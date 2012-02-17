@@ -1,0 +1,8 @@
+*.pyc
+*.pyo
+*.swp
+*.un~
+*.db
+static_root/
+settings/local.py
+settings/sekrit.py
