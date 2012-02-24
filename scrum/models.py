@@ -2,6 +2,9 @@ import re
 from collections import defaultdict
 from datetime import datetime
 
+import dateutil.parser
+from dateutil.relativedelta import relativedelta
+
 from django.conf import settings
 from django.contrib import admin
 from django.core.cache import cache
@@ -79,6 +82,7 @@ class Sprint(models.Model):
         return args
 
     def refresh_bugs(self):
+        delattr(self, '_bugs')
         cache.delete(self._bugs_cache_key)
         return self.get_bugs()
 
@@ -87,11 +91,28 @@ class Sprint(models.Model):
         return 'sprint:{0}:bugs'.format(self.pk)
 
     def get_bugs(self):
-        data = cache.get(self._bugs_cache_key)
-        if data is None:
-            data = BZAPI.bug.get(**self._get_bz_args())
-            cache.set(self._bugs_cache_key, data, 3600)
-        return [Bug(b) for b in data['bugs']]
+        if not hasattr(self, '_bugs'):
+            data = cache.get(self._bugs_cache_key)
+            if data is None:
+                data = BZAPI.bug.get(**self._get_bz_args())
+                cache.set(self._bugs_cache_key, data, 3600)
+            self._bugs = [Bug(b) for b in data['bugs']]
+        return self._bugs
+
+    def get_time_series(self):
+        now = datetime.now().date()
+        sdate = self.start_date
+        edate = self.end_date if self.end_date < now else now
+        if sdate > now: return []
+        tseries = []
+        cdate = sdate
+        while cdate <= edate:
+            cpoints = 0
+            for bug in self.get_bugs():
+                cpoints += bug.points_for_date(cdate)
+            tseries.append([cdate, cpoints])
+            cdate = cdate + relativedelta(days=1)
+        return tseries
 
     def get_bugs_data(self):
         data = {
@@ -151,38 +172,34 @@ class Bug(object):
 
     @property
     def points_history(self):
-        phistory = []
-        cpoints = 0
-        cstatus = 'NEW'
-        for h in self.history:
-            hdate = h['change_time'].split('T')[0]
-            hdate = datetime.strptime(hdate, '%Y-%m-%d')
-            for change in h['changes']:
-                fn = change['field_name']
-                cdate = change
-                if fn == 'status' and cpoints:
-                    new_status = change['added']
-                    was_closed = is_closed(cstatus)
-                    now_closed = is_closed(new_status)
-                    if was_closed != now_closed:
-                        cpoints *= -1
-                        phistory.append({
-                            'date': hdate,
-                            'points': cpoints,
-                        })
-                    cstatus = new_status
-                elif fn == 'whiteboard':
-                    pts = parse_whiteboard(change['added'])['points']
-                    if not pts: continue
-                    if is_closed(cstatus):
-                        pts *= -1
-                    if pts != cpoints:
-                        phistory.append({
-                            'date': hdate,
-                            'points': pts,
-                        })
-                        cpoints = pts
-        return phistory
+        if not hasattr(self, '_phistory'):
+            phistory = []
+            cpoints = 0
+            closed = False
+            for h in self.history:
+                hdate = dateutil.parser.parse(h['change_time']).date()
+                for change in h['changes']:
+                    fn = change['field_name']
+                    if fn == 'status':
+                        now_closed = is_closed(change['added'])
+                        if closed != now_closed:
+                            pts = 0 if now_closed else cpoints
+                            phistory.append({
+                                'date': hdate,
+                                'points': pts,
+                            })
+                            closed = now_closed
+                    elif fn == 'whiteboard':
+                        pts = parse_whiteboard(change['added'])['points']
+                        if pts != cpoints:
+                            cpoints = pts
+                            if not closed:
+                                phistory.append({
+                                    'date': hdate,
+                                    'points': pts,
+                                })
+            self._phistory = phistory
+        return self._phistory
 
 
 

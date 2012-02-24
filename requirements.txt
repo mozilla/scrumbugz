@@ -4,3 +4,4 @@ Unipath
 django-redis-cache
 fabric
 django-bootstrap-form
+python-dateutil==1.5
