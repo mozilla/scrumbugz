@@ -25,24 +25,3 @@ CACHES = {
     },
 }
 MEDIA_ROOT = config['core']['data_directory']
-
-# CELERY SETTINGS
-# ===============
-
-# Uncomment if you're using Celery on ep.io.
-
-# CELERY_RESULT_BACKEND = "redis"
-# REDIS_HOST = config['redis']['host']
-# REDIS_PORT = int(config['redis']['port'])
-# REDIS_PASSWORD = config['redis']['password']
-# REDIS_DB = int(config['redis']['database'])
-# REDIS_CONNECT_RETRY = True
-
-# BROKER_BACKEND = 'redis'
-# BROKER_HOST = config['redis']['host']
-# BROKER_PORT = int(config['redis']['port'])
-# BROKER_PASSWORD = config['redis']['password']
-# BROKER_VHOST = int(config['redis']['database'])
-
-# import djcelery
-# djcelery.setup_loader()

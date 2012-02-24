@@ -1,0 +1,45 @@
+{% extends "scrum/base.html" %}
+{% load bootstrap %}
+
+{% block main_content %}
+  <a class="btn btn-primary pull-right"
+     href="#new-sprint"
+     data-toggle="modal">New Sprint</a>
+  <h1>{{ project.name }}</h1>
+  <hr>
+  <h2>Sprints</h2>
+  <ul>
+    {% for sprint in project.sprints.all %}
+      <li><a href="{{ sprint.get_absolute_url }}">{{ sprint.name }}</a></li>
+    {% endfor %}
+  </ul>
+
+  <div class="modal hide fade" id="new-sprint">
+    <div class="modal-header">
+      <a class="close" href="#" data-dismiss="modal">&times;</a>
+      <h3>New Sprint</h3>
+    </div>
+    <form action="{{ request.get_full_path }}"
+          class="form-horizontal modal-form"
+          method="post">
+      {% csrf_token %}
+      <div class="modal-body">
+        {{ form|bootstrap }}
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" type="submit">GO</button>
+        <button class="btn" data-dismiss="modal">Cancel</button>
+      </div>
+    </form>
+  </div>
+{% endblock %}
+
+{% block js %}
+  <script type="text/javascript">
+    $(function(){
+      if($('#new-sprint div.error').length){
+        $('#new-sprint').modal('show');
+      }
+    })
+  </script>
+{% endblock %}

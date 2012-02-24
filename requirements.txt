@@ -3,3 +3,4 @@ epio
 Unipath
 django-redis-cache
 fabric
+django-bootstrap-form
