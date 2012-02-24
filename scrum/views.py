@@ -1,5 +1,3 @@
-import json
-
 from django.core.urlresolvers import reverse
 from django.http import QueryDict
 from django.shortcuts import get_object_or_404, redirect
@@ -8,6 +6,11 @@ from django.views.generic import (CreateView, FormView, DetailView, ListView,
 
 from scrum.forms import BZUrlForm, SprintForm
 from scrum.models import Project, Sprint, parse_bz_url
+
+try:
+    import simplejson as json
+except ImportError:
+    import json
 
 
 class ProjectsMixin(object):
@@ -89,5 +92,6 @@ class SprintView(ProjectsMixin, DetailView):
         context = super(SprintView, self).get_context_data(**kwargs)
         context['sprint'] = self.object
         context['bugs'] = self.object.get_bugs()
-        context['bugs_data'] = json.dumps(self.object.get_bugs_data())
+        context['bugs_data'] = self.object.get_bugs_data()
+        context['bugs_data_json'] = json.dumps(context['bugs_data'])
         return context

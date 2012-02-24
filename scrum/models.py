@@ -1,26 +1,22 @@
+from __future__ import absolute_import
+
 import re
 from collections import defaultdict
 from datetime import datetime
-
-import dateutil.parser
-from dateutil.relativedelta import relativedelta
 
 from django.conf import settings
 from django.contrib import admin
 from django.core.cache import cache
 from django.core.validators import RegexValidator
 from django.db import models
-from django.http import QueryDict
 
+import dateutil.parser
 import slumber
 
+from .utils import (date_to_js, is_closed, date_range, parse_bz_url,
+                    parse_whiteboard)
 
-BZ_URL_EXCLUDE = (
-    'cmdtype',
-    'remaction',
-    'list_id',
-    'columnlist',
-)
+
 BZ_FIELDS = (
     'id',
     'url',
@@ -30,12 +26,6 @@ BZ_FIELDS = (
     'whiteboard',
     'assigned_to',
 )
-TAG_2_ATTR = {
-    'p': 'points',
-    'u': 'user',
-    'c': 'component',
-}
-CLOSED_STATUSES = ['RESOLVED', 'VERIFIED']
 BZAPI = slumber.API(settings.BZ_API_URL)
 slug_re = re.compile(r'^[-.\w]+$')
 validate_slug = RegexValidator(slug_re, "Enter a valid 'slug' consisting of letters, numbers, underscores, periods or hyphens.", 'invalid')
@@ -99,20 +89,24 @@ class Sprint(models.Model):
             self._bugs = [Bug(b) for b in data['bugs']]
         return self._bugs
 
-    def get_time_series(self):
-        now = datetime.now().date()
+    def get_burndown(self):
+        """Return a list of total point values per day of sprint"""
+        now = datetime.utcnow().date()
         sdate = self.start_date
         edate = self.end_date if self.end_date < now else now
         if sdate > now: return []
         tseries = []
-        cdate = sdate
-        while cdate <= edate:
+        for cdate in date_range(sdate, edate):
             cpoints = 0
             for bug in self.get_bugs():
                 cpoints += bug.points_for_date(cdate)
-            tseries.append([cdate, cpoints])
-            cdate = cdate + relativedelta(days=1)
+            tseries.append([date_to_js(cdate), cpoints])
         return tseries
+
+    def get_burndown_axis(self):
+        """Return a list of epoch dates between sprint start and end inclusive"""
+        return [date_to_js(cdate) for cdate in
+                date_range(self.start_date, self.end_date)]
 
     def get_bugs_data(self):
         data = {
@@ -121,6 +115,8 @@ class Sprint(models.Model):
             'status': defaultdict(int),
             'basic_status': defaultdict(int),
             'total_points': 0,
+            'burndown': self.get_burndown(),
+            'burndown_axis': self.get_burndown_axis(),
         }
         for bug in self.get_bugs():
             if bug.points:
@@ -129,6 +125,9 @@ class Sprint(models.Model):
                 data['status'][bug.status] += bug.points
                 data['basic_status'][bug.basic_status] += bug.points
                 data['total_points'] += bug.points
+        # have to convert to dicts b/c of django template bug
+        for item in ['users', 'components', 'status', 'basic_status']:
+            data[item] = dict(data[item])
         return data
 
 
@@ -200,38 +199,6 @@ class Bug(object):
                                 })
             self._phistory = phistory
         return self._phistory
-
-
-
-def parse_whiteboard(wb):
-    wb_dict = {
-        'points': 0,
-        'user': '',
-        'component': '',
-    }
-    wb = wb.strip()
-    if wb:
-        data = dict(i.split('=') for i in wb.split() if '=' in i)
-        for k, v in data.iteritems():
-            if v:
-                cast = int if k == 'p' else str
-                wb_dict[TAG_2_ATTR[k]] = cast(v)
-    return wb_dict
-
-
-def parse_bz_url(url):
-    qs = url.split('?')[1]
-    qd = QueryDict(qs, mutable=True)
-    for key in BZ_URL_EXCLUDE:
-        try:
-            del qd[key]
-        except KeyError:
-            continue
-    return qd
-
-
-def is_closed(status):
-    return status in CLOSED_STATUSES
 
 
 admin.site.register(Project)
