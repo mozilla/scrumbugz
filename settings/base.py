@@ -15,6 +15,7 @@ ADMINS = (
 MANAGERS = ADMINS
 
 BZ_API_URL = 'https://api-dev.bugzilla.mozilla.org/latest/'
+CACHE_BUGS_FOR = 2 # hours
 
 TIME_ZONE = 'America/New_York'
 LANGUAGE_CODE = 'en-us'

@@ -29,6 +29,7 @@ BZ_FIELDS = (
 BZAPI = slumber.API(settings.BZ_API_URL)
 slug_re = re.compile(r'^[-.\w]+$')
 validate_slug = RegexValidator(slug_re, "Enter a valid 'slug' consisting of letters, numbers, underscores, periods or hyphens.", 'invalid')
+CACHE_BUGS_FOR = getattr(settings, 'CACHE_BUGS_FOR', 2) * 60 * 60 # hours
 
 
 class Project(models.Model):
@@ -85,7 +86,7 @@ class Sprint(models.Model):
             data = cache.get(self._bugs_cache_key)
             if data is None:
                 data = BZAPI.bug.get(**self._get_bz_args())
-                cache.set(self._bugs_cache_key, data, 3600)
+                cache.set(self._bugs_cache_key, data, CACHE_BUGS_FOR)
             self._bugs = [Bug(b) for b in data['bugs']]
         return self._bugs
 
@@ -109,12 +110,14 @@ class Sprint(models.Model):
                 date_range(self.start_date, self.end_date)]
 
     def get_bugs_data(self):
+        bugs = self.get_bugs()
         data = {
             'users': defaultdict(int),
             'components': defaultdict(int),
             'status': defaultdict(int),
             'basic_status': defaultdict(int),
             'total_points': 0,
+            'total_bugs': len(bugs),
             'burndown': self.get_burndown(),
             'burndown_axis': self.get_burndown_axis(),
         }
@@ -125,9 +128,6 @@ class Sprint(models.Model):
                 data['status'][bug.status] += bug.points
                 data['basic_status'][bug.basic_status] += bug.points
                 data['total_points'] += bug.points
-        # have to convert to dicts b/c of django template bug
-        for item in ['users', 'components', 'status', 'basic_status']:
-            data[item] = dict(data[item])
         return data
 
 

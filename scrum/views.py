@@ -1,8 +1,10 @@
+from operator import itemgetter
 from django.core.urlresolvers import reverse
 from django.http import QueryDict
 from django.shortcuts import get_object_or_404, redirect
 from django.views.generic import (CreateView, FormView, DetailView, ListView,
                                   TemplateView)
+from django.views.generic.edit import UpdateView
 
 from scrum.forms import BZUrlForm, SprintForm
 from scrum.models import Project, Sprint, parse_bz_url
@@ -88,10 +90,18 @@ class SprintView(ProjectsMixin, DetailView):
         sslug = self.kwargs.get('sslug')
         return get_object_or_404(Sprint, project__slug=pslug, slug=sslug)
 
+    def process_bug_data(self):
+        data = self.object.get_bugs_data()
+        for item in ['users', 'components', 'status', 'basic_status']:
+            data[item] = [{'label': k, 'data': v} for k, v in
+                          sorted(data[item].iteritems(), key=itemgetter(1))]
+        return data
+
+
     def get_context_data(self, **kwargs):
         context = super(SprintView, self).get_context_data(**kwargs)
         context['sprint'] = self.object
         context['bugs'] = self.object.get_bugs()
-        context['bugs_data'] = self.object.get_bugs_data()
+        context['bugs_data'] = self.process_bug_data()
         context['bugs_data_json'] = json.dumps(context['bugs_data'])
         return context
