@@ -60,7 +60,7 @@
 
         self.resize();
 
-        $.plot(self.$element, [self.data], {
+        $.plot(self.$element, [{data: self.data, color: '#049cdb'}], {
             xaxis: {
                 mode: 'time',
                 ticks: self.ticks,
@@ -83,7 +83,7 @@
             },
             points: {
                 show: true,
-                fill: false
+                fill: true
             }
         });
 
