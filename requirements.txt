@@ -6,4 +6,6 @@ fabric
 django-bootstrap-form
 django-floppyforms
 python-dateutil==1.5
+slumber
+simplejson
 

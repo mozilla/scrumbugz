@@ -34,7 +34,7 @@ CACHE_BUGS_FOR = getattr(settings, 'CACHE_BUGS_FOR', 2) * 60 * 60 # hours
 
 class Project(models.Model):
     name = models.CharField(max_length=200)
-    slug = models.SlugField()
+    slug = models.SlugField(unique=True)
 
     def __unicode__(self):
         return self.name
@@ -47,7 +47,8 @@ class Project(models.Model):
 class Sprint(models.Model):
     project = models.ForeignKey(Project, related_name='sprints')
     name = models.CharField(max_length=200)
-    slug = models.CharField(max_length=200, validators=[validate_slug])
+    slug = models.CharField(max_length=200, validators=[validate_slug],
+                            db_index=True)
     start_date = models.DateField()
     end_date = models.DateField()
     created_date = models.DateTimeField(editable=False, default=datetime.now)

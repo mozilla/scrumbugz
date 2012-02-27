@@ -1,10 +1,6 @@
 from fabric.api import local, env
 
-def production():
-    env['epioapp'] = # production epio instance name
-
-def staging():
-    env['epioapp'] = # staging epio instance
+env['epioapp'] = 'scrumbugs'
 
 def epio(commandstring):
     local("epio {0} -a {1}".format(
@@ -16,6 +12,6 @@ def deploy():
     local("./manage.py collectstatic")
     epio('upload')
     epio('django syncdb')
-    epio('django migrate')
+    #epio('django migrate')
     epio('django epio_flush_cache')
 
