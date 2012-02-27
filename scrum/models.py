@@ -55,7 +55,7 @@ class Sprint(models.Model):
 
     class Meta:
         get_latest_by = 'created_date'
-        ordering = ['-created_date']
+        ordering = ['-start_date']
         unique_together = ('project', 'slug')
 
     def __unicode__(self):
@@ -73,7 +73,10 @@ class Sprint(models.Model):
         return args
 
     def refresh_bugs(self):
-        delattr(self, '_bugs')
+        try:
+            delattr(self, '_bugs')
+        except AttributeError:
+            pass
         cache.delete(self._bugs_cache_key)
         return self.get_bugs()
 
@@ -129,6 +132,14 @@ class Sprint(models.Model):
                 data['basic_status'][bug.basic_status] += bug.points
                 data['total_points'] += bug.points
         return data
+
+    def save(self, force_insert=False, force_update=False, using=None):
+        """Clear the cache if we update the bz url"""
+        if self.pk:
+            old_obj = Sprint.objects.get(pk=self.pk)
+            if old_obj.bz_url != self.bz_url:
+                self.refresh_bugs()
+        return super(Sprint, self).save(force_insert, force_update, using)
 
 
 class Bug(object):

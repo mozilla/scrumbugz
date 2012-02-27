@@ -1,4 +1,20 @@
 {% extends "scrum/base.html" %}
 
 {% block main_content %}
+  <div class="hero-unit">
+    <h1>Projects</h1>
+
+    <p>Sorry. Not much here yet. Choose a project on the left, and go. Just go.</p>
+    <a class="btn btn-primary btn-large"
+       href="#modal_form"
+       data-toggle="modal">
+      <i class="icon-plus icon-white"></i> New Project
+    </a>
+  </div>
+
+  {% include "scrum/modal_form.html" %}
+{% endblock %}
+
+{% block js %}
+  <script type="text/javascript" src="{{ STATIC_URL }}js/modal_form.js"></script>
 {% endblock %}

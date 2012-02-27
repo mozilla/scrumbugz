@@ -28,9 +28,9 @@ dl.sprint-numbers dt {
     position: absolute;
     display: none;
     padding: 10px;
-    background-color: #666;
+    background-color: #333;
     color: #fff;
-    opacity: 0.90;
+    opacity: 0.95;
     -webkit-border-radius: 7px;
     -moz-border-radius: 7px;
     border-radius: 7px;
@@ -56,5 +56,5 @@ table thead tr .headerSortDown {
 }
 
 tr.bug-closed td{
-    background-color: rgb(221, 221, 221) !important;
+    background-color: #dff0d8 !important;
 }

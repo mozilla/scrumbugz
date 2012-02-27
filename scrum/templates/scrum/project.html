@@ -3,7 +3,7 @@
 
 {% block main_content %}
   <a class="btn btn-primary pull-right"
-     href="#new-sprint"
+     href="#modal_form"
      data-toggle="modal">
     <i class="icon-plus icon-white"></i> New Sprint
   </a>
@@ -12,36 +12,18 @@
   <h2>Sprints</h2>
   <ul>
     {% for sprint in project.sprints.all %}
-      <li><a href="{{ sprint.get_absolute_url }}">{{ sprint.name }}</a></li>
+      <li>
+        <a href="{{ sprint.get_absolute_url }}">
+          {{ sprint.name }}
+        </a>
+        &mdash; {{ sprint.start_date }} - {{ sprint.end_date }}
+      </li>
     {% endfor %}
   </ul>
 
-  <div class="modal hide fade" id="new-sprint">
-    <div class="modal-header">
-      <a class="close" href="#" data-dismiss="modal">&times;</a>
-      <h3>New Sprint</h3>
-    </div>
-    <form action="{{ request.get_full_path }}"
-          class="form-horizontal modal-form"
-          method="post">
-      {% csrf_token %}
-      <div class="modal-body">
-        {{ form|bootstrap }}
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-primary" type="submit">GO</button>
-        <button class="btn" data-dismiss="modal">Cancel</button>
-      </div>
-    </form>
-  </div>
+  {% include "scrum/modal_form.html" %}
 {% endblock %}
 
 {% block js %}
-  <script type="text/javascript">
-    $(function(){
-      if($('#new-sprint div.error').length){
-        $('#new-sprint').modal('show');
-      }
-    })
-  </script>
+  <script type="text/javascript" src="{{ STATIC_URL }}js/modal_form.js"></script>
 {% endblock %}

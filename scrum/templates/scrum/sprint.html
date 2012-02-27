@@ -1,11 +1,14 @@
 {% extends "base.html" %}
 
+{% load bootstrap %}
+
 {% block content %}
   <div class="row">
     <div class="span12">
       <a class="btn btn-primary pull-right"
-         href="{# url scrum_sprint_edit project.slug sprint.slug #}">
-        <i class="icon-pencil icon-white"></i> Edit Sprint
+         href="#modal_form"
+         data-toggle="modal">
+        <i class="icon-edit icon-white"></i> Update Sprint
       </a>
       <h1><a href="{{ project.get_absolute_url }}">{{ project.name }}</a> &mdash; {{ sprint.name }}</h1>
     </div>
@@ -73,6 +76,8 @@
       </table>
     </div>
   </div>
+
+  {% include "scrum/modal_form.html" %}
 {% endblock %}
 
 {% block js %}
@@ -80,6 +85,7 @@
   <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.flot.pie.min.js"></script>
   <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.flot.resize.min.js"></script>
   <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.tablesorter.min.js"></script>
+  <script type="text/javascript" src="{{ STATIC_URL }}js/modal_form.js"></script>
   <script type="text/javascript" src="{{ STATIC_URL }}js/sprint.js"></script>
   <script type="text/javascript">
     $(function(){

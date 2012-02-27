@@ -1,4 +1,4 @@
-from time import mktime
+import time
 
 from django.http import QueryDict
 
@@ -61,5 +61,5 @@ def date_range(sdate, edate, step=1):
 
 
 def date_to_js(date):
-    """Return unix epoc timestamp in miliseconds"""
-    return int(mktime(date.timetuple()) * 1000)
+    """Return unix epoc timestamp in miliseconds (in UTC)"""
+    return int((time.mktime(date.timetuple()) - time.timezone) * 1000)

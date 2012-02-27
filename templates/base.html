@@ -46,9 +46,8 @@
           <a class="brand" href="{% url scrum_home %}">ScrumBugz</a>
           <div class="nav-collapse">
             <ul class="nav">
-              <li class="active"><a href="{% url scrum_home %}">Home</a></li>
-              <li><a href="{% url scrum_projects_list %}">Projects</a></li>
-              <li><a href="#contact">Contact</a></li>
+              <li{% if not projects %} class="active"{% endif %}><a href="{% url scrum_home %}">Home</a></li>
+              <li{% if projects %} class="active"{% endif %}><a href="{% url scrum_projects_list %}">Projects</a></li>
             </ul>
           </div><!--/.nav-collapse -->
         </div>
