@@ -1,4 +1,4 @@
-from django import forms
+import floppyforms as forms
 
 from scrum.models import Sprint, Project
 
@@ -9,10 +9,30 @@ class ProjectForm(forms.ModelForm):
         model = Project
 
 
+date5 = forms.DateInput(attrs={
+    'placeholder': 'YYYY-MM-DD',
+})
+
+
+class SlugInput(forms.TextInput):
+
+    def get_context_data(self):
+        self.attrs['pattern'] = "[-.\w]+"
+        return super(SlugInput, self).get_context_data()
+
+
 class SprintForm(forms.ModelForm):
     template_title = 'Sprint'
+
     class Meta:
         model = Sprint
+        widgets = {
+            'name': forms.TextInput,
+            'slug': SlugInput,
+            'start_date': date5,
+            'end_date': date5,
+            'bz_url': forms.URLInput,
+        }
         fields = (
             'name',
             'slug',

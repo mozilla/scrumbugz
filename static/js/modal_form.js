@@ -8,6 +8,15 @@ $(function(){
     $('#id_name').on('keyup', function(){
         $('#id_slug').val($(this).val().replace(/\s+/g,'-').replace(/[^a-zA-Z0-9.\-]/g,'').toLowerCase());
     });
-    $('input[id*="date"]').attr('placeholder', 'YYYY-MM-DD');
     $('#id_bz_url').attr('placeholder', 'https://bugzilla.mozilla.org/...');
+    $(':date').dateinput({
+        format: 'yyyy-mm-dd'
+    });
+    $('#id_start_date').data('dateinput').change(function(){
+        $('#id_end_date').data('dateinput').setMin(this.getValue(), true)
+                                           .setValue(new Date(this.getValue().getTime() + 1000 * 60 * 60 * 24 * 7))
+    });
+    $('#id_end_date').data('dateinput').onBeforeShow(function(){
+        this.setMin($('#id_start_date').data('dateinput').getValue());
+    });
 });

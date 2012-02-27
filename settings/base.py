@@ -70,6 +70,7 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'epio_commands',
     'bootstrapform',
+    'floppyforms',
     'scrum',
 )
 
