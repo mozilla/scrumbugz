@@ -11,9 +11,9 @@ TAG_2_ATTR = {
     'c': 'component',
 }
 BZ_URL_EXCLUDE = (
-    'cmdtype',
-    'remaction',
-    'list_id',
+#    'cmdtype',
+#    'remaction',
+#    'list_id',
     'columnlist',
 )
 CLOSED_STATUSES = ['RESOLVED', 'VERIFIED']

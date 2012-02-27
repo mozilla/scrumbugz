@@ -31,7 +31,9 @@ class SprintForm(forms.ModelForm):
             'slug': SlugInput,
             'start_date': date5,
             'end_date': date5,
-            'bz_url': forms.URLInput,
+            'bz_url': forms.URLInput(attrs={
+                'placeholder': 'https://bugzilla.mozilla.org/...',
+            }),
         }
         fields = (
             'name',
