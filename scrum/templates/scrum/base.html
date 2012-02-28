@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 
+{% block title %}{{ block.super }} &raquo; {{ project.name|default:"Projects" }}{% endblock %}
+
 {% block content %}
   <div class="row">
     <div class="span3">

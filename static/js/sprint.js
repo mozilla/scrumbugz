@@ -83,7 +83,8 @@
             },
             points: {
                 show: true,
-                fill: true
+                fill: true,
+                radius: 4
             }
         });
 
@@ -185,8 +186,10 @@
         });
     };
 
-    window.init_tooltip = function(){
+    window.init_sprint = function(){
         $tooltip = $('<div id="tooltip"></div>').appendTo("body");
+        $('#bugs-table').tablesorter({sortList: [[6,0]]});
+        $('td.ttip').tooltip();
     };
 
     var cur_key = null;

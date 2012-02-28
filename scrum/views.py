@@ -90,7 +90,9 @@ class SprintView(ProjectsMixin, ProtectedUpdateView):
         data = self.object.get_bugs_data()
         for item in ['users', 'components', 'status', 'basic_status']:
             data[item] = [{'label': k, 'data': v} for k, v in
-                          sorted(data[item].iteritems(), key=itemgetter(1))]
+                          sorted(data[item].iteritems(),
+                                 key=itemgetter(1),
+                                 reverse=True)]
         return data
 
     def get_context_data(self, **kwargs):

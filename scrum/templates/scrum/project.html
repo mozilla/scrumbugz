@@ -18,7 +18,7 @@
         <a href="{{ sprint.get_absolute_url }}">
           {{ sprint.name }}
         </a>
-        &mdash; {{ sprint.start_date }} - {{ sprint.end_date }}
+        &mdash; {{ sprint.start_date }} <i class="icon-chevron-right"></i> {{ sprint.end_date }}
       </li>
     {% endfor %}
   </ul>

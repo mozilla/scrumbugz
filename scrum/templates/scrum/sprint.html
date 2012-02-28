@@ -1,6 +1,6 @@
-{% extends "base.html" %}
+{% extends "scrum/base.html" %}
 
-{% load bootstrap %}
+{% block title %}{{ block.super }} &raquo; {{ sprint.name }}{% endblock %}
 
 {% block content %}
   <div class="row">
@@ -12,7 +12,9 @@
           <i class="icon-edit icon-white"></i> Update Sprint
         </a>
       {% endif %}
-      <h1><a href="{{ project.get_absolute_url }}">{{ project.name }}</a> &mdash; {{ sprint.name }}</h1>
+      <h1>
+        <a href="{{ project.get_absolute_url }}">{{ project.name }}</a>
+        &raquo; {{ sprint.name }}</h1>
     </div>
   </div>
   <div class="row">
@@ -55,7 +57,7 @@
           <tr>
             <th>ID</th>
             <th>Summary</th>
-            <th>Assigned To</th>
+            <th>Assigned</th>
             <th>User</th>
             <th>Component</th>
             <th>Points</th>
@@ -67,7 +69,7 @@
             <tr data-bugid="{{ bug.id }}" id="bug{{ bug.id }}"{% if bug.is_closed %} class="bug-closed"{% endif %}>
               <td><a href="https://bugzilla.mozilla.org/show_bug.cgi?id={{ bug.id }}">{{ bug.id }}</a></td>
               <td>{{ bug.summary }}</td>
-              <td>{{ bug.assigned_to.real_name }}</td>
+              <td class="ttip" title="{{ bug.assigned_to.real_name }}">{{ bug.assigned_to.name }}</td>
               <td>{{ bug.user }}</td>
               <td>{{ bug.component }}</td>
               <td>{{ bug.points }}</td>
@@ -76,6 +78,16 @@
           {% endfor %}
         </tbody>
       </table>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="span12">
+      <a class="btn"
+         href="{{ sprint.bz_url }}">
+        <i class="icon-share"></i>
+        Back to Bugzilla
+      </a>
     </div>
   </div>
 
@@ -99,7 +111,7 @@
       "use strict";
 
       var BUGS_DATA = {{ bugs_data_json|safe }};
-      init_tooltip();
+      init_sprint();
       new Burndown('#burndown', BUGS_DATA.burndown, BUGS_DATA.burndown_axis);
       new PieFlot('#component-pie', BUGS_DATA.components);
       new PieFlot('#user-pie', BUGS_DATA.users);
@@ -110,8 +122,6 @@
           assigned: "rgb(175, 216, 248)"
         }
       });
-
-      $('#bugs-table').tablesorter({sortList: [[5,1]]});
     });
   </script>
 {% endblock %}

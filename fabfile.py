@@ -1,6 +1,6 @@
 from fabric.api import local, env
 
-env['epioapp'] = 'scrumbugs'
+env['epioapp'] = 'scrumbugz'
 
 def epio(commandstring):
     local("epio {0} -a {1}".format(
