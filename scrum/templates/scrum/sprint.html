@@ -5,11 +5,13 @@
 {% block content %}
   <div class="row">
     <div class="span12">
-      <a class="btn btn-primary pull-right"
-         href="#modal_form"
-         data-toggle="modal">
-        <i class="icon-edit icon-white"></i> Update Sprint
-      </a>
+      {% if perms.scrum.change_sprint %}
+        <a class="btn btn-primary pull-right"
+           href="#modal_form"
+           data-toggle="modal">
+          <i class="icon-edit icon-white"></i> Update Sprint
+        </a>
+      {% endif %}
       <h1><a href="{{ project.get_absolute_url }}">{{ project.name }}</a> &mdash; {{ sprint.name }}</h1>
     </div>
   </div>
@@ -77,16 +79,20 @@
     </div>
   </div>
 
-  {% include "scrum/modal_form.html" %}
+  {% if perms.scrum.change_sprint %}
+    {% include "scrum/modal_form.html" %}
+  {% endif %}
 {% endblock %}
 
 {% block js %}
-  <script type="text/javascript" src="//cdn.jquerytools.org/1.2.6/form/jquery.tools.min.js"></script>
+  {% if perms.scrum.change_sprint %}
+    <script type="text/javascript" src="//cdn.jquerytools.org/1.2.6/form/jquery.tools.min.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/modal_form.js"></script>
+  {% endif %}
   <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.flot.min.js"></script>
   <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.flot.pie.min.js"></script>
   <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.flot.resize.min.js"></script>
   <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.tablesorter.min.js"></script>
-  <script type="text/javascript" src="{{ STATIC_URL }}js/modal_form.js"></script>
   <script type="text/javascript" src="{{ STATIC_URL }}js/sprint.js"></script>
   <script type="text/javascript">
     $(function(){

@@ -1,10 +1,7 @@
 from operator import itemgetter
-from django.core.urlresolvers import reverse
-from django.http import QueryDict
+from django.contrib.auth.decorators import permission_required
 from django.shortcuts import get_object_or_404, redirect
-from django.views.generic import (CreateView, FormView, DetailView, ListView,
-                                  TemplateView)
-from django.views.generic.edit import UpdateView
+from django.views.generic import CreateView, UpdateView, TemplateView
 
 from scrum.forms import SprintForm, ProjectForm
 from scrum.models import Project, Sprint, parse_bz_url
@@ -13,6 +10,26 @@ try:
     import simplejson as json
 except ImportError:
     import json
+
+
+class ProtectedCreateView(CreateView):
+    def post(self, request, *args, **kwargs):
+        @permission_required('%s.add_%s' % (self.model._meta.app_label,
+                                            self.model._meta.module_name))
+        def wrap(request, *args, **kwargs):
+            return super(ProtectedCreateView, self).post(request,
+                                                         *args, **kwargs)
+        return wrap(request, *args, **kwargs)
+
+
+class ProtectedUpdateView(UpdateView):
+    def post(self, request, *args, **kwargs):
+        @permission_required('%s.change_%s' % (self.model._meta.app_label,
+                                               self.model._meta.module_name))
+        def wrap(request, *args, **kwargs):
+            return super(ProtectedUpdateView, self).post(request,
+                                                         *args, **kwargs)
+        return wrap(request, *args, **kwargs)
 
 
 class ProjectsMixin(object):
@@ -31,7 +48,7 @@ class HomeView(TemplateView):
 home = HomeView.as_view()
 
 
-class ProjectView(ProjectsMixin, CreateView):
+class ProjectView(ProjectsMixin, ProtectedCreateView):
     model = Sprint
     form_class = SprintForm
     template_name = 'scrum/project.html'
@@ -47,7 +64,7 @@ class ProjectView(ProjectsMixin, CreateView):
         return redirect(self.get_success_url())
 
 
-class ListProjectsView(ProjectsMixin, CreateView):
+class ListProjectsView(ProjectsMixin, ProtectedCreateView):
     model = Project
     form_class = ProjectForm
     template_name = 'scrum/projects_list.html'
@@ -56,7 +73,7 @@ class ListProjectsView(ProjectsMixin, CreateView):
         return self.object.get_absolute_url()
 
 
-class SprintView(ProjectsMixin, UpdateView):
+class SprintView(ProjectsMixin, ProtectedUpdateView):
     model = Sprint
     form_class = SprintForm
     template_name = 'scrum/sprint.html'

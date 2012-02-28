@@ -2,11 +2,13 @@
 {% load bootstrap %}
 
 {% block main_content %}
-  <a class="btn btn-primary pull-right"
-     href="#modal_form"
-     data-toggle="modal">
-    <i class="icon-plus icon-white"></i> New Sprint
-  </a>
+  {% if perms.scrum.add_sprint %}
+    <a class="btn btn-primary pull-right"
+       href="#modal_form"
+       data-toggle="modal">
+      <i class="icon-plus icon-white"></i> New Sprint
+    </a>
+  {% endif %}
   <h1>{{ project.name }}</h1>
   <hr>
   <h2>Sprints</h2>
@@ -21,10 +23,14 @@
     {% endfor %}
   </ul>
 
-  {% include "scrum/modal_form.html" %}
+  {% if perms.scrum.add_sprint %}
+    {% include "scrum/modal_form.html" %}
+  {% endif %}
 {% endblock %}
 
 {% block js %}
-  <script type="text/javascript" src="//cdn.jquerytools.org/1.2.6/form/jquery.tools.min.js"></script>
-  <script type="text/javascript" src="{{ STATIC_URL }}js/modal_form.js"></script>
+  {% if perms.scrum.add_sprint %}
+    <script type="text/javascript" src="//cdn.jquerytools.org/1.2.6/form/jquery.tools.min.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/modal_form.js"></script>
+  {% endif %}
 {% endblock %}
