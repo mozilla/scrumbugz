@@ -122,6 +122,7 @@ class Sprint(models.Model):
             'basic_status': defaultdict(int),
             'total_points': 0,
             'total_bugs': len(bugs),
+            'scoreless_bugs': 0,
             'burndown': self.get_burndown(),
             'burndown_axis': self.get_burndown_axis(),
         }
@@ -132,6 +133,8 @@ class Sprint(models.Model):
                 data['status'][bug.status] += bug.points
                 data['basic_status'][bug.basic_status] += bug.points
                 data['total_points'] += bug.points
+            else:
+                data['scoreless_bugs'] += 1
         return data
 
     def save(self, force_insert=False, force_update=False, using=None):
@@ -171,7 +174,9 @@ class Bug(object):
 
     @property
     def basic_status(self):
-        if self.is_closed():
+        if not self.points:
+            status = 'scoreless'
+        elif self.is_closed():
             status = 'closed'
         else:
             status = 'assigned' if self.is_assigned() else 'open'

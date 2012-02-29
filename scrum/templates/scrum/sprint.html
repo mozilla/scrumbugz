@@ -23,8 +23,12 @@
       <dl class="well sprint-numbers">
         <dt>Total Points</dt>
         <dd>{{ bugs_data.total_points }}</dd>
-        <dt>Total Stories</dt>
-        <dd>{{ bugs|length }}</dd>
+        <dt>Total Bugs</dt>
+        <dd>{{ bugs_data.total_bugs }}</dd>
+        {% if bugs_data.scoreless_bugs %}
+          <dt class="scoreless">Scoreless Bugs</dt>
+          <dd class="scoreless">{{ bugs_data.scoreless_bugs }}</dd>
+        {% endif %}
         {% for data in bugs_data.basic_status %}
           <dt>{{ data.label|capfirst }} Points</dt>
           <dd>{{ data.data }}</dd>
@@ -66,7 +70,7 @@
         </thead>
         <tbody>
           {% for bug in bugs %}
-            <tr data-bugid="{{ bug.id }}" id="bug{{ bug.id }}"{% if bug.is_closed %} class="bug-closed"{% endif %}>
+            <tr data-bugid="{{ bug.id }}" id="bug{{ bug.id }}" class="bug-{{ bug.basic_status }}">
               <td><a href="https://bugzilla.mozilla.org/show_bug.cgi?id={{ bug.id }}">{{ bug.id }}</a></td>
               <td>{{ bug.summary }}</td>
               <td class="ttip" title="{{ bug.assigned_to.real_name }}">{{ bug.assigned_to.name }}</td>
@@ -82,8 +86,24 @@
   </div>
 
   <div class="row">
-    <div class="span12">
-      <a class="btn"
+    <div class="span6">
+      <h4>Legend</h4>
+      <table class="table-condensed">
+        <tbody>
+          <tr class="bug-closed">
+            <td>Closed</td>
+          </tr>
+          <tr class="bug-scoreless">
+            <td>Scoreless</td>
+          </tr>
+          <tr class="bug-open">
+            <td>Unassigned (open)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="span6">
+      <a class="btn pull-right"
          href="{{ sprint.bz_url }}">
         <i class="icon-share"></i>
         Back to Bugzilla

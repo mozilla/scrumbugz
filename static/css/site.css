@@ -59,6 +59,18 @@ tr.bug-closed td{
     background-color: #dff0d8 !important;
 }
 
+tr.bug-scoreless td{
+    background-color: #f2dede !important;
+}
+dd.scoreless,
+dt.scoreless{
+    color: #b94a48;
+}
+
+tr.bug-open td{
+    background-color: #fcf8e3 !important;
+}
+
 /* For the details, see: http://flowplayer.org/tools/dateinput/index.html#skinning */
 
 /* calendar root element */
