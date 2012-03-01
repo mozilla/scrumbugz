@@ -4,6 +4,7 @@ from .base import *
 from bundle_config import config
 
 ENFORCE_HOSTNAME = 'scrumbu.gs'
+ENABLE_GA = True
 
 DATABASES = {
     'default': {

@@ -54,6 +54,8 @@ class Sprint(models.Model):
     created_date = models.DateTimeField(editable=False, default=datetime.now)
     bz_url = models.URLField(verbose_name='Bugzilla URL', max_length=2048)
 
+    date_cached = None
+
     class Meta:
         get_latest_by = 'created_date'
         ordering = ['-start_date']
@@ -90,8 +92,10 @@ class Sprint(models.Model):
             data = cache.get(self._bugs_cache_key)
             if data is None:
                 data = BZAPI.bug.get(**self._get_bz_args())
+                data['date_received'] = datetime.now()
                 cache.set(self._bugs_cache_key, data, CACHE_BUGS_FOR)
             self._bugs = [Bug(b) for b in data['bugs']]
+            self.date_cached = data.get('date_received', datetime.now())
         return self._bugs
 
     def get_burndown(self):

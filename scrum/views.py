@@ -97,6 +97,9 @@ class SprintView(ProjectsMixin, ProtectedUpdateView):
 
     def get_context_data(self, **kwargs):
         context = super(SprintView, self).get_context_data(**kwargs)
+        # clear cache if requested
+        if self.request.META.get('HTTP_CACHE_CONTROL') == 'no-cache':
+            self.object.refresh_bugs()
         context['sprint'] = self.object
         context['bugs'] = self.object.get_bugs()
         context['bugs_data'] = self.process_bug_data()

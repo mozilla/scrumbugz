@@ -86,7 +86,7 @@
     <script src="{{ STATIC_URL }}js/bootstrap.js"></script>
     {% block js %}{% endblock %}
 
-    {% if not debug %}
+    {% if ENABLE_GA %}
       <script type="text/javascript">
         var _gaq = _gaq || [];
         _gaq.push(['_setAccount', 'UA-170744-7']);

@@ -1,6 +1,6 @@
 {% extends "scrum/base.html" %}
 
-{% block title %}{{ block.super }} &raquo; {{ sprint.name }}{% endblock %}
+{% block title %}{{ block.super }} / {{ sprint.name }}{% endblock %}
 
 {% block content %}
   <div class="row">
@@ -14,7 +14,8 @@
       {% endif %}
       <h1>
         <a href="{{ project.get_absolute_url }}">{{ project.name }}</a>
-        &raquo; {{ sprint.name }}</h1>
+        / {{ sprint.name }}
+      </h1>
     </div>
   </div>
   <div class="row">
@@ -90,13 +91,13 @@
       <h4>Legend</h4>
       <table class="table-condensed">
         <tbody>
-          <tr class="bug-closed">
+          <tr class="bug-closed pull-left">
             <td>Closed</td>
           </tr>
-          <tr class="bug-scoreless">
+          <tr class="bug-scoreless pull-left">
             <td>Scoreless</td>
           </tr>
-          <tr class="bug-open">
+          <tr class="bug-open pull-left">
             <td>Unassigned (open)</td>
           </tr>
         </tbody>
@@ -106,8 +107,16 @@
       <a class="btn pull-right"
          href="{{ sprint.bz_url }}">
         <i class="icon-share"></i>
-        Back to Bugzilla
+        Go to Bugzilla
       </a>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="span12">
+      <h4>Last updated: {{ sprint.date_cached|timesince }} ago</h4>
+      <p>Hard refresh your browser to get new data from Bugzilla.</p>
+      <p>Data is refreshed automatically every {{ CACHE_BUGS_FOR }} hours.</p>
     </div>
   </div>
 

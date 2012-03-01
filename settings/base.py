@@ -3,6 +3,7 @@ from unipath import FSPath as Path
 
 from .sekrit import *
 
+
 PROJECT_DIR = Path(__file__).absolute().ancestor(2)
 
 DEBUG = False
@@ -16,6 +17,12 @@ MANAGERS = ADMINS
 
 BZ_API_URL = 'https://api-dev.bugzilla.mozilla.org/latest/'
 CACHE_BUGS_FOR = 2 # hours
+
+CONTEXT_SETTINGS = (
+    'CACHE_BUGS_FOR',
+    'DEBUG',
+    'ENABLE_GA',
+)
 
 TIME_ZONE = 'America/New_York'
 LANGUAGE_CODE = 'en-us'
@@ -73,6 +80,16 @@ INSTALLED_APPS = (
     'bootstrapform',
     'floppyforms',
     'scrum',
+)
+
+TEMPLATE_CONTEXT_PROCESSORS = (
+    "django.contrib.auth.context_processors.auth",
+    "django.core.context_processors.debug",
+    "django.core.context_processors.i18n",
+    "django.core.context_processors.media",
+    "django.core.context_processors.static",
+    "django.contrib.messages.context_processors.messages",
+    "context_processors.context_settings",
 )
 
 LOGGING = {
