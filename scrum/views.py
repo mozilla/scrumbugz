@@ -1,6 +1,11 @@
 from operator import itemgetter
+
+from django import http
+from django.conf import settings
 from django.contrib.auth.decorators import permission_required
 from django.shortcuts import get_object_or_404, redirect
+from django.template import loader
+from django.template.context import Context
 from django.views.generic import CreateView, UpdateView, TemplateView
 
 from scrum.forms import SprintForm, ProjectForm
@@ -105,3 +110,12 @@ class SprintView(ProjectsMixin, ProtectedUpdateView):
         context['bugs_data'] = self.process_bug_data()
         context['bugs_data_json'] = json.dumps(context['bugs_data'])
         return context
+
+
+def server_error(request):
+    context = {
+        'STATIC_URL': getattr(settings, 'STATIC_URL', '/static/'),
+        'ENABLE_GA': getattr(settings, 'ENABLE_GA', False),
+    }
+    t = loader.get_template('500.html')
+    return http.HttpResponseServerError(t.render(Context(context)))
