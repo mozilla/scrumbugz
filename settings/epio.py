@@ -2,6 +2,9 @@ from __future__ import absolute_import
 from .base import *
 
 from bundle_config import config
+
+ENFORCE_HOSTNAME = 'scrumbu.gs'
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
@@ -24,4 +27,5 @@ CACHES = {
         'VERSION': config['core']['version'],
     },
 }
+
 MEDIA_ROOT = config['core']['data_directory']
