@@ -61,6 +61,7 @@
         <thead>
           <tr>
             <th>ID</th>
+            <th>Priority</th>
             <th>Summary</th>
             <th>Assigned</th>
             <th>User</th>
@@ -73,6 +74,7 @@
           {% for bug in bugs %}
             <tr data-bugid="{{ bug.id }}" id="bug{{ bug.id }}" class="bug-{{ bug.basic_status }}">
               <td><a href="https://bugzilla.mozilla.org/show_bug.cgi?id={{ bug.id }}">{{ bug.id }}</a></td>
+              <td>{{ bug.priority }}</td>
               <td>{{ bug.summary }}</td>
               <td class="ttip" title="{{ bug.assigned_to.real_name }}">{{ bug.assigned_to.name }}</td>
               <td>{{ bug.user }}</td>
