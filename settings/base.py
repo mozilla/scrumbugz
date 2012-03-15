@@ -1,8 +1,6 @@
 from __future__ import absolute_import
 from unipath import FSPath as Path
 
-from .sekrit import *
-
 
 PROJECT_DIR = Path(__file__).absolute().ancestor(2)
 

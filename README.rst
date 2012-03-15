@@ -36,18 +36,15 @@ That sets up all the dependencies required.
 Configure
 ---------
 
-You need to create a sekrit module that holds secret settings. First, copy
-the template over::
-
-    cp settings/sekrit.py.tmpl settings/sekrit.py
-
-and edit it.
-
 Then you should create a local file. First, copy the template over::
 
-    cp settings/local.py.tmpl settings/local.py
+    cp settings/local.py-dist settings/local.py
 
 and edit it.
+
+You'll notice a `sekrit.py-dist` in there as well. This is for deployment
+to ep.io. Unless you plan on deploying your own instance there, you won't
+need this. It is only imported by settings/epio.py.
 
 
 Activate virtual environment
@@ -68,31 +65,32 @@ Run::
 This also creates a superuser which you can use to log into the admin.
 
 
-Set up Redis
+Set up Cache
 ------------
 
-Set up a Redis instance based on your Redis settings.
+By default the settings/local.py file is setup for a local memory cache.
+This should be fine for local testing and you shouldn't need to do anything
+else. If you'd like to more closely mimic production, you can install
+`memcached` or `Redis` and configure the `CACHES` setting in `settings/local.py`
+accordingly.
 
 
-Collect static stuff and run
-----------------------------
-
-Then collect static stuff::
-
-    ./manage.py collectstatic
-
-Then::
+Run it
+------
 
     ./manage.py runserver
+
+Static media will be handled automatically by Django 1.3's built-in
+handler.
 
 
 Setting up a project
 ====================
 
-In the admin, click on "projects" and add a project.
-
-Each project needs at least one sprint. So in the admin, click on "sprints" and add
-a sprint.
+Pull up the home page which should now be at http://localhost:8000/. Click
+the `Admin` link on the right of the nav bar. Login with the admin account
+you setup in during `syncdb`, then go back to the home page. Once you're
+logged in you'll see buttons for creating and editing projects and sprints.
 
 The bugzilla url for a sprint should be the url for a query defining the sprint. For
 example, SUMO uses the target to define sprints, so the query url for our 2012.6 sprint

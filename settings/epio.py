@@ -3,6 +3,11 @@ from .base import *
 
 from bundle_config import config
 
+try:
+    from .sekrit import *
+except ImportError:
+    pass
+
 ENFORCE_HOSTNAME = 'scrumbu.gs'
 ENABLE_GA = True
 
