@@ -25,6 +25,7 @@ BZ_FIELDS = (
     'history',
     'whiteboard',
     'assigned_to',
+    'priority',
 )
 BZAPI = slumber.API(settings.BZ_API_URL)
 slug_re = re.compile(r'^[-.\w]+$')
