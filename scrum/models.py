@@ -31,8 +31,10 @@ BZ_FIELDS = (
 )
 BZAPI = slumber.API(settings.BZ_API_URL)
 slug_re = re.compile(r'^[-.\w]+$')
-validate_slug = RegexValidator(slug_re, "Enter a valid 'slug' consisting of letters, numbers, underscores, periods or hyphens.", 'invalid')
-CACHE_BUGS_FOR = getattr(settings, 'CACHE_BUGS_FOR', 2) * 60 * 60 # hours
+validate_slug = RegexValidator(slug_re, "Enter a valid 'slug' consisting of "
+                               "letters, numbers, underscores, periods or "
+                               "hyphens.", 'invalid')
+CACHE_BUGS_FOR = getattr(settings, 'CACHE_BUGS_FOR', 2) * 60 * 60  # hours
 
 
 class Project(models.Model):
@@ -106,7 +108,8 @@ class Sprint(models.Model):
         now = datetime.utcnow().date()
         sdate = self.start_date
         edate = self.end_date if self.end_date < now else now
-        if sdate > now: return []
+        if sdate > now:
+            return []
         tseries = []
         for cdate in date_range(sdate, edate):
             cpoints = 0
@@ -116,7 +119,8 @@ class Sprint(models.Model):
         return tseries
 
     def get_burndown_axis(self):
-        """Return a list of epoch dates between sprint start and end inclusive"""
+        """Return a list of epoch dates between sprint start and end
+        inclusive"""
         return [date_to_js(cdate) for cdate in
                 date_range(self.start_date, self.end_date)]
 

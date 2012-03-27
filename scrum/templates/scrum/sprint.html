@@ -81,7 +81,7 @@
               <td>{{ bug.component }}</td>
               <td>{{ bug.points }}</td>
               <td>{{ bug.status }}</td>
-              <td><a class="btn" href="{{ BZ_FILE_URL }}blocked=720068&product={{ bug.product }}&component={{ bug.bz_component }}"><i class="icon-ban-circle" alt="Add Blocking Bug"></i></a></td>
+              <td><a class="btn" href="{{ BZ_FILE_URL }}blocked={{ bug.id }}&product={{ bug.product }}&component={{ bug.bz_component }}"><i class="icon-ban-circle" alt="Add Blocking Bug"></i></a></td>
             </tr>
           {% endfor %}
         </tbody>
