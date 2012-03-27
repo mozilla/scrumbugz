@@ -26,6 +26,8 @@ BZ_FIELDS = (
     'whiteboard',
     'assigned_to',
     'priority',
+    'product',
+    'component',
 )
 BZAPI = slumber.API(settings.BZ_API_URL)
 slug_re = re.compile(r'^[-.\w]+$')
@@ -150,11 +152,20 @@ class Sprint(models.Model):
                 self.refresh_bugs()
         return super(Sprint, self).save(force_insert, force_update, using)
 
+    def get_products(self):
+        return self._get_bz_args().getlist('product')
+
+    def get_components(self):
+        return self._get_bz_args().getlist('component')
+
 
 class Bug(object):
     def __init__(self, data):
         for key, value in data.iteritems():
-            setattr(self, key, value)
+            if key == 'component':
+                setattr(self, 'bz_component', value)
+            else:
+                setattr(self, key, value)
         for key, value in self.scrum_data.iteritems():
             setattr(self, key, value)
 

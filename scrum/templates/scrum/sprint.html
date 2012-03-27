@@ -73,7 +73,7 @@
         <tbody>
           {% for bug in bugs %}
             <tr data-bugid="{{ bug.id }}" id="bug{{ bug.id }}" class="bug-{{ bug.basic_status }}">
-              <td><a href="https://bugzilla.mozilla.org/show_bug.cgi?id={{ bug.id }}">{{ bug.id }}</a></td>
+                <td><a href="{{ BZ_SHOW_URL }}id={{ bug.id }}">{{ bug.id }}</a></td>
               <td>{{ bug.priority }}</td>
               <td>{{ bug.summary }}</td>
               <td class="ttip" title="{{ bug.assigned_to.real_name }}">{{ bug.assigned_to.name }}</td>
@@ -81,6 +81,7 @@
               <td>{{ bug.component }}</td>
               <td>{{ bug.points }}</td>
               <td>{{ bug.status }}</td>
+              <td><a class="btn" href="{{ BZ_FILE_URL }}blocked=720068&product={{ bug.product }}&component={{ bug.bz_component }}"><i class="icon-ban-circle" alt="Add Blocking Bug"></i></a></td>
             </tr>
           {% endfor %}
         </tbody>
@@ -89,7 +90,7 @@
   </div>
 
   <div class="row">
-    <div class="span6">
+    <div class="span3">
       <h4>Legend</h4>
       <table class="table-condensed">
         <tbody>
@@ -106,6 +107,13 @@
       </table>
     </div>
     <div class="span6">
+      <div class="btn-group">
+        {% for product in sprint.get_products %}
+        <a class="btn" href="{{ BZ_FILE_URL }}product={{ product }}"><i class="icon-plus-sign"></i>{{ product }} bug</a>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="span3">
       <a class="btn pull-right"
          href="{{ sprint.bz_url }}">
         <i class="icon-share"></i>
