@@ -17,7 +17,6 @@ class TestSprint(TestCase):
     def setUp(self):
         self.s = Sprint.objects.get(slug='2.2')
 
-
     def test_get_products(self):
         products = self.s.get_products()
         eq_(2, len(products))
