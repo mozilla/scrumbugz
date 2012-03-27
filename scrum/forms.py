@@ -47,4 +47,6 @@ class SprintForm(forms.ModelForm):
         url = self.cleaned_data['bz_url']
         if not url.startswith('https://bugzilla.mozilla.org/buglist.cgi?'):
             raise forms.ValidationError('Must be a valid bugzilla.mozilla.org URL.')
+        if 'cmdtype' in url or 'namedcmd' in url:
+            raise forms.ValidationError('Cannot use named commands or saved searches.')
         return url
