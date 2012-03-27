@@ -188,7 +188,7 @@
 
     window.init_sprint = function(){
         $tooltip = $('<div id="tooltip"></div>').appendTo("body");
-        $('#bugs-table').tablesorter({sortList: [[6,0]]});
+        $('#bugs-table').tablesorter({sortList: [[7,0]]});
         $('td.ttip').tooltip();
     };
 

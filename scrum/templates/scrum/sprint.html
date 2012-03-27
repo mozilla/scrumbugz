@@ -81,7 +81,7 @@
               <td>{{ bug.component }}</td>
               <td>{{ bug.points }}</td>
               <td>{{ bug.status }}</td>
-              <td><a class="btn" href="{{ BZ_FILE_URL }}blocked={{ bug.id }}&product={{ bug.product }}&component={{ bug.bz_component }}"><i class="icon-ban-circle" alt="Add Blocking Bug"></i></a></td>
+              <td><a class="btn" href="{{ BZ_FILE_URL }}blocked={{ bug.id }}&product={{ bug.product }}&component={{ bug.bz_component }}" title="Add Blocking Bug"><i class="icon-ban-circle"></i></a></td>
             </tr>
           {% endfor %}
         </tbody>
@@ -109,7 +109,7 @@
     <div class="span6">
       <div class="btn-group">
         {% for product in sprint.get_products %}
-        <a class="btn" href="{{ BZ_FILE_URL }}product={{ product }}"><i class="icon-plus-sign"></i>{{ product }} bug</a>
+        <a class="btn" href="{{ BZ_FILE_URL }}product={{ product }}"><i class="icon-plus-sign"></i> {{ product }} bug</a>
         {% endfor %}
       </div>
     </div>
