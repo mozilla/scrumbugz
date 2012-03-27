@@ -26,6 +26,7 @@ GOOD_BZ_URL = "https://bugzilla.mozilla.org/buglist.cgi?list_id=2692959;"
 "product=Mozilla%20Developer%20Network;target_milestone=---;"
 "target_milestone=2.7;known_name=mdn_20120410"
 
+
 class TestSprint(TestCase):
     fixtures = ['test_data.json']
 

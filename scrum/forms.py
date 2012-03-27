@@ -5,6 +5,7 @@ from scrum.models import Sprint, Project
 
 class ProjectForm(forms.ModelForm):
     template_title = 'Project'
+
     class Meta:
         model = Project
 
@@ -46,7 +47,9 @@ class SprintForm(forms.ModelForm):
     def clean_bz_url(self):
         url = self.cleaned_data['bz_url']
         if not url.startswith('https://bugzilla.mozilla.org/buglist.cgi?'):
-            raise forms.ValidationError('Must be a valid bugzilla.mozilla.org URL.')
+            raise forms.ValidationError('Must be a valid bugzilla.mozilla.org '
+                                        'URL.')
         if 'cmdtype' in url or 'namedcmd' in url:
-            raise forms.ValidationError('Cannot use named commands or saved searches.')
+            raise forms.ValidationError('Cannot use named commands or saved '
+                                        'searches.')
         return url
