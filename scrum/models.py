@@ -96,9 +96,13 @@ class Sprint(models.Model):
         if not hasattr(self, '_bugs'):
             data = cache.get(self._bugs_cache_key)
             if data is None:
-                data = BZAPI.bug.get(**self._get_bz_args())
-                data['date_received'] = datetime.now()
-                cache.set(self._bugs_cache_key, data, CACHE_BUGS_FOR)
+                try:
+                    data = BZAPI.bug.get(**self._get_bz_args())
+                    data['date_received'] = datetime.now()
+                    cache.set(self._bugs_cache_key, data, CACHE_BUGS_FOR)
+                except:
+                    raise Exception("Couldn't retrieve bugs from "
+                                           "Bugzilla")
             self._bugs = [Bug(b) for b in data['bugs']]
             self.date_cached = data.get('date_received', datetime.now())
         return self._bugs
