@@ -1,14 +1,44 @@
 (function(){
     "use strict";
 
-    window.Burndown = function(selector, data, ticks) {
+    window.Burndown = function(selector, bugs_data) {
         var self = this;
         self.$element = $(selector);
-        self.data = data;
-        self.ticks = ticks;
-        self.tip_cache = {};
-
         self.$element.data('flot', self);
+        self.ticks = bugs_data.burndown_axis;
+        self.tip_cache = {};
+        self.base_options = {
+            xaxis: {
+                mode: 'time',
+                ticks: self.ticks,
+                min: self.ticks[0],
+                max: self.ticks[self.ticks.length-1]
+            },
+            yaxis: {
+                min: 0,
+                tickSize: 2,
+                tickFormatter: parseInt
+            },
+            grid: {
+                hoverable: true,
+                clickable: true,
+                markings: self.weekend_areas
+            },
+            lines: {
+                show: true,
+                fill: 0.4
+            },
+            points: {
+                show: true,
+                fill: true,
+                radius: 4
+            }
+        };
+        self.actual_plot = {data: bugs_data.burndown, color: '#049cdb'}
+        self.ideal_plot = {data: [
+            [bugs_data.burndown_axis[0], bugs_data['total_points']],
+            [bugs_data.burndown_axis[bugs_data.burndown_axis.length-1], 0]
+        ], lines: {fill: false}, points: {show: false}, color: '#0f0'};
 
         self.resize = function(){
             self.$element.css('height', function(){
@@ -60,33 +90,7 @@
 
         self.resize();
 
-        $.plot(self.$element, [{data: self.data, color: '#049cdb'}], {
-            xaxis: {
-                mode: 'time',
-                ticks: self.ticks,
-                min: self.ticks[0],
-                max: self.ticks[self.ticks.length-1]
-            },
-            yaxis: {
-                min: 0,
-                tickSize: 2,
-                tickFormatter: parseInt
-            },
-            grid: {
-                hoverable: true,
-                clickable: true,
-                markings: self.weekend_areas
-            },
-            lines: {
-                show: true,
-                fill: 0.4
-            },
-            points: {
-                show: true,
-                fill: true,
-                radius: 4
-            }
-        });
+        $.plot(self.$element, [self.actual_plot, self.ideal_plot], self.base_options);
 
         self.$element.bind({
             plothover: self.plothover,

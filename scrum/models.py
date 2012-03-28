@@ -189,7 +189,7 @@ class Bug(object):
         return self.assigned_to['name'] != 'nobody'
 
     def points_for_date(self, date):
-        cpoints = 0
+        cpoints = self.points
         for h in self.points_history:
             if date < h['date']:
                 return cpoints
