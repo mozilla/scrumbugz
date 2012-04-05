@@ -151,7 +151,7 @@
 
       var BUGS_DATA = {{ bugs_data_json|safe }};
       init_sprint();
-      new Burndown('#burndown', BUGS_DATA.burndown, BUGS_DATA.burndown_axis);
+      new Burndown('#burndown', BUGS_DATA);
       new PieFlot('#component-pie', BUGS_DATA.components);
       new PieFlot('#user-pie', BUGS_DATA.users);
       new PieFlot('#status-pie', BUGS_DATA.basic_status, {

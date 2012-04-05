@@ -6,12 +6,13 @@ Replace this with more appropriate tests for your application.
 """
 from datetime import date
 
+from mock import patch
 from nose.tools import eq_, ok_
 
 from django.test import TestCase
 
 from forms import SprintForm
-from models import Sprint
+from models import Sprint, Bug
 
 
 GOOD_BZ_URL = "https://bugzilla.mozilla.org/buglist.cgi?list_id=2692959;"
@@ -25,6 +26,20 @@ GOOD_BZ_URL = "https://bugzilla.mozilla.org/buglist.cgi?list_id=2692959;"
 "component=Localization;component=Upload%20Requests;component=Website;"
 "product=Mozilla%20Developer%20Network;target_milestone=---;"
 "target_milestone=2.7;known_name=mdn_20120410"
+
+
+class TestBug(TestCase):
+    fixtures = ['test_data.json']
+
+    def setUp(self):
+        self.s = Sprint.objects.get(slug='2.2')
+
+    @patch.object(Bug, 'points_history')
+    def test_points_for_date_default(self, mock_bug):
+        """ should default to points in whiteboard """
+        bugs = self.s.get_bugs()
+        b = bugs[0]
+        eq_(b.points, b.points_for_date(date.today()))
 
 
 class TestSprint(TestCase):
