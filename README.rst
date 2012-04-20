@@ -23,6 +23,21 @@ IRC:
 Setup for development
 =====================
 
+Requirements
+------------
+
+* Bugzilla 4
+* a recent version of the Bugzilla API
+
+Currently, scrumbugz uses Bugzilla search urls to define a sprint. It converts
+the parameters in the search url to a form which it then uses with the Bugzilla
+API.
+
+Thus, in order to use scrumbugz, you need a Bugzilla instance that's running
+a recent version of Bugzilla and the Bugzilla API. We think the minimum 
+version is Bugzilla 4, but haven't verified this.
+
+
 Get dependencies
 ----------------
 
