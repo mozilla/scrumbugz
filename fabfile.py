@@ -1,17 +1,14 @@
 from fabric.api import local, env
 
-env['epioapp'] = 'scrumbugz'
+def heroku(cmd):
+    local("heroku run '{0}'".format(cmd))
 
-def epio(commandstring):
-    local("epio {0} -a {1}".format(
-        commandstring,
-        env['epioapp']))
+def heroku_django(cmd):
+    heroku("python manage.py {0}".format(cmd))
 
 def deploy():
-    """ An example deploy workflow """
-    local("./manage.py collectstatic")
-    epio('upload')
-    epio('django syncdb')
-    #epio('django migrate')
-    epio('django epio_flush_cache')
+    local('git push heroku master')
+    heroku_django('collectstatic --noinput')
+    heroku_django('syncdb')
+    #heroku_django('migrate')
 

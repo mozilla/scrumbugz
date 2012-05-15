@@ -7,5 +7,11 @@ django-floppyforms
 python-dateutil==1.5
 slumber
 simplejson
-nose==1.1.2
-mock==0.8.0
+django-storages==1.1.4
+boto==2.3.0
+gunicorn==0.13.4
+gevent==0.13.7
+greenlet==0.3.4
+django-pylibmc-sasl==0.2.4
+pylibmc==1.2.3
+psycopg2==2.4.5
