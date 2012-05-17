@@ -43,7 +43,7 @@ Get dependencies
 
 Run::
 
-    pip install -E ./venv/ -r requirements.txt
+    pip install -E ./venv/ -r requirements-dev.txt
 
 That sets up all the dependencies required.
 
@@ -56,11 +56,6 @@ Then you should create a local file. First, copy the template over::
     cp settings/local.py-dist settings/local.py
 
 and edit it.
-
-You'll notice a `sekrit.py-dist` in there as well. This is for deployment
-to ep.io. Unless you plan on deploying your own instance there, you won't
-need this. It is only imported by settings/epio.py.
-
 
 Activate virtual environment
 ----------------------------
