@@ -31,3 +31,7 @@ CACHES = {
 SECRET_KEY = os.environ['SECRET_KEY']
 STATIC_URL = '//s3.amazonaws.com/%s/' % AWS_STORAGE_BUCKET_NAME
 ADMIN_MEDIA_PREFIX = STATIC_URL + 'admin/'
+
+# SENTRY
+SENTRY_DSN = os.environ['SENTRY_DSN']
+INSTALLED_APPS += ('raven.contrib.django',)
