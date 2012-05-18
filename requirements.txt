@@ -6,7 +6,7 @@ django-bootstrap-form
 django-floppyforms
 python-dateutil==1.5
 slumber
-simplejson=2.5.2
+simplejson==2.5.2
 django-storages==1.1.4
 boto==2.3.0
 gunicorn==0.13.4
