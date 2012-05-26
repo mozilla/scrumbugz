@@ -9,7 +9,7 @@ from django.template.context import Context
 from django.views.generic import CreateView, UpdateView, TemplateView
 
 from scrum.forms import SprintForm, ProjectForm
-from scrum.models import Project, Sprint, parse_bz_url
+from scrum.models import BZError, Project, Sprint, parse_bz_url
 
 try:
     import simplejson as json
@@ -106,9 +106,13 @@ class SprintView(ProjectsMixin, ProtectedUpdateView):
         if self.request.META.get('HTTP_CACHE_CONTROL') == 'no-cache':
             self.object.refresh_bugs()
         context['sprint'] = self.object
-        context['bugs'] = self.object.get_bugs()
-        context['bugs_data'] = self.process_bug_data()
-        context['bugs_data_json'] = json.dumps(context['bugs_data'])
+        try:
+            context['bugs'] = self.object.get_bugs()
+            context['bugs_data'] = self.process_bug_data()
+            context['bugs_data_json'] = json.dumps(context['bugs_data'])
+            context['bzerror'] = False
+        except BZError:
+            context['bzerror'] = True
         return context
 
 

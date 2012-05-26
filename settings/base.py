@@ -1,7 +1,5 @@
-from __future__ import absolute_import
-
 import os
-from unipath import FSPath as Path
+from unipath import Path
 
 
 PROJECT_DIR = Path(__file__).absolute().ancestor(2)
@@ -49,11 +47,6 @@ STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 #    'django.contrib.staticfiles.finders.DefaultStorageFinder',
 )
-STATICFILES_STORAGE = 'storages.backends.s3boto.S3BotoStorage'
-DEFAULT_FILE_STORAGE = STATICFILES_STORAGE
-AWS_ACCESS_KEY_ID = os.environ['AWS_ACCESS_KEY_ID']
-AWS_SECRET_ACCESS_KEY = os.environ['AWS_SECRET_ACCESS_KEY']
-AWS_STORAGE_BUCKET_NAME = 'scrumbugz-static'
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
@@ -87,7 +80,6 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'bootstrapform',
     'floppyforms',
-    'storages',
     'scrum',
 )
 

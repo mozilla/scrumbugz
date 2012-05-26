@@ -37,6 +37,10 @@ validate_slug = RegexValidator(slug_re, "Enter a valid 'slug' consisting of "
 CACHE_BUGS_FOR = getattr(settings, 'CACHE_BUGS_FOR', 2) * 60 * 60  # hours
 
 
+class BZError(IOError):
+    """Bugzilla connection error"""
+
+
 class Project(models.Model):
     name = models.CharField(max_length=200)
     slug = models.SlugField(unique=True)
@@ -101,8 +105,8 @@ class Sprint(models.Model):
                     data['date_received'] = datetime.now()
                     cache.set(self._bugs_cache_key, data, CACHE_BUGS_FOR)
                 except:
-                    raise Exception("Couldn't retrieve bugs from "
-                                           "Bugzilla")
+                    raise BZError("Couldn't retrieve bugs from "
+                                  "Bugzilla")
             self._bugs = [Bug(b) for b in data['bugs']]
             self.date_cached = data.get('date_received', datetime.now())
         return self._bugs

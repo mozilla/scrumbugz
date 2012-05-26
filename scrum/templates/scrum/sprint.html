@@ -3,6 +3,18 @@
 {% block title %}{{ block.super }} / {{ sprint.name }}{% endblock %}
 
 {% block content %}
+  {% if bzerror %}
+  <div class="row">
+    <div class="span12">
+      <h1>
+        <a href="{{ project.get_absolute_url }}">{{ project.name }}</a>
+        / {{ sprint.name }}
+      </h1>
+      <h2>Could not contact Bugzilla</h2>
+      <p>Maybe Bugzilla is down, or the server is having issues. Either way, it's time for a break.</p>
+    </div>
+  </div>
+  {% else %}
   <div class="row">
     <div class="span12">
       {% if perms.scrum.change_sprint %}
@@ -132,6 +144,7 @@
 
   {% if perms.scrum.change_sprint %}
     {% include "scrum/modal_form.html" %}
+  {% endif %}
   {% endif %}
 {% endblock %}
 
