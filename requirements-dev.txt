@@ -1,5 +1,5 @@
--r requirements.txt
+# Dev and testing requirements.
+-r requirements-base.txt
 
-fabric
 nose==1.1.2
 mock==0.8.0
