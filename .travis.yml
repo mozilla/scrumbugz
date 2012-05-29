@@ -1,0 +1,8 @@
+language: python
+script: python manage.py test
+python:
+  - "2.7"
+install:
+  - pip install -r requirements-dev.txt --use-mirrors
+notifications:
+  irc: "irc.mozilla.org#scrum"
