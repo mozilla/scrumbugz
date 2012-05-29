@@ -6,6 +6,8 @@ This is the software that runs https://scrumbu.gs/ .
 
 This allows you to manage sprints backed by Bugzilla data.
 
+.. image:: https://secure.travis-ci.org/pmclanahan/scrumbugz.png
+
 
 Project details
 ===============
