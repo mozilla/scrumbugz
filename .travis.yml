@@ -2,6 +2,8 @@ language: python
 script: python manage.py test
 python:
   - "2.7"
+env:
+  - TRAVIS_CI=true
 install:
   - pip install -r requirements-dev.txt --use-mirrors
 notifications:
