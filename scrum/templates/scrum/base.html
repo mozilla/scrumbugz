@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ block.super }} / {{ project.name|default:"Projects" }}{% endblock %}
+{% block title %}{{ project.name|default:"Projects" }} / {{ block.super }}{% endblock %}
 
 {% block content %}
   <div class="row">
