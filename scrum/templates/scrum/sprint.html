@@ -1,6 +1,6 @@
 {% extends "scrum/base.html" %}
 
-{% block title %}{{ block.super }} / {{ sprint.name }}{% endblock %}
+{% block title %}{{ sprint.name }} / {{ block.super }}{% endblock %}
 
 {% block content %}
   {% if bzerror %}
