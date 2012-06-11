@@ -18,6 +18,8 @@ BZ_SHOW_URL = 'https://bugzilla.mozilla.org/show_bug.cgi?'
 BZ_FILE_URL = 'https://bugzilla.mozilla.org/enter_bug.cgi?'
 CACHE_BUGS_FOR = 2  # hours
 
+SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
+
 CONTEXT_SETTINGS = (
     'CACHE_BUGS_FOR',
     'DEBUG',
@@ -40,7 +42,6 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = (
     str(PROJECT_DIR.child('static')),
 )
-ADMIN_MEDIA_PREFIX = STATIC_URL + 'admin/'
 
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
