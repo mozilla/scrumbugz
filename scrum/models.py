@@ -5,7 +5,6 @@ from collections import defaultdict
 from datetime import datetime
 
 from django.conf import settings
-from django.contrib import admin
 from django.core.cache import cache
 from django.core.validators import RegexValidator
 from django.db import models
@@ -244,7 +243,3 @@ class Bug(object):
                                 })
             self._phistory = phistory
         return self._phistory
-
-
-admin.site.register(Project)
-admin.site.register(Sprint)

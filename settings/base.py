@@ -19,6 +19,7 @@ BZ_FILE_URL = 'https://bugzilla.mozilla.org/enter_bug.cgi?'
 CACHE_BUGS_FOR = 2  # hours
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
+MESSAGE_STORAGE= 'django.contrib.messages.storage.fallback.FallbackStorage'
 
 CONTEXT_SETTINGS = (
     'CACHE_BUGS_FOR',
