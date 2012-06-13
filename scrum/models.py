@@ -43,7 +43,7 @@ class BZError(IOError):
 class Project(models.Model):
     name = models.CharField(max_length=200)
     slug = models.CharField(max_length=50, validators=[validate_slug],
-                            db_index=True)
+                            db_index=True, unique=True)
 
     def __unicode__(self):
         return self.name
@@ -61,7 +61,6 @@ class Sprint(models.Model):
     start_date = models.DateField()
     end_date = models.DateField()
     created_date = models.DateTimeField(editable=False, default=datetime.now)
-    bz_url = models.URLField(verbose_name='Bugzilla URL', max_length=2048)
 
     date_cached = None
 
