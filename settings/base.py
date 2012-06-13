@@ -83,6 +83,7 @@ INSTALLED_APPS = (
     'bootstrapform',
     'floppyforms',
     'scrum',
+    'south',
 )
 
 TEMPLATE_CONTEXT_PROCESSORS = (
