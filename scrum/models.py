@@ -42,7 +42,8 @@ class BZError(IOError):
 
 class Project(models.Model):
     name = models.CharField(max_length=200)
-    slug = models.SlugField(unique=True)
+    slug = models.CharField(max_length=50, validators=[validate_slug],
+                            db_index=True)
 
     def __unicode__(self):
         return self.name
@@ -77,39 +78,6 @@ class Sprint(models.Model):
         return 'scrum_sprint', (), {'pslug': self.project.slug,
                                     'sslug': self.slug}
 
-    def _get_bz_args(self):
-        """Return a dict of the arguments from the bz_url"""
-        args = parse_bz_url(self.bz_url)
-        args['include_fields'] = ','.join(BZ_FIELDS)
-        return args
-
-    def refresh_bugs(self):
-        try:
-            delattr(self, '_bugs')
-        except AttributeError:
-            pass
-        cache.delete(self._bugs_cache_key)
-        return self.get_bugs()
-
-    @property
-    def _bugs_cache_key(self):
-        return 'sprint:{0}:bugs'.format(self.pk)
-
-    def get_bugs(self):
-        if not hasattr(self, '_bugs'):
-            data = cache.get(self._bugs_cache_key)
-            if data is None:
-                try:
-                    data = BZAPI.bug.get(**self._get_bz_args())
-                    data['date_received'] = datetime.now()
-                    cache.set(self._bugs_cache_key, data, CACHE_BUGS_FOR)
-                except:
-                    raise BZError("Couldn't retrieve bugs from "
-                                  "Bugzilla")
-            self._bugs = [Bug(b) for b in data['bugs']]
-            self.date_cached = data.get('date_received', datetime.now())
-        return self._bugs
-
     def get_burndown(self):
         """Return a list of total point values per day of sprint"""
         now = datetime.utcnow().date()
@@ -130,6 +98,25 @@ class Sprint(models.Model):
         inclusive"""
         return [date_to_js(cdate) for cdate in
                 date_range(self.start_date, self.end_date)]
+
+    def get_bugs(self):
+        """Get a unique set of bugs from all bz urls"""
+        return self._get_url_items('bugs')
+
+    def get_components(self):
+        """Get a unique set of bugs from all bz urls"""
+        return self._get_url_items('components')
+
+    def get_products(self):
+        """Get a unique set of bugs from all bz urls"""
+        return self._get_url_items('products')
+
+    def _get_url_items(self, item_name):
+        """Get a unique set of items from all bz urls"""
+        items = set()
+        for url in self.urls.all():
+            items |= getattr(url, 'get_' + item_name)()
+        return list(items)
 
     def get_bugs_data(self):
         bugs = self.get_bugs()
@@ -163,11 +150,54 @@ class Sprint(models.Model):
                 self.refresh_bugs()
         return super(Sprint, self).save(force_insert, force_update, using)
 
+
+class BugzillaURL(models.Model):
+    url = models.URLField(verbose_name='Bugzilla URL', max_length=2048)
+    project = models.ForeignKey(Project, null=True, blank=True,
+                                related_name='urls')
+    sprint = models.ForeignKey(Sprint, null=True, blank=True,
+                               related_name='urls')
+
+    def _get_bz_args(self):
+        """Return a dict of the arguments from the bz_url"""
+        args = parse_bz_url(self.url)
+        args['include_fields'] = ','.join(BZ_FIELDS)
+        return args
+
+    def refresh_bugs(self):
+        try:
+            delattr(self, '_bugs')
+        except AttributeError:
+            pass
+        cache.delete(self._bugs_cache_key)
+        return self.get_bugs()
+
+    @property
+    def _bugs_cache_key(self):
+        return 'url:{0}:bugs'.format(self.pk)
+
+    def get_bugs(self):
+        if not hasattr(self, '_bugs'):
+            data = cache.get(self._bugs_cache_key)
+            if data is None:
+                try:
+                    data = BZAPI.bug.get(**self._get_bz_args())
+                    data['date_received'] = datetime.now()
+                    cache.set(self._bugs_cache_key, data, CACHE_BUGS_FOR)
+                except:
+                    raise BZError("Couldn't retrieve bugs from "
+                                  "Bugzilla")
+            self._bugs = set(Bug(b) for b in data['bugs'])
+            self.date_cached = data.get('date_received', datetime.now())
+        return self._bugs
+
     def get_products(self):
-        return self._get_bz_args().getlist('product')
+        """Return a set of the products in the search url"""
+        return set(self._get_bz_args().getlist('product'))
 
     def get_components(self):
-        return self._get_bz_args().getlist('component')
+        """Return a set of the components in the search url"""
+        return set(self._get_bz_args().getlist('component'))
 
 
 class Bug(object):
@@ -184,6 +214,12 @@ class Bug(object):
         if name in BZ_FIELDS:
             return ''
         raise AttributeError(name)
+
+    def __eq__(self, other):
+        return self.id == other.id
+
+    def __hash__(self):
+        return int(self.id)
 
     def is_closed(self):
         return is_closed(self.status)

@@ -3,13 +3,6 @@ import floppyforms as forms
 from scrum.models import Sprint, Project
 
 
-class ProjectForm(forms.ModelForm):
-    template_title = 'Project'
-
-    class Meta:
-        model = Project
-
-
 date5 = forms.DateInput(attrs={
     'placeholder': 'YYYY-MM-DD',
 })
@@ -20,6 +13,20 @@ class SlugInput(forms.TextInput):
     def get_context_data(self):
         self.attrs['pattern'] = "[-.\w]+"
         return super(SlugInput, self).get_context_data()
+
+
+class ProjectForm(forms.ModelForm):
+    template_title = 'Project'
+
+    class Meta:
+        model = Project
+        widgets = {
+            'slug': SlugInput,
+        }
+        fields = (
+            'name',
+            'slug',
+        )
 
 
 class SprintForm(forms.ModelForm):

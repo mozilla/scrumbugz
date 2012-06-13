@@ -3,9 +3,8 @@ import sys, os
 
 sys.path.append(os.path.dirname(__file__))
 
-if "DJANGO_SETTINGS_MODULE" not in os.environ:
-    os.environ['DJANGO_SETTINGS_MODULE'] = "settings"
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'settings')
 
-import django.core.handlers.wsgi
+from django.core.wsgi import get_wsgi_application
 
-application = django.core.handlers.wsgi.WSGIHandler()
+application = get_wsgi_application()
