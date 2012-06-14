@@ -33,7 +33,7 @@ def parse_whiteboard(wb):
                 cast = int if k == 'p' else str
                 try:
                     wb_dict[TAG_2_ATTR[k]] = cast(v)
-                except KeyError:
+                except (KeyError, ValueError):
                     continue
     return wb_dict
 
