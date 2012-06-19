@@ -24,7 +24,7 @@ def parse_whiteboard(wb):
         'points': 0,
         'user': '',
         'component': '',
-        }
+    }
     wb = wb.strip()
     if wb:
         data = dict(i.split('=') for i in wb.split() if '=' in i)

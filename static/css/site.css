@@ -1,3 +1,7 @@
+body {
+    padding-bottom: 40px;
+}
+
 div.row {
     margin-bottom: 10px;
 }
@@ -223,4 +227,12 @@ a.caldisabled {
 #caltoday {
     background-color:#333;
     color:#fff;
+}
+
+.btn.pull-right {
+    margin-left: 4px;
+}
+
+.navbar .navbar-inner {
+    border-radius: 0;
 }

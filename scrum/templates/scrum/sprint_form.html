@@ -1,0 +1,26 @@
+{% extends "scrum/base.html" %}
+{% load bootstrap %}
+
+{% block main_content %}
+  {% if sprint %}
+    <h1>Edit {{ project.name }} / {{ sprint.name }}</h1>
+  {% else %}
+    <h1>Create {{ project.name }} Sprint</h1>
+  {% endif %}
+  <hr>
+  <form action="{{ request.get_full_path }}"
+        class="form-horizontal"
+        method="post">
+    {% csrf_token %}
+    {{ form|bootstrap }}
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">{{ sprint|yesno:"Update,Create" }}</button>
+      <a href="{% if sprint %}{{ sprint.get_absolute_url }}{% else %}{% url scrum_project project.slug %}{% endif %}" class="btn">Cancel</a>
+    </div>
+  </form>
+{% endblock %}
+
+{% block js %}
+  <script type="text/javascript" src="//cdn.jquerytools.org/1.2.6/form/jquery.tools.min.js"></script>
+  <script type="text/javascript" src="{{ STATIC_URL }}js/forms.js"></script>
+{% endblock %}

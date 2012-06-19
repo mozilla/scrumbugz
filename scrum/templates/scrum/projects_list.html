@@ -14,13 +14,4 @@
     {% endif %}
   </div>
 
-  {% if perms.scrum.add_project %}
-    {% include "scrum/modal_form.html" %}
-  {% endif %}
-{% endblock %}
-
-{% block js %}
-  {% if perms.scrum.add_project %}
-    <script type="text/javascript" src="{{ STATIC_URL }}js/modal_form.js"></script>
-  {% endif %}
 {% endblock %}

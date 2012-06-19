@@ -98,9 +98,9 @@ class Sprint(models.Model):
         return [date_to_js(cdate) for cdate in
                 date_range(self.start_date, self.end_date)]
 
-    def get_bugs(self):
+    def get_bugs(self, refresh=False):
         """Get a unique set of bugs from all bz urls"""
-        return self._get_url_items('bugs')
+        return self._get_url_items('bugs', refresh)
 
     def get_components(self):
         """Get a unique set of bugs from all bz urls"""
@@ -110,11 +110,13 @@ class Sprint(models.Model):
         """Get a unique set of bugs from all bz urls"""
         return self._get_url_items('products')
 
-    def _get_url_items(self, item_name):
+    def _get_url_items(self, item_name, *args):
         """Get a unique set of items from all bz urls"""
         items = set()
         for url in self.urls.all():
-            items |= getattr(url, 'get_' + item_name)()
+            items |= getattr(url, 'get_' + item_name)(*args)
+            if url.date_cached:
+                self.date_cached = url.date_cached
         return list(items)
 
     def get_bugs_data(self):
@@ -157,25 +159,34 @@ class BugzillaURL(models.Model):
     sprint = models.ForeignKey(Sprint, null=True, blank=True,
                                related_name='urls')
 
+    date_cached = None
+
+    def set_project_or_sprint(self, obj, obj_type=None):
+        """Figure out if obj is a project or sprint, and set it as such."""
+        if obj_type is None:
+            obj_type = obj._meta.module_name
+        setattr(self, obj_type, obj)
+
     def _get_bz_args(self):
         """Return a dict of the arguments from the bz_url"""
         args = parse_bz_url(self.url)
         args['include_fields'] = ','.join(BZ_FIELDS)
         return args
 
-    def refresh_bugs(self):
+    def _clear_cache(self):
         try:
             delattr(self, '_bugs')
         except AttributeError:
             pass
         cache.delete(self._bugs_cache_key)
-        return self.get_bugs()
 
     @property
     def _bugs_cache_key(self):
         return 'url:{0}:bugs'.format(self.pk)
 
-    def get_bugs(self):
+    def get_bugs(self, refresh=False):
+        if refresh:
+            self._clear_cache()
         if not hasattr(self, '_bugs'):
             data = cache.get(self._bugs_cache_key)
             if data is None:

@@ -1,6 +1,6 @@
 import floppyforms as forms
 
-from scrum.models import Sprint, Project
+from scrum.models import BugzillaURL, Project, Sprint
 
 
 date5 = forms.DateInput(attrs={
@@ -39,20 +39,29 @@ class SprintForm(forms.ModelForm):
             'slug': SlugInput,
             'start_date': date5,
             'end_date': date5,
-            'bz_url': forms.URLInput(attrs={
-                'placeholder': 'https://bugzilla.mozilla.org/...',
-            }),
         }
         fields = (
             'name',
             'slug',
             'start_date',
             'end_date',
-            'bz_url',
         )
 
-    def clean_bz_url(self):
-        url = self.cleaned_data['bz_url']
+
+class BZURLForm(forms.ModelForm):
+    class Meta:
+        model = BugzillaURL
+        widgets = {
+            'url': forms.URLInput(attrs={
+                'placeholder': 'https://bugzilla.mozilla.org/...',
+            }),
+        }
+        fields = (
+            'url',
+        )
+
+    def clean_url(self):
+        url = self.cleaned_data['url']
         if not url.startswith('https://bugzilla.mozilla.org/buglist.cgi?'):
             raise forms.ValidationError('Must be a valid bugzilla.mozilla.org '
                                         'URL.')

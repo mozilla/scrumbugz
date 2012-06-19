@@ -142,17 +142,10 @@
     </div>
   </div>
 
-  {% if perms.scrum.change_sprint %}
-    {% include "scrum/modal_form.html" %}
-  {% endif %}
   {% endif %}
 {% endblock %}
 
 {% block js %}
-  {% if perms.scrum.change_sprint %}
-    <script type="text/javascript" src="//cdn.jquerytools.org/1.2.6/form/jquery.tools.min.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}js/modal_form.js"></script>
-  {% endif %}
   <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.flot.min.js"></script>
   <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.flot.pie.min.js"></script>
   <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.flot.resize.min.js"></script>

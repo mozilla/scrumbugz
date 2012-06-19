@@ -4,9 +4,14 @@
 {% block main_content %}
   {% if perms.scrum.add_sprint %}
     <a class="btn btn-primary pull-right"
-       href="#modal_form"
-       data-toggle="modal">
+       href="{% url scrum_sprint_new project.slug %}">
       <i class="icon-plus icon-white"></i> New Sprint
+    </a>
+  {% endif %}
+  {% if perms.scrum.change_project %}
+    <a class="btn btn-primary pull-right"
+       href="{% url scrum_project_edit project.slug %}">
+      <i class="icon-edit icon-white"></i> Edit
     </a>
   {% endif %}
   <h1>{{ project.name }}</h1>
@@ -18,19 +23,8 @@
         <a href="{{ sprint.get_absolute_url }}">
           {{ sprint.name }}
         </a>
-        &mdash; {{ sprint.start_date }} <i class="icon-chevron-right"></i> {{ sprint.end_date }}
+        &mdash; {{ sprint.start_date }} &rarr; {{ sprint.end_date }}
       </li>
     {% endfor %}
   </ul>
-
-  {% if perms.scrum.add_sprint %}
-    {% include "scrum/modal_form.html" %}
-  {% endif %}
-{% endblock %}
-
-{% block js %}
-  {% if perms.scrum.add_sprint %}
-    <script type="text/javascript" src="//cdn.jquerytools.org/1.2.6/form/jquery.tools.min.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}js/modal_form.js"></script>
-  {% endif %}
 {% endblock %}
