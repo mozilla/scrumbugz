@@ -53,6 +53,12 @@
     {% block breadcrumbs %}{% endblock %}
 
     <div class="container">
+      {% for message in messages %}
+        <div class="span6 offset3 alert alert-{{ message.tags }}">
+          <a class="close" data-dismiss="alert" href="#">×</a>
+          {{ message }}
+        </div>
+      {% endfor %}
 
       {% block content %}{% endblock %}
 

@@ -1,0 +1,5 @@
+{% for url in bzurls %}
+  <li><a href="{{ url.url }}" target="_blank">{{ url.url|truncatechars:30 }}</a></li>
+{% empty %}
+  <li class="empty">No URLs so far</li>
+{% endfor %}

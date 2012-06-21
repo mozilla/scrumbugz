@@ -2,6 +2,7 @@ from operator import itemgetter
 
 from django import http
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect
@@ -52,8 +53,7 @@ class ProtectedDeleteView(DeleteView):
 class ProjectOrSprintMixin(object):
     def get_project_or_sprint(self):
         """Returns a project or sprint object based on the url kwargs."""
-        if (not hasattr(self, 'target_obj') or
-            not hasattr(self, 'target_obj_type')):
+        if not hasattr(self, 'target_obj'):
             pslug = self.kwargs.get('pslug')
             sslug = self.kwargs.get('sslug')
             if sslug:
@@ -175,25 +175,29 @@ class CreateBZUrlView(ProjectOrSprintMixin, ProtectedCreateView):
             return HttpResponseForbidden()
         return super(CreateBZUrlView, self).get(request, *args, **kwargs)
 
-    def post(self, request, *args, **kwargs):
-        if not request.is_ajax():
-            return HttpResponseForbidden()
-        return super(CreateBZUrlView, self).post(request, *args, **kwargs)
-
     def get_context_data(self, **kwargs):
         obj, objtype = self.get_project_or_sprint()
         kwargs['target_obj'] = obj
         kwargs['target_obj_type'] = objtype
+        kwargs['bzurls'] = obj.urls.all()
         return super(CreateBZUrlView, self).get_context_data(**kwargs)
 
     def form_valid(self, form):
         url = form.save(commit=False)
         url.set_project_or_sprint(*self.get_project_or_sprint())
         url.save()
-        return HttpResponse(status=204)
+        if self.request.is_ajax():
+            return HttpResponse(status=204)
+        else:
+            return redirect(self.target_obj)
 
     def form_invalid(self, form):
-        return HttpResponse(json.dumps(form.errors), status=400)
+        if self.request.is_ajax():
+            return HttpResponse(json.dumps(form.errors), status=400)
+        else:
+            target_obj = self.get_project_or_sprint()[0]
+            messages.error(self.request, form['url'].errors[0])
+            return redirect(target_obj.get_edit_url())
 
 
 def server_error(request):

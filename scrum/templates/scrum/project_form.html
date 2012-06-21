@@ -18,6 +18,28 @@
       <a href="{% if project %}{{ project.get_absolute_url }}{% else %}{% url scrum_projects_list %}{% endif %}" class="btn">Cancel</a>
     </div>
   </form>
+  {% if project %}
+    <h2>Edit URLs</h2>
+    <form action="{% url scrum_project_urls project.slug %}"
+          class="form-horizontal"
+          method="post">
+      {% csrf_token %}
+      <ul class="urls">
+        {% include "scrum/bzurl_list.html" %}
+      </ul>
+      <div class="control-group">
+        <label class="control-label" for="id_url">Add a URL</label>
+        <div class="controls">
+          <div class="input-append">
+            <input id="id_url"
+                   name="url"
+                   placeholder="https://bugzilla.mozilla.org/..."
+                   type="text"><button class="btn" type="submit"><i class="icon-plus"></i></button>
+          </div>
+        </div>
+      </div>
+    </form>
+  {% endif %}
 {% endblock %}
 
 {% block js %}

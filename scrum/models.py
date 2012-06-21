@@ -52,6 +52,10 @@ class Project(models.Model):
     def get_absolute_url(self):
         return 'scrum_project', [self.slug]
 
+    @models.permalink
+    def get_edit_url(self):
+        return 'scrum_project_edit', [self.slug]
+
 
 class Sprint(models.Model):
     project = models.ForeignKey(Project, related_name='sprints')
@@ -76,6 +80,11 @@ class Sprint(models.Model):
     def get_absolute_url(self):
         return 'scrum_sprint', (), {'pslug': self.project.slug,
                                     'sslug': self.slug}
+
+    @models.permalink
+    def get_edit_url(self):
+        return 'scrum_sprint_edit', (), {'pslug': self.project.slug,
+                                         'sslug': self.slug}
 
     def get_burndown(self):
         """Return a list of total point values per day of sprint"""
