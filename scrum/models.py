@@ -170,6 +170,9 @@ class BugzillaURL(models.Model):
 
     date_cached = None
 
+    class Meta:
+        ordering = ('id',)
+
     def set_project_or_sprint(self, obj, obj_type=None):
         """Figure out if obj is a project or sprint, and set it as such."""
         if obj_type is None:

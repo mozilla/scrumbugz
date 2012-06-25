@@ -1,13 +1,15 @@
 from django.conf.urls.defaults import patterns, url
 
 from scrum.views import (CreateBZUrlView, CreateProjectView, CreateSprintView,
-                         EditProjectView, EditSprintView, ListProjectsView,
-                         ProjectView, SprintView)
+                         DeleteBZUlrView, EditProjectView, EditSprintView,
+                         ListProjectsView, ProjectView, SprintView)
 
 
 urlpatterns = patterns('',
     url(r'^$', ListProjectsView.as_view(), name='scrum_projects_list'),
     url(r'^new/$', CreateProjectView.as_view(), name='scrum_project_new'),
+    url(r'^url/(?P<pk>\d+)/delete/$', DeleteBZUlrView.as_view(),
+        name='scrum_url_delete'),
     url(r'^(?P<pslug>[-\w]+)/$', ProjectView.as_view(), name='scrum_project'),
     url(r'^(?P<pslug>[-\w]+)/new/$', CreateSprintView.as_view(),
         name='scrum_sprint_new'),

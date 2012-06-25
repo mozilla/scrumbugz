@@ -187,9 +187,9 @@ class CreateBZUrlView(ProjectOrSprintMixin, ProtectedCreateView):
         url.set_project_or_sprint(*self.get_project_or_sprint())
         url.save()
         if self.request.is_ajax():
-            return HttpResponse(status=204)
+            return self.render_to_response(self.get_context_data(form=form))
         else:
-            return redirect(self.target_obj)
+            return redirect(self.target_obj.get_edit_url())
 
     def form_invalid(self, form):
         if self.request.is_ajax():
@@ -198,6 +198,25 @@ class CreateBZUrlView(ProjectOrSprintMixin, ProtectedCreateView):
             target_obj = self.get_project_or_sprint()[0]
             messages.error(self.request, form['url'].errors[0])
             return redirect(target_obj.get_edit_url())
+
+
+class DeleteBZUlrView(ProtectedDeleteView):
+    model = BugzillaURL
+    success_url = '/'
+
+    def __init__(self):
+        # remove GET from allowed methods to throw 405
+        # copy list or modify global copy
+        self.http_method_names = self.http_method_names[:]
+        self.http_method_names.remove('get')
+        super(DeleteBZUlrView, self).__init__()
+
+    def delete(self, request, *args, **kwargs):
+        if request.is_ajax():
+            super(DeleteBZUlrView, self).delete(request, *args, **kwargs)
+            return HttpResponse(status=204)
+        return HttpResponseForbidden()
+
 
 
 def server_error(request):
