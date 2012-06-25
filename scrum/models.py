@@ -221,6 +221,9 @@ class BugzillaURL(models.Model):
         """Return a set of the components in the search url"""
         return set(self._get_bz_args().getlist('component'))
 
+    def get_whiteboard(self):
+        return self._get_bz_args().get('status_whiteboard')
+
 
 class Bug(object):
     def __init__(self, data):
