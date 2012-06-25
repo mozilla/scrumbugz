@@ -1,0 +1,18 @@
+<form action="{{ bzurl_form_url }}"
+      class="form-horizontal"
+      method="post"
+      id="bzurl_form">
+  {% csrf_token %}
+  <div class="control-group">
+    <label class="control-label" for="id_url">Add a URL</label>
+    <div class="controls">
+      <div class="input-append" id="id_url_wrapper">
+        <input id="id_url"
+               class="input-xxlarge"
+               name="url"
+               placeholder="https://bugzilla.mozilla.org/..."
+               type="text"><button class="btn" type="submit" id="add_url_btn"><i class="icon-plus" id="add_url_icon"></i></button>
+      </div>
+    </div>
+  </div>
+</form>

@@ -25,10 +25,39 @@ $(function(){
     };
 
     // url management
+    var $btn_icon = $('#add_url_icon');
+    var $add_url_btn = $('#add_url_btn')
+    var add_url_spinner = Spinner({
+        lines: 12,
+        length: 5,
+        width: 1,
+        radius: 2
+    });
+    function start_spin () {
+        //$btn_icon.detach();
+        add_url_spinner.spin();
+        $btn_icon
+            .attr('disabled', 'disabled')
+            .addClass('icon-blank')
+            .removeClass('icon-plus');
+        $(add_url_spinner.el).prependTo($add_url_btn).css({
+            top: '8px',
+            left: '6px'
+        });
+        $add_url_btn.attr('disabled', 'disabled');
+    }
+    function stop_spin () {
+        add_url_spinner.stop();
+        $btn_icon
+            .removeClass('icon-blank')
+            .addClass('icon-plus');
+        $add_url_btn.removeAttr('disabled');
+    }
     $('#bzurl_form').on('submit', function(e){
         e.preventDefault();
         $('.control-group.error').removeClass('error');
         $('.help-block').remove();
+        start_spin();
         var post_url = $(this).attr('action');
         var post_data = {'url': $('#id_url').val()};
         $.post(post_url, post_data)
@@ -39,10 +68,10 @@ $(function(){
             .fail(function(jqxhr, status, err){
                 var errors = $.parseJSON(jqxhr.responseText);
                 $('#id_url_wrapper')
-                    .append('<p class="help-block"></p>')
-                    .html(errors.url)
+                    .append('<p class="help-block">'+errors.url.join(', ')+'</p>')
                     .closest('.control-group').addClass('error');
-            });
+            })
+            .always(stop_spin);
     });
     $('#bzurl_list_wrapper').on('click', '.bzurl-remove', function(e){
         e.preventDefault();

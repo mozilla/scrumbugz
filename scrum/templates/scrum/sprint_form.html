@@ -3,58 +3,33 @@
 
 {% block main_content %}
   {% if sprint %}
-    <h1>Edit {{ project.name }} / {{ sprint.name }}</h1>
-    <ul class="nav nav-tabs">
-      <li class="active"><a href="#edit" data-toggle="tab">Edit</a></li>
-      <li><a href="#urls" data-toggle="tab">URLs</a></li>
-    </ul>
+    <h1>Edit <a href="{% url scrum_project project.slug %}">{{ project.name }}</a> / <a href="{% url scrum_sprint project.slug sprint.slug %}">{{ sprint.name }}</a></h1>
   {% else %}
-    <h1>Create {{ project.name }} Sprint</h1>
-    <hr>
+    <h1>Create <a href="{% url scrum_project project.slug %}">{{ project.name }}</a> Sprint</h1>
   {% endif %}
-  <div class="tab-content">
-    <div class="tab-pane active" id="edit">
-      <form action="{{ request.get_full_path }}"
-            class="form-horizontal"
-            method="post">
-        {% csrf_token %}
-        {{ form|bootstrap }}
-        <div class="form-actions">
-          <button class="btn btn-primary" type="submit">{{ sprint|yesno:"Update,Create" }}</button>
-          <a href="{% if sprint %}{{ sprint.get_absolute_url }}{% else %}{% url scrum_project project.slug %}{% endif %}" class="btn">Cancel</a>
-        </div>
-      </form>
+  <hr>
+  <form action="{{ request.get_full_path }}"
+        class="form-horizontal"
+        method="post">
+    {% csrf_token %}
+    {{ form|bootstrap }}
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">{{ sprint|yesno:"Update,Create" }}</button>
+      <a href="{% if sprint %}{{ sprint.get_absolute_url }}{% else %}{% url scrum_project project.slug %}{% endif %}" class="btn">Cancel</a>
     </div>
-    <div class="tab-pane" id="urls">
-      {% if sprint %}
-        <h2>Manage URLs</h2>
-        <div id="bzurl_list_wrapper" data-url="{% url scrum_sprint_urls project.slug sprint.slug %}">
-          {% include "scrum/bzurl_list.html" with bzurls=sprint.urls.all %}
-        </div>
-        <form action="{% url scrum_sprint_urls project.slug sprint.slug %}"
-              class="form-horizontal"
-              method="post"
-              id="bzurl_form">
-          {% csrf_token %}
-          <div class="control-group">
-            <label class="control-label" for="id_url">Add a URL</label>
-            <div class="controls">
-              <div class="input-append" id="id_url_wrapper">
-                <input id="id_url"
-                       class="input-xxlarge"
-                       name="url"
-                       placeholder="https://bugzilla.mozilla.org/..."
-                       type="text"><button class="btn" type="submit"><i class="icon-plus"></i></button>
-              </div>
-            </div>
-          </div>
-        </form>
-      {% endif %}
+  </form>
+  {% if sprint %}
+    <h2>Bugzilla URLs</h2>
+    <div id="bzurl_list_wrapper" data-url="{% url scrum_sprint_urls project.slug sprint.slug %}">
+      {% include "scrum/bzurl_list.html" with bzurls=sprint.urls.all %}
     </div>
-  </div>
+    {% url scrum_sprint_urls project.slug sprint.slug as bzurl_form_url %}
+    {% include "scrum/bzurl_form.html" %}
+  {% endif %}
 {% endblock %}
 
 {% block js %}
   <script type="text/javascript" src="//cdn.jquerytools.org/1.2.6/form/jquery.tools.min.js"></script>
+  <script type="text/javascript" src="{{ STATIC_URL }}js/spin.min.js"></script>
   <script type="text/javascript" src="{{ STATIC_URL }}js/forms.js"></script>
 {% endblock %}

@@ -19,8 +19,7 @@
     <div class="span12">
       {% if perms.scrum.change_sprint %}
         <a class="btn btn-primary pull-right"
-           href="#modal_form"
-           data-toggle="modal">
+           href="{% url scrum_sprint_edit project.slug sprint.slug %}">
           <i class="icon-edit icon-white"></i> Update Sprint
         </a>
       {% endif %}
