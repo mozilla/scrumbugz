@@ -4,16 +4,7 @@
 
 {% block content %}
   {% if bzerror %}
-  <div class="row">
-    <div class="span12">
-      <h1>
-        <a href="{{ project.get_absolute_url }}">{{ project.name }}</a>
-        / {{ sprint.name }}
-      </h1>
-      <h2>Could not contact Bugzilla</h2>
-      <p>Maybe Bugzilla is down, or the server is having issues. Either way, it's time for a break.</p>
-    </div>
-  </div>
+    {% include "scrum/bzerror.html" %}
   {% else %}
   <div class="row">
     <div class="span12">
@@ -68,6 +59,17 @@
   </div>
   <div class="row">
     <div class="span12">
+      {% if not scrum_only %}
+        <a href="?" class="btn pull-right">Hide dataless bugs</a>
+      {% endif %}
+      <h2>Bugs</h2>
+      {% if sprint.num_no_data_bugs %}
+        <div class="alert">
+          <button class="close" data-dismiss="alert">&times;</button>
+          <strong>Warning!</strong> There are {{ sprint.num_no_data_bugs }} bug{{ sprint.num_no_data_bugs|pluralize }} with no scrum data in this sprint.
+          <a href="?all=1">Show them</a>?
+        </div>
+      {% endif %}
       <table class="table table-striped table-condensed" id="bugs-table">
         <thead>
           <tr>
@@ -101,7 +103,7 @@
   </div>
 
   <div class="row">
-    <div class="span3">
+    <div class="span6">
       <h4>Legend</h4>
       <table class="table-condensed">
         <tbody>
@@ -112,8 +114,13 @@
             <td>Scoreless</td>
           </tr>
           <tr class="bug-open pull-left">
-            <td>Unassigned (open)</td>
+            <td>Unassigned</td>
           </tr>
+          {% if not scrum_only %}
+            <tr class="bug-dataless pull-left">
+              <td>Dataless</td>
+            </tr>
+          {% endif %}
         </tbody>
       </table>
     </div>
@@ -123,13 +130,6 @@
         <a class="btn" href="{{ BZ_FILE_URL }}product={{ product }}"><i class="icon-plus-sign"></i> {{ product }} bug</a>
         {% endfor %}
       </div>
-    </div>
-    <div class="span3">
-      <a class="btn pull-right"
-         href="{{ sprint.bz_url }}">
-        <i class="icon-share"></i>
-        Go to Bugzilla
-      </a>
     </div>
   </div>
 

@@ -65,6 +65,27 @@ class ProjectOrSprintMixin(object):
         return self.target_obj, self.target_obj_type
 
 
+class BugsDataMixin(object):
+    def get_context_data(self, **kwargs):
+        context = super(BugsDataMixin, self).get_context_data(**kwargs)
+        # clear cache if requested
+        refresh = False
+        if self.request.META.get('HTTP_CACHE_CONTROL') == 'no-cache':
+            refresh = True
+        scrum_only = True
+        if 'all' in self.request.GET:
+            scrum_only = False
+        try:
+            context['bugs'] = self.object.get_bugs(refresh, scrum_only)
+            context['scrum_only'] = scrum_only
+            context['bugs_data'] = self.object.get_graph_bug_data()
+            context['bugs_data_json'] = json.dumps(context['bugs_data'])
+            context['bzerror'] = False
+        except BZError:
+            context['bzerror'] = True
+        return context
+
+
 class ProjectsMixin(ProjectOrSprintMixin):
     model = Project
     slug_url_kwarg = 'pslug'
@@ -82,7 +103,7 @@ class HomeView(TemplateView):
 home = HomeView.as_view()
 
 
-class ProjectView(ProjectsMixin, DetailView):
+class ProjectView(BugsDataMixin, ProjectsMixin, DetailView):
     template_name = 'scrum/project.html'
 
 
@@ -95,6 +116,11 @@ class CreateProjectView(ProjectsMixin, ProtectedCreateView):
     model = Project
     form_class = ProjectForm
     template_name = 'scrum/project_form.html'
+
+    def get_success_url(self):
+        if self.object.has_backlog:
+            return self.object.get_edit_url()
+        return self.object.get_absolute_url()
 
 
 class EditProjectView(ProjectsMixin, ProtectedUpdateView):
@@ -114,9 +140,14 @@ class CreateSprintView(ProjectsMixin, ProtectedCreateView):
 
     def get_initial(self):
         self.project = self.get_project_or_sprint()[0]
-        return {
-            'project': self.project,
-        }
+        return super(CreateSprintView, self).get_initial()
+
+    def form_valid(self, form):
+        sprint = form.save(commit=False)
+        sprint.project = self.project
+        sprint.save()
+        return redirect('scrum_sprint_edit', sslug=sprint.slug,
+                        pslug=self.project.slug)
 
 
 class SprintMixin(ProjectOrSprintMixin):
@@ -131,32 +162,15 @@ class SprintMixin(ProjectOrSprintMixin):
         return sprint
 
 
-class SprintView(SprintMixin, DetailView):
+class SprintView(BugsDataMixin, SprintMixin, DetailView):
     template_name = 'scrum/sprint.html'
-
-    def process_bug_data(self):
-        data = self.object.get_bugs_data()
-        for item in ['users', 'components', 'status', 'basic_status']:
-            data[item] = [{'label': k, 'data': v} for k, v in
-                                                  sorted(data[item].iteritems(),
-                                                         key=itemgetter(1),
-                                                         reverse=True)]
-        return data
 
     def get_context_data(self, **kwargs):
         context = super(SprintView, self).get_context_data(**kwargs)
-        # clear cache if requested
-        refresh = False
-        if self.request.META.get('HTTP_CACHE_CONTROL') == 'no-cache':
-            refresh = True
-        try:
-            context['project'] = self.project
-            context['bugs'] = self.object.get_bugs(refresh)
-            context['bugs_data'] = self.process_bug_data()
+        context['project'] = self.project
+        if not context['bzerror']:
+            context['bugs_data'].update(self.object.get_burndown_data())
             context['bugs_data_json'] = json.dumps(context['bugs_data'])
-            context['bzerror'] = False
-        except BZError:
-            context['bzerror'] = True
         return context
 
 

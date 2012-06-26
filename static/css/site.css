@@ -71,6 +71,10 @@ dt.scoreless{
     color: #b94a48;
 }
 
+tr.bug-dataless td{
+    background-color: #ccc !important;
+}
+
 tr.bug-open td{
     background-color: #fcf8e3 !important;
 }

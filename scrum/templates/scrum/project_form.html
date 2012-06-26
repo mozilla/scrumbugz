@@ -18,8 +18,8 @@
       <a href="{% if project %}{{ project.get_absolute_url }}{% else %}{% url scrum_projects_list %}{% endif %}" class="btn">Cancel</a>
     </div>
   </form>
-  {% if project %}
-    <h2>Bugzilla URLs</h2>
+  {% if project and project.has_backlog %}
+    <h2 id="bzurls">Bugzilla URLs</h2>
     <div id="bzurl_list_wrapper" data-url="{% url scrum_project_urls project.slug %}">
       {% include "scrum/bzurl_list.html" with bzurls=project.urls.all %}
     </div>

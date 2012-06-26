@@ -26,6 +26,7 @@ class ProjectForm(forms.ModelForm):
         fields = (
             'name',
             'slug',
+            'has_backlog',
         )
 
 

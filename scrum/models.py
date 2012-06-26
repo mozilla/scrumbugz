@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from operator import itemgetter
 
 import re
 from collections import defaultdict
@@ -40,10 +41,73 @@ class BZError(IOError):
     """Bugzilla connection error"""
 
 
-class Project(models.Model):
+class BugsMixin(object):
+    num_no_data_bugs = 0
+
+    def get_bugs(self, refresh=False, scrum_only=True):
+        """Get a unique set of bugs from all bz urls"""
+        return self._get_url_items('bugs', refresh, scrum_only)
+
+    def get_components(self):
+        """Get a unique set of bugs from all bz urls"""
+        return self._get_url_items('components')
+
+    def get_products(self):
+        """Get a unique set of bugs from all bz urls"""
+        return self._get_url_items('products')
+
+    def _get_url_items(self, item_name, *args):
+        """Get a unique set of items from all bz urls"""
+        attr_name = "_url_items_%s" % item_name
+        if not hasattr(self, attr_name):
+            items = set()
+            for url in self.urls.all():
+                items |= getattr(url, 'get_' + item_name)(*args)
+                if url.date_cached:
+                    self.date_cached = url.date_cached
+                if item_name == 'bugs' and url.num_no_data_bugs:
+                    self.num_no_data_bugs += url.num_no_data_bugs
+
+            setattr(self, attr_name, list(items))
+        return getattr(self, attr_name)
+
+    def get_bugs_data(self):
+        bugs = self.get_bugs()
+        data = {
+            'users': defaultdict(int),
+            'components': defaultdict(int),
+            'status': defaultdict(int),
+            'basic_status': defaultdict(int),
+            'total_points': 0,
+            'total_bugs': len(bugs),
+            'scoreless_bugs': 0,
+        }
+        for bug in bugs:
+            if bug.points:
+                data['users'][bug.user] += bug.points
+                data['components'][bug.component] += bug.points
+                data['status'][bug.status] += bug.points
+                data['basic_status'][bug.basic_status] += bug.points
+                data['total_points'] += bug.points
+            else:
+                data['scoreless_bugs'] += 1
+        return data
+
+    def get_graph_bug_data(self):
+        data = self.get_bugs_data()
+        for item in ['users', 'components', 'status', 'basic_status']:
+            data[item] = [{'label': k, 'data': v} for k, v in
+                                                  sorted(data[item].iteritems(),
+                                                         key=itemgetter(1),
+                                                         reverse=True)]
+        return data
+
+
+class Project(BugsMixin, models.Model):
     name = models.CharField(max_length=200)
     slug = models.CharField(max_length=50, validators=[validate_slug],
                             db_index=True, unique=True)
+    has_backlog = models.BooleanField('Use a backlog', default=False)
 
     def __unicode__(self):
         return self.name
@@ -57,7 +121,7 @@ class Project(models.Model):
         return 'scrum_project_edit', [self.slug]
 
 
-class Sprint(models.Model):
+class Sprint(BugsMixin, models.Model):
     project = models.ForeignKey(Project, related_name='sprints')
     name = models.CharField(max_length=200)
     slug = models.CharField(max_length=200, validators=[validate_slug],
@@ -107,58 +171,11 @@ class Sprint(models.Model):
         return [date_to_js(cdate) for cdate in
                 date_range(self.start_date, self.end_date)]
 
-    def get_bugs(self, refresh=False):
-        """Get a unique set of bugs from all bz urls"""
-        return self._get_url_items('bugs', refresh)
-
-    def get_components(self):
-        """Get a unique set of bugs from all bz urls"""
-        return self._get_url_items('components')
-
-    def get_products(self):
-        """Get a unique set of bugs from all bz urls"""
-        return self._get_url_items('products')
-
-    def _get_url_items(self, item_name, *args):
-        """Get a unique set of items from all bz urls"""
-        items = set()
-        for url in self.urls.all():
-            items |= getattr(url, 'get_' + item_name)(*args)
-            if url.date_cached:
-                self.date_cached = url.date_cached
-        return list(items)
-
-    def get_bugs_data(self):
-        bugs = self.get_bugs()
-        data = {
-            'users': defaultdict(int),
-            'components': defaultdict(int),
-            'status': defaultdict(int),
-            'basic_status': defaultdict(int),
-            'total_points': 0,
-            'total_bugs': len(bugs),
-            'scoreless_bugs': 0,
+    def get_burndown_data(self):
+        return {
             'burndown': self.get_burndown(),
             'burndown_axis': self.get_burndown_axis(),
         }
-        for bug in self.get_bugs():
-            if bug.points:
-                data['users'][bug.user] += bug.points
-                data['components'][bug.component] += bug.points
-                data['status'][bug.status] += bug.points
-                data['basic_status'][bug.basic_status] += bug.points
-                data['total_points'] += bug.points
-            else:
-                data['scoreless_bugs'] += 1
-        return data
-
-    def save(self, force_insert=False, force_update=False, using=None):
-        """Clear the cache if we update the bz url"""
-        if self.pk:
-            old_obj = Sprint.objects.get(pk=self.pk)
-            if old_obj.bz_url != self.bz_url:
-                self.refresh_bugs()
-        return super(Sprint, self).save(force_insert, force_update, using)
 
 
 class BugzillaURL(models.Model):
@@ -169,6 +186,7 @@ class BugzillaURL(models.Model):
                                related_name='urls')
 
     date_cached = None
+    num_no_data_bugs = 0
 
     class Meta:
         ordering = ('id',)
@@ -196,7 +214,7 @@ class BugzillaURL(models.Model):
     def _bugs_cache_key(self):
         return 'url:{0}:bugs'.format(self.pk)
 
-    def get_bugs(self, refresh=False):
+    def get_bugs(self, refresh=False, scrum_only=True):
         if refresh:
             self._clear_cache()
         if not hasattr(self, '_bugs'):
@@ -210,6 +228,13 @@ class BugzillaURL(models.Model):
                     raise BZError("Couldn't retrieve bugs from "
                                   "Bugzilla")
             self._bugs = set(Bug(b) for b in data['bugs'])
+            if scrum_only:
+                # only show bugs that have at least user and component set
+                num_all_bugs = len(self._bugs)
+                self._bugs = set(b for b in self._bugs
+                                 if b.has_scrum_data)
+                self.num_no_data_bugs = num_all_bugs - len(self._bugs)
+                print self.num_no_data_bugs
             self.date_cached = data.get('date_received', datetime.now())
         return self._bugs
 
@@ -262,7 +287,9 @@ class Bug(object):
 
     @property
     def basic_status(self):
-        if not self.points:
+        if not self.has_scrum_data:
+            status = 'dataless'
+        elif not self.points:
             status = 'scoreless'
         elif self.is_closed():
             status = 'closed'
@@ -273,6 +300,10 @@ class Bug(object):
     @property
     def scrum_data(self):
         return parse_whiteboard(self.whiteboard)
+
+    @property
+    def has_scrum_data(self):
+        return self.user and self.component
 
     @property
     def points_history(self):

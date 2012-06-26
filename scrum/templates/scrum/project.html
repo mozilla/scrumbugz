@@ -1,7 +1,10 @@
 {% extends "scrum/base.html" %}
 {% load bootstrap %}
 
-{% block main_content %}
+{% block content %}
+  {% if bzerror %}
+    {% include "scrum/bzerror.html" %}
+  {% else %}
   {% if perms.scrum.add_sprint %}
     <a class="btn btn-primary pull-right"
        href="{% url scrum_sprint_new project.slug %}">
@@ -27,4 +30,96 @@
       </li>
     {% endfor %}
   </ul>
+  {% if project.has_backlog %}
+    <div class="row">
+      <div class="span12">
+        <hr>
+        {% if not scrum_only %}
+          <a href="?" class="btn pull-right">Hide dataless bugs</a>
+        {% endif %}
+        <h2>Backlog</h2>
+        {% if project.num_no_data_bugs %}
+          <div class="alert">
+            <button class="close" data-dismiss="alert">&times;</button>
+            <strong>Warning!</strong> There are {{ project.num_no_data_bugs }} bug{{ project.num_no_data_bugs|pluralize }} with no scrum data in the backlog.
+            <a href="?all=1">Show them</a>?
+          </div>
+        {% endif %}
+        <table class="table table-striped table-condensed" id="bugs-table">
+          <thead>
+          <tr>
+            <th>ID</th>
+            <th>Priority</th>
+            <th>Summary</th>
+            <th>Assigned</th>
+            <th>User</th>
+            <th>Component</th>
+            <th>Points</th>
+            <th>Status</th>
+          </tr>
+          </thead>
+          <tbody>
+          {% for bug in bugs %}
+            <tr data-bugid="{{ bug.id }}" id="bug{{ bug.id }}" class="bug-{{ bug.basic_status }}">
+              <td><a href="{{ BZ_SHOW_URL }}id={{ bug.id }}">{{ bug.id }}</a></td>
+              <td>{{ bug.priority }}</td>
+              <td>{{ bug.summary }}</td>
+              <td class="ttip" title="{{ bug.assigned_to.real_name }}">{{ bug.assigned_to.name }}</td>
+              <td>{{ bug.user }}</td>
+              <td>{{ bug.component }}</td>
+              <td>{{ bug.points }}</td>
+              <td>{{ bug.status }}</td>
+              <td><a class="btn" href="{{ BZ_FILE_URL }}blocked={{ bug.id }}&product={{ bug.product }}&component={{ bug.bz_component }}" title="Add Blocking Bug"><i class="icon-ban-circle"></i></a></td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="span6">
+        <h4>Legend</h4>
+        <table class="table-condensed">
+          <tbody>
+          <tr class="bug-closed pull-left">
+            <td>Closed</td>
+          </tr>
+          <tr class="bug-scoreless pull-left">
+            <td>Scoreless</td>
+          </tr>
+          <tr class="bug-open pull-left">
+            <td>Unassigned</td>
+          </tr>
+          {% if not scrum_only %}
+            <tr class="bug-dataless pull-left">
+              <td>Dataless</td>
+            </tr>
+          {% endif %}
+          </tbody>
+        </table>
+      </div>
+      <div class="span6">
+        <div class="btn-group">
+          {% for product in project.get_products %}
+            <a class="btn" href="{{ BZ_FILE_URL }}product={{ product }}"><i class="icon-plus-sign"></i> {{ product }} bug</a>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="span12">
+        <h4>Last updated: {{ project.date_cached|timesince }} ago</h4>
+        <p>Hard refresh your browser to get new data from Bugzilla.</p>
+        <p>Data is refreshed automatically every {{ CACHE_BUGS_FOR }} hours.</p>
+      </div>
+    </div>
+  {% endif %}
+  {% endif %}
+{% endblock %}
+
+{% block js %}
+  <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.tablesorter.min.js"></script>
+  <script type="text/javascript" src="{{ STATIC_URL }}js/project.js"></script>
 {% endblock %}
