@@ -101,7 +101,10 @@ class Sprint(models.Model):
             data = cache.get(self._bugs_cache_key)
             if data is None:
                 try:
-                    data = BZAPI.bug.get(**self._get_bz_args())
+                    args = self._get_bz_args()
+                    args = dict((k.encode('utf-8'), v) for k, v in
+                                args.iterlists())
+                    data = BZAPI.bug.get(**args)
                     data['date_received'] = datetime.now()
                     cache.set(self._bugs_cache_key, data, CACHE_BUGS_FOR)
                 except:
