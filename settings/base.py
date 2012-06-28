@@ -29,6 +29,19 @@ CONTEXT_SETTINGS = (
     'BZ_FILE_URL',
 )
 
+CACHES = {
+    'default': {
+        'BACKEND': 'django_pylibmc.memcached.PyLibMCCache',
+        'TIMEOUT': 500,
+        'BINARY': True,
+        'OPTIONS': {
+            'tcp_nodelay': True,
+            'ketama': True,
+        },
+    },
+}
+PYLIBMC_MIN_COMPRESS_LEN = 150 * 1024
+
 TIME_ZONE = 'America/New_York'
 LANGUAGE_CODE = 'en-us'
 SITE_ID = 1
@@ -89,10 +102,10 @@ INSTALLED_APPS = (
 TEMPLATE_CONTEXT_PROCESSORS = (
     "django.contrib.auth.context_processors.auth",
     "django.core.context_processors.debug",
-    "django.core.context_processors.i18n",
     "django.core.context_processors.media",
     "django.core.context_processors.static",
+    'django.core.context_processors.tz',
+    "django.core.context_processors.request",
     "django.contrib.messages.context_processors.messages",
     "context_processors.context_settings",
 )
-

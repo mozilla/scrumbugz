@@ -17,7 +17,7 @@
         <td>{{ url.get_components|join:", " }}</td>
         <td>{{ url.get_whiteboard }}</td>
         <td width="1">
-          <a href="{% url scrum_url_delete url.pk %}" class="btn btn-danger bzurl-remove" title="Remove URL"><i class="icon-remove icon-white"></i></a>
+          <a href="{% url scrum_url_delete url.pk %}" class="btn btn-mini btn-danger bzurl-remove" title="Remove URL"><i class="icon-remove icon-white"></i></a>
         </td>
       </tr>
     {% empty %}

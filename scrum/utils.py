@@ -1,6 +1,8 @@
+import hashlib
 import time
 
 from django.http import QueryDict
+from django.utils.encoding import smart_str
 
 from dateutil.relativedelta import relativedelta
 
@@ -66,3 +68,9 @@ def date_range(sdate, edate, step=1):
 def date_to_js(date):
     """Return unix epoc timestamp in miliseconds (in UTC)"""
     return int((time.mktime(date.timetuple()) - time.timezone) * 1000)
+
+
+def make_sha1_key(key, key_prefix, version):
+    """A cache key generating function that uses a sha1 hash."""
+    prekey = ':'.join([key_prefix, str(version), smart_str(key)])
+    return hashlib.sha1(prekey).hexdigest()

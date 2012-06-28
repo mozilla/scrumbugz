@@ -23,12 +23,6 @@ DATABASES = {
     }
 }
 
-CACHES = {
-    'default': {
-        'BACKEND': 'django_pylibmc.memcached.PyLibMCCache'
-    }
-}
-
 SECRET_KEY = os.environ['SECRET_KEY']
 
 # Static media

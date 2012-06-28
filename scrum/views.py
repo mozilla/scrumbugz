@@ -232,7 +232,6 @@ class DeleteBZUlrView(ProtectedDeleteView):
         return HttpResponseForbidden()
 
 
-
 def server_error(request):
     context = {
         'STATIC_URL': getattr(settings, 'STATIC_URL', '/static/'),

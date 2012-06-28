@@ -1,9 +1,10 @@
 from __future__ import absolute_import
-from operator import itemgetter
 
+import hashlib
 import re
 from collections import defaultdict
 from datetime import datetime
+from operator import itemgetter
 
 from django.conf import settings
 from django.core.cache import cache
@@ -212,7 +213,7 @@ class BugzillaURL(models.Model):
 
     @property
     def _bugs_cache_key(self):
-        return 'url:{0}:bugs'.format(self.pk)
+        return hashlib.sha1(self.url).hexdigest()
 
     def get_bugs(self, refresh=False, scrum_only=True):
         if refresh:
