@@ -39,7 +39,7 @@ class TestBug(TestCase):
         """ should default to points in whiteboard """
         bugs = self.s.get_bugs()
         b = bugs[0]
-        eq_(b.points, b.points_for_date(date.today()))
+        eq_(b.story_points, b.points_for_date(date.today()))
 
 
 class TestSprint(TestCase):

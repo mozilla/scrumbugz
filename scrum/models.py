@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 import hashlib
+from django.utils.decorators import method_decorator
 import re
 from collections import defaultdict
 from datetime import datetime
@@ -9,10 +10,13 @@ from operator import itemgetter
 from django.conf import settings
 from django.core.cache import cache
 from django.core.validators import RegexValidator
-from django.db import models
+from django.db import models, transaction
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
 
 import dateutil.parser
 import slumber
+from jsonfield import JSONField
 
 from .utils import (date_to_js, is_closed, date_range, parse_bz_url,
                     parse_whiteboard)
@@ -84,12 +88,12 @@ class BugsMixin(object):
             'scoreless_bugs': 0,
         }
         for bug in bugs:
-            if bug.points:
-                data['users'][bug.user] += bug.points
-                data['components'][bug.component] += bug.points
-                data['status'][bug.status] += bug.points
-                data['basic_status'][bug.basic_status] += bug.points
-                data['total_points'] += bug.points
+            if bug.story_points:
+                data['users'][bug.story_user] += bug.story_points
+                data['components'][bug.story_component] += bug.story_points
+                data['status'][bug.status] += bug.story_points
+                data['basic_status'][bug.basic_status] += bug.story_points
+                data['total_points'] += bug.story_points
             else:
                 data['scoreless_bugs'] += 1
         return data
@@ -179,6 +183,70 @@ class Sprint(BugsMixin, models.Model):
         }
 
 
+def extract_bug_kwargs(data):
+    kwargs = data.copy()
+    if 'history' in kwargs:
+        del kwargs['history']
+    kwargs['assigned_to'] = kwargs['assigned_to']['name']
+    if 'url' in kwargs:
+        del kwargs['url']
+    if 'whiteboard' in kwargs:
+        scrum_data = parse_whiteboard(kwargs['whiteboard'])
+        for key, val in scrum_data.iteritems():
+            if val:
+                kwargs['story_' + key] = val
+    return kwargs
+
+
+class CachedBugManager(models.Manager):
+    @method_decorator(transaction.commit_on_success)
+    def store_bugs(self, bugs):
+        from pprint import pprint
+        for bug in bugs:
+            pprint(bug)
+            self.update_or_create(bug)
+
+    def update_or_create(self, data):
+        """
+        Create or overwrite a bug from the given data.
+        :param data: dict of bug data
+        :return: CachedBug instance
+        """
+        obj = self.model(data=data)
+        obj.save()
+        return obj
+
+
+class CachedBug(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    data = JSONField()
+    last_updated = models.DateTimeField(default=datetime.now)
+    product = models.CharField(max_length=200)
+    component = models.CharField(max_length=200)
+    assigned_to = models.CharField(max_length=200)
+    status = models.CharField(max_length=20)
+    summary = models.CharField(max_length=500)
+    priority = models.CharField(max_length=2, blank=True)
+    whiteboard = models.CharField(max_length=200, blank=True)
+    story_user = models.CharField(max_length=50, blank=True)
+    story_component = models.CharField(max_length=50, blank=True)
+    story_points = models.PositiveSmallIntegerField(default=0)
+
+    objects = CachedBugManager()
+
+    @property
+    def scrum_data(self):
+        return parse_whiteboard(self.whiteboard)
+
+    def fill_from_data(self):
+        self.__dict__.update(extract_bug_kwargs(self.data))
+
+
+@receiver(pre_save, sender=CachedBug)
+def fill_bug_fields(sender, instance, **args):
+    instance.fill_from_data()
+
+
 class BugzillaURL(models.Model):
     url = models.URLField(verbose_name='Bugzilla URL', max_length=2048)
     project = models.ForeignKey(Project, null=True, blank=True,
@@ -227,10 +295,10 @@ class BugzillaURL(models.Model):
                                 args.iterlists())
                     data = BZAPI.bug.get(**args)
                     data['date_received'] = datetime.now()
-                    cache.set(self._bugs_cache_key, data, CACHE_BUGS_FOR)
                 except:
-                    raise BZError("Couldn't retrieve bugs from "
-                                  "Bugzilla")
+                    raise BZError("Couldn't retrieve bugs from Bugzilla")
+                cache.set(self._bugs_cache_key, data, CACHE_BUGS_FOR)
+                CachedBug.objects.store_bugs(data['bugs'])
             self._bugs = set(Bug(b) for b in data['bugs'])
             if scrum_only:
                 # only show bugs that have at least user and component set
@@ -238,7 +306,6 @@ class BugzillaURL(models.Model):
                 self._bugs = set(b for b in self._bugs
                                  if b.has_scrum_data)
                 self.num_no_data_bugs = num_all_bugs - len(self._bugs)
-                print self.num_no_data_bugs
             self.date_cached = data.get('date_received', datetime.now())
         return self._bugs
 
@@ -256,13 +323,9 @@ class BugzillaURL(models.Model):
 
 class Bug(object):
     def __init__(self, data):
-        for key, value in data.iteritems():
-            if key == 'component':
-                setattr(self, 'bz_component', value)
-            else:
-                setattr(self, key, value)
+        self.__dict__.update(data)
         for key, value in self.scrum_data.iteritems():
-            setattr(self, key, value)
+            setattr(self, 'story_' + key, value)
 
     def __getattr__(self, name):
         if name in BZ_FIELDS:
@@ -282,7 +345,7 @@ class Bug(object):
         return self.assigned_to['name'] != 'nobody'
 
     def points_for_date(self, date):
-        cpoints = self.points
+        cpoints = self.story_points
         for h in self.points_history:
             if date < h['date']:
                 return cpoints
@@ -293,7 +356,7 @@ class Bug(object):
     def basic_status(self):
         if not self.has_scrum_data:
             status = 'dataless'
-        elif not self.points:
+        elif not self.story_points:
             status = 'scoreless'
         elif self.is_closed():
             status = 'closed'
@@ -307,7 +370,7 @@ class Bug(object):
 
     @property
     def has_scrum_data(self):
-        return self.user and self.component
+        return bool(self.story_user and self.story_component)
 
     @property
     def points_history(self):

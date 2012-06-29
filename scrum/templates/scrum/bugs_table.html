@@ -31,11 +31,11 @@
           <td>{{ bug.priority }}</td>
           <td>{{ bug.summary }}</td>
           <td class="ttip" title="{{ bug.assigned_to.real_name }}">{{ bug.assigned_to.name }}</td>
-          <td>{{ bug.user }}</td>
-          <td>{{ bug.component }}</td>
-          <td>{{ bug.points }}</td>
+          <td>{{ bug.story_user }}</td>
+          <td>{{ bug.story_component }}</td>
+          <td>{{ bug.story_points }}</td>
           <td>{{ bug.status }}</td>
-          <td width="1"><a class="btn btn-mini btn-inverse" href="{{ BZ_FILE_URL }}blocked={{ bug.id }}&product={{ bug.product }}&component={{ bug.bz_component }}" title="Add Blocking Bug"><i class="icon-ban-circle icon-white"></i></a></td>
+          <td width="1"><a class="btn btn-mini btn-inverse" href="{{ BZ_FILE_URL }}blocked={{ bug.id }}&product={{ bug.product }}&component={{ bug.component }}" title="Add Blocking Bug"><i class="icon-ban-circle icon-white"></i></a></td>
         </tr>
       {% endfor %}
       </tbody>
