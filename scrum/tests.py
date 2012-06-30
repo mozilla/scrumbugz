@@ -1,37 +1,35 @@
-"""
-This file demonstrates writing tests using the unittest module. These will pass
-when you run "manage.py test".
-
-Replace this with more appropriate tests for your application.
-"""
+from __future__ import absolute_import
 from datetime import date
 
-from mock import patch
+from mock import Mock, patch
 from nose.tools import eq_, ok_
 
+from django.conf import settings
+from django.core.cache import cache
 from django.test import TestCase
+from django.utils import simplejson as json
 
-from forms import SprintForm
-from models import Sprint, Bug
+from .forms import BZURLForm
+from .models import Bug, CachedBug, Sprint
+from scrum import models as scrum_models
 
 
-GOOD_BZ_URL = "https://bugzilla.mozilla.org/buglist.cgi?list_id=2692959;"
-"columnlist=opendate%2Cassigned_to%2Cbug_status%2Cresolution%2Cshort_desc"
-"%2Cstatus_whiteboard%2Ckeywords;emailtype1=exact;query_based_on=mdn_20120410;"
-"status_whiteboard_type=allwordssubstr;query_format=advanced;"
-"status_whiteboard=s%3D2012-04-10;email1=nobody%40mozilla.org;"
-"component=Administration;component=Deki%20Infrastructure;component=Demos;"
-"component=Docs%20Platform;component=Documentation%20Requests;"
-"component=Engagement;component=Evangelism;component=Forums;"
-"component=Localization;component=Upload%20Requests;component=Website;"
-"product=Mozilla%20Developer%20Network;target_milestone=---;"
-"target_milestone=2.7;known_name=mdn_20120410"
+scrum_models.BZAPI = Mock()
+BUG_DATA_FILE = settings.PROJECT_DIR.child('scrum')\
+                                    .child('test_data')\
+                                    .child('bugzilla_data.json')
+with open(BUG_DATA_FILE) as bdf:
+    BUG_DATA = json.load(bdf)
+
+GOOD_BZ_URL = BUG_DATA['bz_url']
+scrum_models.BZAPI.bug.get.return_value = BUG_DATA
 
 
 class TestBug(TestCase):
     fixtures = ['test_data.json']
 
     def setUp(self):
+        cache.clear()
         self.s = Sprint.objects.get(slug='2.2')
 
     @patch.object(Bug, 'points_history')
@@ -40,6 +38,21 @@ class TestBug(TestCase):
         bugs = self.s.get_bugs()
         b = bugs[0]
         eq_(b.story_points, b.points_for_date(date.today()))
+
+    def test_db_cached_bugs(self):
+        bugs = self.s.get_bugs()
+        compare_fields = [
+            'summary',
+            'status',
+            'whiteboard',
+            'product',
+            'component',
+        ]
+        for bug in bugs:
+            cbug = CachedBug.objects.get(id=bug.id)
+            for fieldname in compare_fields:
+                self.assertEqual(getattr(bug, fieldname),
+                                 getattr(cbug, fieldname))
 
 
 class TestSprint(TestCase):
@@ -61,27 +74,17 @@ class TestSprint(TestCase):
 
 class TestSprintForm(TestCase):
 
-    def setUp(self):
-        self.form_data = {
-            'project': '1',
-            'name': 'test',
-            'slug': 'test',
-            'start_date': date.today(),
-            'end_date': date.today(),
-            'bz_url': ''
-        }
-
     def test_bugzilla_url(self):
-        self.form_data.update({"bz_url": "http://localhost/?bugs"})
-        form = SprintForm(self.form_data)
+        form_data = {"url": "http://localhost/?bugs"}
+        form = BZURLForm(form_data)
         eq_(False, form.is_valid())
-        ok_('bz_url' in form.errors.keys())
-        self.form_data.update({"bz_url": "https://bugzilla.mozilla.org/"
-                               "buglist.cgi?cmdtype=runnamed;"
-                               "namedcmd=mdn_20120410;list_id=2693036"})
-        form = SprintForm(self.form_data)
+        ok_('url' in form.errors.keys())
+        form_data = {"url": "https://bugzilla.mozilla.org/"
+                            "buglist.cgi?cmdtype=runnamed;"
+                            "namedcmd=mdn_20120410;list_id=2693036"}
+        form = BZURLForm(form_data)
         eq_(False, form.is_valid())
-        ok_('bz_url' in form.errors.keys())
-        self.form_data.update({"bz_url": GOOD_BZ_URL})
-        form = SprintForm(self.form_data)
+        ok_('url' in form.errors.keys())
+        form_data = {"url": GOOD_BZ_URL}
+        form = BZURLForm(form_data)
         eq_(True, form.is_valid())

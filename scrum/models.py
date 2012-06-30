@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 
 import hashlib
-from django.utils.decorators import method_decorator
 import re
 from collections import defaultdict
 from datetime import datetime
@@ -11,8 +10,6 @@ from django.conf import settings
 from django.core.cache import cache
 from django.core.validators import RegexValidator
 from django.db import models, transaction
-from django.db.models.signals import pre_save
-from django.dispatch import receiver
 
 import dateutil.parser
 import slumber
@@ -46,7 +43,7 @@ class BZError(IOError):
     """Bugzilla connection error"""
 
 
-class BugsMixin(object):
+class BugsListMixin(object):
     num_no_data_bugs = 0
 
     def get_bugs(self, refresh=False, scrum_only=True):
@@ -108,7 +105,7 @@ class BugsMixin(object):
         return data
 
 
-class Project(BugsMixin, models.Model):
+class Project(BugsListMixin, models.Model):
     name = models.CharField(max_length=200)
     slug = models.CharField(max_length=50, validators=[validate_slug],
                             db_index=True, unique=True)
@@ -126,7 +123,7 @@ class Project(BugsMixin, models.Model):
         return 'scrum_project_edit', [self.slug]
 
 
-class Sprint(BugsMixin, models.Model):
+class Sprint(BugsListMixin, models.Model):
     project = models.ForeignKey(Project, related_name='sprints')
     name = models.CharField(max_length=200)
     slug = models.CharField(max_length=200, validators=[validate_slug],
@@ -183,70 +180,6 @@ class Sprint(BugsMixin, models.Model):
         }
 
 
-def extract_bug_kwargs(data):
-    kwargs = data.copy()
-    if 'history' in kwargs:
-        del kwargs['history']
-    kwargs['assigned_to'] = kwargs['assigned_to']['name']
-    if 'url' in kwargs:
-        del kwargs['url']
-    if 'whiteboard' in kwargs:
-        scrum_data = parse_whiteboard(kwargs['whiteboard'])
-        for key, val in scrum_data.iteritems():
-            if val:
-                kwargs['story_' + key] = val
-    return kwargs
-
-
-class CachedBugManager(models.Manager):
-    @method_decorator(transaction.commit_on_success)
-    def store_bugs(self, bugs):
-        from pprint import pprint
-        for bug in bugs:
-            pprint(bug)
-            self.update_or_create(bug)
-
-    def update_or_create(self, data):
-        """
-        Create or overwrite a bug from the given data.
-        :param data: dict of bug data
-        :return: CachedBug instance
-        """
-        obj = self.model(data=data)
-        obj.save()
-        return obj
-
-
-class CachedBug(models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    data = JSONField()
-    last_updated = models.DateTimeField(default=datetime.now)
-    product = models.CharField(max_length=200)
-    component = models.CharField(max_length=200)
-    assigned_to = models.CharField(max_length=200)
-    status = models.CharField(max_length=20)
-    summary = models.CharField(max_length=500)
-    priority = models.CharField(max_length=2, blank=True)
-    whiteboard = models.CharField(max_length=200, blank=True)
-    story_user = models.CharField(max_length=50, blank=True)
-    story_component = models.CharField(max_length=50, blank=True)
-    story_points = models.PositiveSmallIntegerField(default=0)
-
-    objects = CachedBugManager()
-
-    @property
-    def scrum_data(self):
-        return parse_whiteboard(self.whiteboard)
-
-    def fill_from_data(self):
-        self.__dict__.update(extract_bug_kwargs(self.data))
-
-
-@receiver(pre_save, sender=CachedBug)
-def fill_bug_fields(sender, instance, **args):
-    instance.fill_from_data()
-
-
 class BugzillaURL(models.Model):
     url = models.URLField(verbose_name='Bugzilla URL', max_length=2048)
     project = models.ForeignKey(Project, null=True, blank=True,
@@ -298,7 +231,7 @@ class BugzillaURL(models.Model):
                 except:
                     raise BZError("Couldn't retrieve bugs from Bugzilla")
                 cache.set(self._bugs_cache_key, data, CACHE_BUGS_FOR)
-                CachedBug.objects.store_bugs(data['bugs'])
+                store_bugs(data['bugs'])
             self._bugs = set(Bug(b) for b in data['bugs'])
             if scrum_only:
                 # only show bugs that have at least user and component set
@@ -321,28 +254,14 @@ class BugzillaURL(models.Model):
         return self._get_bz_args().get('status_whiteboard')
 
 
-class Bug(object):
-    def __init__(self, data):
-        self.__dict__.update(data)
-        for key, value in self.scrum_data.iteritems():
-            setattr(self, 'story_' + key, value)
-
-    def __getattr__(self, name):
-        if name in BZ_FIELDS:
-            return ''
-        raise AttributeError(name)
-
-    def __eq__(self, other):
-        return self.id == other.id
-
-    def __hash__(self):
-        return int(self.id)
-
+class BugMixin(object):
     def is_closed(self):
         return is_closed(self.status)
 
     def is_assigned(self):
-        return self.assigned_to['name'] != 'nobody'
+        if isinstance(self.assigned_to, dict):
+            return self.assigned_to['name'] != 'nobody'
+        return self.assigned_to != 'nobody'
 
     def points_for_date(self, date):
         cpoints = self.story_points
@@ -374,7 +293,7 @@ class Bug(object):
 
     @property
     def points_history(self):
-        if not hasattr(self, '_phistory'):
+        if not hasattr(self, '_points_history'):
             phistory = []
             cpoints = 0
             closed = False
@@ -389,7 +308,7 @@ class Bug(object):
                             phistory.append({
                                 'date': hdate,
                                 'points': pts,
-                            })
+                                })
                             closed = now_closed
                     elif fn == 'whiteboard':
                         pts = parse_whiteboard(change['added'])['points']
@@ -399,6 +318,72 @@ class Bug(object):
                                 phistory.append({
                                     'date': hdate,
                                     'points': pts,
-                                })
-            self._phistory = phistory
-        return self._phistory
+                                    })
+            self._points_history = phistory
+        return self._points_history
+
+
+class Bug(BugMixin):
+    def __init__(self, data):
+        self.__dict__.update(data)
+        for key, value in self.scrum_data.iteritems():
+            setattr(self, 'story_' + key, value)
+
+    def __getattr__(self, name):
+        if name in BZ_FIELDS:
+            return ''
+        raise AttributeError(name)
+
+    def __eq__(self, other):
+        return int(self.id) == int(other.id)
+
+    def __hash__(self):
+        return hash(int(self.id))
+
+
+class CachedBug(models.Model, BugMixin):
+    id = models.PositiveIntegerField(primary_key=True)
+    data = JSONField()
+    last_updated = models.DateTimeField(default=datetime.now)
+    product = models.CharField(max_length=200)
+    component = models.CharField(max_length=200)
+    assigned_to = models.CharField(max_length=200)
+    status = models.CharField(max_length=20)
+    summary = models.CharField(max_length=500)
+    priority = models.CharField(max_length=2, blank=True)
+    whiteboard = models.CharField(max_length=200, blank=True)
+    story_user = models.CharField(max_length=50, blank=True)
+    story_component = models.CharField(max_length=50, blank=True)
+    story_points = models.PositiveSmallIntegerField(default=0)
+
+    @property
+    def history(self):
+        return self.data.get('history', [])
+
+    def fill_from_data(self):
+        self.__dict__.update(extract_bug_kwargs(self.data))
+
+    def save(self, force_insert=False, force_update=False, using=None):
+        self.fill_from_data()
+        super(CachedBug, self).save(force_insert, force_update, using)
+
+
+def extract_bug_kwargs(data):
+    kwargs = data.copy()
+    if 'history' in kwargs:
+        del kwargs['history']
+    kwargs['assigned_to'] = kwargs['assigned_to']['name']
+    if 'url' in kwargs:
+        del kwargs['url']
+    if 'whiteboard' in kwargs:
+        scrum_data = parse_whiteboard(kwargs['whiteboard'])
+        for key, val in scrum_data.iteritems():
+            if val:
+                kwargs['story_' + key] = val
+    return kwargs
+
+
+@transaction.commit_on_success
+def store_bugs(bugs):
+    for bug in bugs:
+        CachedBug(data=bug).save()

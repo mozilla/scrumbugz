@@ -8,16 +8,12 @@ from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect
 from django.template import loader
 from django.template.context import Context
+from django.utils import simplejson as json
 from django.views.generic import (CreateView, DeleteView, DetailView,
                                   ListView, TemplateView, UpdateView)
 
 from scrum.forms import BZURLForm, ProjectForm, SprintForm
 from scrum.models import BugzillaURL, BZError, Project, Sprint, parse_bz_url
-
-try:
-    import simplejson as json
-except ImportError:
-    import json
 
 
 class ProtectedCreateView(CreateView):
