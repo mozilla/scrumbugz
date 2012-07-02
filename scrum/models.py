@@ -368,6 +368,20 @@ class CachedBug(models.Model, BugMixin):
         super(CachedBug, self).save(force_insert, force_update, using)
 
 
+class BugSprintLog(models.Model):
+    ADDED = 0
+    REMOVED = 1
+    ACTION_CHOICES = (
+        (ADDED, 'Added'),
+        (REMOVED, 'Removed'),
+    )
+
+    bug = models.ForeignKey(CachedBug, related_name='sprint_actions')
+    sprint = models.ForeignKey(Sprint, related_name='bug_actions')
+    date = models.DateTimeField(default=datetime.now)
+    action = models.PositiveSmallIntegerField(choices=ACTION_CHOICES)
+
+
 def extract_bug_kwargs(data):
     kwargs = data.copy()
     if 'history' in kwargs:
