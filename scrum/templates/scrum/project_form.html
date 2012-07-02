@@ -10,7 +10,8 @@
   <hr>
   <form action="{{ request.get_full_path }}"
         class="form-horizontal"
-        method="post">
+        method="post"
+        id="project_form_{{ project|yesno:'edit,create' }}">
     {% csrf_token %}
     {{ form|bootstrap }}
     <div class="form-actions">
@@ -18,13 +19,15 @@
       <a href="{% if project %}{{ project.get_absolute_url }}{% else %}{% url scrum_projects_list %}{% endif %}" class="btn">Cancel</a>
     </div>
   </form>
-  {% if project and project.has_backlog %}
-    <h2 id="bzurls">Bugzilla URLs</h2>
-    <div id="bzurl_list_wrapper" data-url="{% url scrum_project_urls project.slug %}">
-      {% include "scrum/bzurl_list.html" with bzurls=project.urls.all %}
+  {% if project %}
+    <div id="bzurls_container"{% if not project.has_backlog %} class="hide"{% endif %}>
+      <h2 id="bzurls">Bugzilla URLs</h2>
+      <div id="bzurl_list_wrapper" data-url="{% url scrum_project_urls project.slug %}">
+        {% include "scrum/bzurl_list.html" with bzurls=project.urls.all %}
+      </div>
+      {% url scrum_project_urls project.slug as bzurl_form_url %}
+      {% include "scrum/bzurl_form.html" %}
     </div>
-    {% url scrum_project_urls project.slug as bzurl_form_url %}
-    {% include "scrum/bzurl_form.html" %}
   {% endif %}
 {% endblock %}
 
