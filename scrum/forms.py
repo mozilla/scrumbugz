@@ -1,6 +1,28 @@
+from django.core.exceptions import ValidationError
+
 import floppyforms as forms
 
 from scrum.models import BugzillaURL, Project, Sprint
+
+
+def validate_bzurl(url):
+    if not url.startswith('https://bugzilla.mozilla.org/buglist.cgi?'):
+        raise ValidationError('Must be a valid bugzilla.mozilla.org '
+                                    'URL.')
+    if 'cmdtype' in url or 'namedcmd' in url:
+        raise ValidationError('Cannot use named commands or saved '
+                                    'searches.')
+
+
+class BZURLField(forms.URLField):
+    def __init__(self, *args, **kwargs):
+        super(BZURLField, self).__init__(*args, **kwargs)
+        if self.label is None:
+            self.label = u'Bugzilla URL'
+        self.widget = forms.URLInput(attrs={
+            'placeholder': 'https://bugzilla.mozilla.org/...',
+        })
+        self.validators.append(validate_bzurl)
 
 
 date5 = forms.DateInput(attrs={
@@ -49,24 +71,29 @@ class SprintForm(forms.ModelForm):
         )
 
 
+class CreateFormMixin(forms.ModelForm):
+    url = BZURLField(required=False)
+
+    def save(self, commit=True):
+        obj = super(CreateFormMixin, self).save(commit)
+        if self.cleaned_data['url']:
+            obj.urls.create(url=self.cleaned_data['url'])
+        return obj
+
+
+class CreateSprintForm(SprintForm, CreateFormMixin):
+    """Form for creating new sprints."""
+
+
+class CreateProjectForm(CreateFormMixin, ProjectForm):
+    """Form for creating new projects."""
+
+
 class BZURLForm(forms.ModelForm):
+    url = BZURLField()
+
     class Meta:
         model = BugzillaURL
-        widgets = {
-            'url': forms.URLInput(attrs={
-                'placeholder': 'https://bugzilla.mozilla.org/...',
-            }),
-        }
         fields = (
             'url',
         )
-
-    def clean_url(self):
-        url = self.cleaned_data['url']
-        if not url.startswith('https://bugzilla.mozilla.org/buglist.cgi?'):
-            raise forms.ValidationError('Must be a valid bugzilla.mozilla.org '
-                                        'URL.')
-        if 'cmdtype' in url or 'namedcmd' in url:
-            raise forms.ValidationError('Cannot use named commands or saved '
-                                        'searches.')
-        return url

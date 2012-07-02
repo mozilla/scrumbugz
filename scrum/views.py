@@ -12,7 +12,8 @@ from django.utils import simplejson as json
 from django.views.generic import (CreateView, DeleteView, DetailView,
                                   ListView, TemplateView, UpdateView)
 
-from scrum.forms import BZURLForm, ProjectForm, SprintForm
+from scrum.forms import (CreateProjectForm, CreateSprintForm, BZURLForm,
+                         ProjectForm, SprintForm)
 from scrum.models import BugzillaURL, BZError, Project, Sprint, parse_bz_url
 
 
@@ -110,13 +111,8 @@ class ListProjectsView(ProjectsMixin, ListView):
 
 class CreateProjectView(ProjectsMixin, ProtectedCreateView):
     model = Project
-    form_class = ProjectForm
+    form_class = CreateProjectForm
     template_name = 'scrum/project_form.html'
-
-    def get_success_url(self):
-        if self.object.has_backlog:
-            return self.object.get_edit_url()
-        return self.object.get_absolute_url()
 
 
 class EditProjectView(ProjectsMixin, ProtectedUpdateView):
@@ -126,7 +122,7 @@ class EditProjectView(ProjectsMixin, ProtectedUpdateView):
 
 class CreateSprintView(ProjectsMixin, ProtectedCreateView):
     model = Sprint
-    form_class = SprintForm
+    form_class = CreateSprintForm
     template_name = 'scrum/sprint_form.html'
 
     def get_context_data(self, **kwargs):
@@ -142,8 +138,7 @@ class CreateSprintView(ProjectsMixin, ProtectedCreateView):
         sprint = form.save(commit=False)
         sprint.project = self.project
         sprint.save()
-        return redirect('scrum_sprint_edit', sslug=sprint.slug,
-                        pslug=self.project.slug)
+        return redirect(sprint)
 
 
 class SprintMixin(ProjectOrSprintMixin):

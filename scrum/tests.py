@@ -9,7 +9,7 @@ from django.core.cache import cache
 from django.test import TestCase
 from django.utils import simplejson as json
 
-from .forms import BZURLForm
+from .forms import BZURLForm, CreateProjectForm
 from .models import Bug, CachedBug, Sprint
 from scrum import models as scrum_models
 
@@ -72,7 +72,7 @@ class TestSprint(TestCase):
         ok_('Website' in components)
 
 
-class TestSprintForm(TestCase):
+class TestForms(TestCase):
 
     def test_bugzilla_url(self):
         form_data = {"url": "http://localhost/?bugs"}
@@ -87,4 +87,26 @@ class TestSprintForm(TestCase):
         ok_('url' in form.errors.keys())
         form_data = {"url": GOOD_BZ_URL}
         form = BZURLForm(form_data)
+        eq_(True, form.is_valid())
+
+    def test_create_project_form(self):
+        form_data = {
+            'name': 'Best Project Ever',
+            'slug': 'srsly',
+            'url': 'not a url',
+        }
+        form = CreateProjectForm(form_data)
+        eq_(False, form.is_valid())
+        ok_('url' in form.errors.keys())
+        form_data['url'] = GOOD_BZ_URL
+        form = CreateProjectForm(form_data)
+        eq_(True, form.is_valid())
+        project = form.save()
+        eq_(project.urls.count(), 1)
+        eq_(project.urls.all()[0].url, GOOD_BZ_URL)
+        # no url required
+        form = CreateProjectForm({
+            'name': 'FO REAL Best Ever',
+            'slug': 'srsly-fo-real',
+        })
         eq_(True, form.is_valid())
