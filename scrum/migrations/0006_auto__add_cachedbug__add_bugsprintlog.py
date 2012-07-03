@@ -8,18 +8,40 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
+        # Adding model 'CachedBug'
+        db.create_table('scrum_cachedbug', (
+            ('id', self.gf('django.db.models.fields.PositiveIntegerField')(primary_key=True)),
+            ('history', self.gf('scrum.models.CompressedJSONField')()),
+            ('last_updated', self.gf('django.db.models.fields.DateTimeField')(default=datetime.datetime.now)),
+            ('product', self.gf('django.db.models.fields.CharField')(max_length=200)),
+            ('component', self.gf('django.db.models.fields.CharField')(max_length=200)),
+            ('assigned_to', self.gf('django.db.models.fields.CharField')(max_length=200)),
+            ('status', self.gf('django.db.models.fields.CharField')(max_length=20)),
+            ('summary', self.gf('django.db.models.fields.CharField')(max_length=500)),
+            ('priority', self.gf('django.db.models.fields.CharField')(max_length=2, blank=True)),
+            ('whiteboard', self.gf('django.db.models.fields.CharField')(max_length=200, blank=True)),
+            ('story_user', self.gf('django.db.models.fields.CharField')(max_length=50, blank=True)),
+            ('story_component', self.gf('django.db.models.fields.CharField')(max_length=50, blank=True)),
+            ('story_points', self.gf('django.db.models.fields.PositiveSmallIntegerField')(default=0)),
+            ('sprint', self.gf('django.db.models.fields.related.ForeignKey')(related_name='backlog_bugs', null=True, to=orm['scrum.Sprint'])),
+        ))
+        db.send_create_signal('scrum', ['CachedBug'])
+
         # Adding model 'BugSprintLog'
         db.create_table('scrum_bugsprintlog', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('bug', self.gf('django.db.models.fields.related.ForeignKey')(related_name='sprint_actions', to=orm['scrum.CachedBug'])),
             ('sprint', self.gf('django.db.models.fields.related.ForeignKey')(related_name='bug_actions', to=orm['scrum.Sprint'])),
-            ('date', self.gf('django.db.models.fields.DateTimeField')(default=datetime.datetime.now)),
             ('action', self.gf('django.db.models.fields.PositiveSmallIntegerField')()),
+            ('timestamp', self.gf('django.db.models.fields.DateTimeField')(default=datetime.datetime.now)),
         ))
         db.send_create_signal('scrum', ['BugSprintLog'])
 
 
     def backwards(self, orm):
+        # Deleting model 'CachedBug'
+        db.delete_table('scrum_cachedbug')
+
         # Deleting model 'BugSprintLog'
         db.delete_table('scrum_bugsprintlog')
 
@@ -29,7 +51,7 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'BugSprintLog'},
             'action': ('django.db.models.fields.PositiveSmallIntegerField', [], {}),
             'bug': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'sprint_actions'", 'to': "orm['scrum.CachedBug']"}),
-            'date': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.now'}),
+            'timestamp': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.now'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'sprint': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'bug_actions'", 'to': "orm['scrum.Sprint']"})
         },
@@ -44,11 +66,12 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'CachedBug'},
             'assigned_to': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
             'component': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
-            'data': ('jsonfield.fields.JSONField', [], {}),
+            'history': ('scrum.models.CompressedJSONField', [], {}),
             'id': ('django.db.models.fields.PositiveIntegerField', [], {'primary_key': 'True'}),
             'last_updated': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.now'}),
             'priority': ('django.db.models.fields.CharField', [], {'max_length': '2', 'blank': 'True'}),
             'product': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
+            'sprint': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'backlog_bugs'", 'null': 'True', 'to': "orm['scrum.Sprint']"}),
             'status': ('django.db.models.fields.CharField', [], {'max_length': '20'}),
             'story_component': ('django.db.models.fields.CharField', [], {'max_length': '50', 'blank': 'True'}),
             'story_points': ('django.db.models.fields.PositiveSmallIntegerField', [], {'default': '0'}),

@@ -1,5 +1,6 @@
 from __future__ import absolute_import
-from datetime import date
+from copy import deepcopy
+from datetime import date, timedelta
 
 from mock import Mock, patch
 from nose.tools import eq_, ok_
@@ -10,7 +11,7 @@ from django.test import TestCase
 from django.utils import simplejson as json
 
 from .forms import BZURLForm, CreateProjectForm
-from .models import Bug, CachedBug, Sprint
+from .models import Bug, BugSprintLog, BugzillaURL, CachedBug, Sprint
 from scrum import models as scrum_models
 
 
@@ -22,7 +23,9 @@ with open(BUG_DATA_FILE) as bdf:
     BUG_DATA = json.load(bdf)
 
 GOOD_BZ_URL = BUG_DATA['bz_url']
-scrum_models.BZAPI.bug.get.return_value = BUG_DATA
+
+# have to deepcopy to avoid cross-test-pollution
+scrum_models.BZAPI.bug.get.side_effect = lambda *x, **y: deepcopy(BUG_DATA)
 
 
 class TestBug(TestCase):
@@ -59,6 +62,7 @@ class TestSprint(TestCase):
     fixtures = ['test_data.json']
 
     def setUp(self):
+        cache.clear()
         self.s = Sprint.objects.get(slug='2.2')
 
     def test_get_products(self):
@@ -70,6 +74,58 @@ class TestSprint(TestCase):
         components = self.s.get_components()
         eq_(11, len(components))
         ok_('Website' in components)
+
+    def test_sprint_bug_logging(self):
+        bzurl = BugzillaURL.objects.create(
+            url='http://example.com/?stuff=whatnot'
+        )
+        bugs = bzurl.get_bugs(scrum_only=False)
+        bug_ids = set(int(bug.id) for bug in bugs)
+        cbug_ids = set(bug.id for bug in CachedBug.objects.all())
+        self.assertSetEqual(bug_ids, cbug_ids)
+        self.assertEqual(0, BugSprintLog.objects.count())
+        bugs = self.s.get_bugs(scrum_only=False)
+        self.assertEqual(len(bugs), BugSprintLog.objects.count())
+        action = CachedBug.objects.all()[0].sprint_actions.all()[0].action
+        self.assertEqual(action, BugSprintLog.ADDED)
+
+    def test_sprint_bug_move_logging(self):
+        self.s.get_bugs()
+        newsprint = Sprint.objects.create(
+            name='New Sprint',
+            slug='newsprint',
+            start_date=date.today(),
+            end_date=date.today() + timedelta(days=10),
+            project=self.s.project
+        )
+        bug = CachedBug.objects.get(id=665747)
+        bug.sprint = None
+        bug.save()
+        self.assertEqual(BugSprintLog.REMOVED,
+                         bug.sprint_actions.all()[0].action)
+        bug.sprint = newsprint
+        bug.save()
+        self.assertEqual(BugSprintLog.ADDED,
+                         bug.sprint_actions.all()[0].action)
+
+    def test_sprint_bug_steal_logging(self):
+        self.s.get_bugs()
+        newsprint = Sprint.objects.create(
+            name='New Sprint',
+            slug='newsprint',
+            start_date=date.today(),
+            end_date=date.today() + timedelta(days=10),
+            project=self.s.project
+        )
+        bug = CachedBug.objects.get(id=665747)
+        self.assertEqual(bug.sprint, self.s)
+        bug.sprint = newsprint
+        bug.save()
+        self.assertEqual(bug.sprint_actions.count(), 3)
+        self.assertEqual(BugSprintLog.REMOVED,
+                         bug.sprint_actions.all()[1].action)
+        self.assertEqual(BugSprintLog.ADDED,
+                         bug.sprint_actions.all()[0].action)
 
 
 class TestForms(TestCase):

@@ -23,3 +23,5 @@ CACHES = {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
     },
 }
+
+SOUTH_TESTS_MIGRATE = False

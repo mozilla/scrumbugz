@@ -2,6 +2,8 @@ from __future__ import absolute_import
 
 import hashlib
 import re
+import zlib
+from base64 import b64decode, b64encode
 from collections import defaultdict
 from datetime import datetime
 from operator import itemgetter
@@ -10,6 +12,8 @@ from django.conf import settings
 from django.core.cache import cache
 from django.core.validators import RegexValidator
 from django.db import models, transaction
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
 
 import dateutil.parser
 import slumber
@@ -17,6 +21,35 @@ from jsonfield import JSONField
 
 from .utils import (date_to_js, is_closed, date_range, parse_bz_url,
                     parse_whiteboard)
+
+
+class CompressedJSONField(JSONField):
+    """
+    Django model field that stores JSON data compressed with zlib.
+    """
+    __metaclass__ = models.SubfieldBase
+
+    def to_python(self, value):
+        if isinstance(value, basestring):
+            try:
+                value = zlib.decompress(b64decode(value))
+            except zlib.error:
+                # must not be compressed. leave alone.
+                pass
+        return super(CompressedJSONField, self).to_python(value)
+
+    def get_db_prep_value(self, value, connection=None, prepared=None):
+        value = super(CompressedJSONField, self).get_db_prep_value(value,
+                                                                   connection,
+                                                                   prepared)
+        return b64encode(zlib.compress(value, 9))
+
+
+try:
+    from south.modelsinspector import add_introspection_rules
+    add_introspection_rules([], ['^scrum\.models\.CompressedJSONField'])
+except ImportError:
+    pass
 
 
 BZ_FIELDS = (
@@ -99,9 +132,8 @@ class BugsListMixin(object):
         data = self.get_bugs_data()
         for item in ['users', 'components', 'status', 'basic_status']:
             data[item] = [{'label': k, 'data': v} for k, v in
-                                                  sorted(data[item].iteritems(),
-                                                         key=itemgetter(1),
-                                                         reverse=True)]
+                          sorted(data[item].iteritems(), key=itemgetter(1),
+                                 reverse=True)]
         return data
 
 
@@ -228,10 +260,10 @@ class BugzillaURL(models.Model):
                                 args.iterlists())
                     data = BZAPI.bug.get(**args)
                     data['date_received'] = datetime.now()
-                except:
+                except Exception:
                     raise BZError("Couldn't retrieve bugs from Bugzilla")
                 cache.set(self._bugs_cache_key, data, CACHE_BUGS_FOR)
-                store_bugs(data['bugs'])
+                store_bugs(data['bugs'], self.sprint)
             self._bugs = set(Bug(b) for b in data['bugs'])
             if scrum_only:
                 # only show bugs that have at least user and component set
@@ -341,9 +373,22 @@ class Bug(BugMixin):
         return hash(int(self.id))
 
 
+class CachedBugManager(models.Manager):
+    def save_from_data(self, data):
+        """
+        Create or update a cached bug from the data returned from Bugzilla.
+        :param data: dict of bug data from the bugzilla api.
+        :return: CachedBug instance.
+        """
+        bug = self.model(**extract_bug_kwargs(data))
+        bug.last_updated = datetime.now()
+        bug.save()
+        return bug
+
+
 class CachedBug(models.Model, BugMixin):
     id = models.PositiveIntegerField(primary_key=True)
-    data = JSONField()
+    history = CompressedJSONField()
     last_updated = models.DateTimeField(default=datetime.now)
     product = models.CharField(max_length=200)
     component = models.CharField(max_length=200)
@@ -356,16 +401,32 @@ class CachedBug(models.Model, BugMixin):
     story_component = models.CharField(max_length=50, blank=True)
     story_points = models.PositiveSmallIntegerField(default=0)
 
-    @property
-    def history(self):
-        return self.data.get('history', [])
+    sprint = models.ForeignKey(Sprint, related_name='backlog_bugs', null=True)
 
-    def fill_from_data(self):
+    objects = CachedBugManager()
+
+    def fill_from_data(self, data):
         self.__dict__.update(extract_bug_kwargs(self.data))
+        self.last_updated = datetime.now()
 
-    def save(self, force_insert=False, force_update=False, using=None):
-        self.fill_from_data()
-        super(CachedBug, self).save(force_insert, force_update, using)
+    def refresh_from_bugzilla(self):
+        data = BZAPI.bug.get(
+            id=self.id,
+            id_mode='include',
+            include_fields=','.join(BZ_FIELDS),
+        )
+        self.fill_from_data(data['bugs'][0])
+
+
+class BugSprintLogManager(models.Manager):
+    def _record_action(self, bug, sprint, action):
+        self.create(bug=bug, sprint=sprint, action=action)
+
+    def added_to_sprint(self, bug, sprint):
+        self._record_action(bug, sprint, BugSprintLog.ADDED)
+
+    def removed_from_sprint(self, bug, sprint):
+        self._record_action(bug, sprint, BugSprintLog.REMOVED)
 
 
 class BugSprintLog(models.Model):
@@ -378,14 +439,17 @@ class BugSprintLog(models.Model):
 
     bug = models.ForeignKey(CachedBug, related_name='sprint_actions')
     sprint = models.ForeignKey(Sprint, related_name='bug_actions')
-    date = models.DateTimeField(default=datetime.now)
     action = models.PositiveSmallIntegerField(choices=ACTION_CHOICES)
+    timestamp = models.DateTimeField(default=datetime.now)
+
+    objects = BugSprintLogManager()
+
+    class Meta:
+        ordering = ('-timestamp',)
 
 
 def extract_bug_kwargs(data):
     kwargs = data.copy()
-    if 'history' in kwargs:
-        del kwargs['history']
     kwargs['assigned_to'] = kwargs['assigned_to']['name']
     if 'url' in kwargs:
         del kwargs['url']
@@ -398,6 +462,26 @@ def extract_bug_kwargs(data):
 
 
 @transaction.commit_on_success
-def store_bugs(bugs):
+def store_bugs(bugs, sprint=None):
     for bug in bugs:
-        CachedBug(data=bug).save()
+        if sprint:
+            bug['sprint'] = sprint
+        CachedBug.objects.save_from_data(bug)
+
+
+class DummyBug:
+    sprint = None
+    sprint_id = None
+
+
+@receiver(pre_save, sender=CachedBug)
+def log_bug_actions(sender, instance, **kwargs):
+    try:
+        old_bug = CachedBug.objects.get(id=instance.id)
+    except CachedBug.DoesNotExist:
+        old_bug = DummyBug()
+    if old_bug.sprint_id != instance.sprint_id:
+        if old_bug.sprint:
+            BugSprintLog.objects.removed_from_sprint(instance, old_bug.sprint)
+        if instance.sprint:
+            BugSprintLog.objects.added_to_sprint(instance, instance.sprint)
