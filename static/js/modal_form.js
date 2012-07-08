@@ -8,7 +8,7 @@ $(function(){
         $(this).find('input:visible:first').focus();
     });
     // slugify the names
-    $('#id_name').on('keyup', function(){
+    $('#id_name').on('keyup blur', function(){
         $('#id_slug').val($(this).val().replace(/\s+/g,'-').replace(/[^a-zA-Z0-9.\-]/g,'').toLowerCase());
     });
 
