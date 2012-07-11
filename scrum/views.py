@@ -1,5 +1,3 @@
-from operator import itemgetter
-
 from django import http
 from django.conf import settings
 from django.contrib import messages
@@ -14,7 +12,7 @@ from django.views.generic import (CreateView, DeleteView, DetailView,
 
 from scrum.forms import (CreateProjectForm, CreateSprintForm, BZURLForm,
                          ProjectForm, SprintBugsForm, SprintForm)
-from scrum.models import BugzillaURL, BZError, Project, Sprint, parse_bz_url
+from scrum.models import BugzillaURL, BZError, Project, Sprint
 
 
 class ProtectedCreateView(CreateView):
@@ -54,7 +52,9 @@ class ProjectOrSprintMixin(object):
             pslug = self.kwargs.get('pslug')
             sslug = self.kwargs.get('sslug')
             if sslug:
-                self.target_obj = get_object_or_404(Sprint, project__slug=pslug, slug=sslug)
+                self.target_obj = get_object_or_404(Sprint,
+                                                    project__slug=pslug,
+                                                    slug=sslug)
                 self.target_obj_type = 'sprint'
             else:
                 self.target_obj = get_object_or_404(Project, slug=pslug)
@@ -170,7 +170,7 @@ class EditSprintView(SprintMixin, ProjectsMixin, ProtectedUpdateView):
     template_name = 'scrum/sprint_form.html'
 
 
-class ManageSprintBugsView(SprintMixin, ProjectsMixin, ProtectedUpdateView):
+class ManageSprintBugsView(SprintMixin, ProtectedUpdateView):
     form_class = SprintBugsForm
     template_name = 'scrum/sprint_bugs.html'
 

@@ -13,6 +13,7 @@ from django.utils import simplejson as json
 from .forms import BZURLForm, CreateProjectForm
 from .models import Bug, BugSprintLog, BugzillaURL, CachedBug, Sprint
 from scrum import models as scrum_models
+from scrum.forms import SprintBugsForm
 
 
 scrum_models.BZAPI = Mock()
@@ -131,19 +132,56 @@ class TestSprint(TestCase):
         self.s.get_bugs()
         self.s.backlog_bugs.remove(CachedBug.objects.get(id=665747))
         self.assertEqual(self.s.backlog_bugs.count(), 36)
-        self.s.update_backlog_bugs([665747, 758377, 766608])
+        new_bug_ids = [665747, 758377, 766608]
+        self.s.update_backlog_bugs(new_bug_ids)
         self.assertEqual(self.s.backlog_bugs.count(), 3)
-        self.assertSetEqual(set(self.s.backlog_bugs.values_list('id',
-                                                                flat=True)),
-                            set([665747, 758377, 766608]))
+        all_bl_bug_ids = self.s.backlog_bugs.values_list('id', flat=True)
+        self.assertSetEqual(set(all_bl_bug_ids), set(new_bug_ids))
+        # the process of syncing did not remove bugs unnecessarily
         self.assertEqual(self.s.bug_actions.filter(
             bug_id__in=[758377, 766608],
             action=BugSprintLog.REMOVED,
         ).count(), 0)
+        # the bug was added back, thus the 2 ADDED actions.
         self.assertEqual(self.s.bug_actions.filter(
             bug_id=665747,
             action=BugSprintLog.ADDED
         ).count(), 2)
+
+    def test_sprint_bug_management(self):
+        self.s.get_bugs()
+        self.s.backlog_bugs.remove(CachedBug.objects.get(id=665747))
+        self.assertEqual(self.s.backlog_bugs.count(), 36)
+        new_bug_ids = [665747, 758377, 766608]
+        form = SprintBugsForm(instance=self.s, data={
+            'sprint_bugs': ','.join(str(bid) for bid in new_bug_ids),
+        })
+        self.assertTrue(form.is_valid())
+        form.save()
+        self.assertEqual(self.s.backlog_bugs.count(), 3)
+        all_bl_bug_ids = self.s.backlog_bugs.values_list('id', flat=True)
+        self.assertSetEqual(set(all_bl_bug_ids), set(new_bug_ids))
+
+    def test_sprint_bugs_form_validation(self):
+        # non digit
+        form = SprintBugsForm(instance=self.s, data={
+            'sprint_bugs': '1234,234d,2345',
+        })
+        self.assertFalse(form.is_valid())
+        # no commas
+        form = SprintBugsForm(instance=self.s, data={
+            'sprint_bugs': '12342342345',
+        })
+        self.assertTrue(form.is_valid())
+        # blank
+        form = SprintBugsForm(instance=self.s, data={
+            'sprint_bugs': '',
+        })
+        self.assertFalse(form.is_valid())
+        form = SprintBugsForm(instance=self.s, data={
+            'sprint_bugs': '1234,23465,2345',
+        })
+        self.assertTrue(form.is_valid())
 
 
 class TestForms(TestCase):

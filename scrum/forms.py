@@ -83,18 +83,15 @@ class SprintBugsForm(forms.ModelForm):
         fields = ('sprint_bugs',)
 
     def clean_sprint_bugs(self):
-        sprint_bugs = self.cleaned_data.get('sprint_bugs')
+        sprint_bugs = self.cleaned_data['sprint_bugs']
         bugs_list = []
         if sprint_bugs:
             bugs_list = [int(b) for b in sprint_bugs.split(',')]
         return bugs_list
 
-    def save(self, commit=False):
-        instance = super(SprintBugsForm, self).save(commit)
-        sprint_bugs = self.cleaned_data.get('sprint_bugs', [])
-        for bug_id in sprint_bugs:
-            instance.backlog_bugs.add(bug_id)
-
+    def save(self, commit=True):
+        sprint_bugs = self.cleaned_data['sprint_bugs']
+        self.instance.update_backlog_bugs(sprint_bugs)
 
 
 class CreateFormMixin(forms.ModelForm):

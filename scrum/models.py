@@ -414,7 +414,8 @@ class CachedBug(models.Model, BugMixin):
     story_component = models.CharField(max_length=50, blank=True)
     story_points = models.PositiveSmallIntegerField(default=0)
 
-    sprint = models.ForeignKey(Sprint, related_name='backlog_bugs', null=True)
+    sprint = models.ForeignKey(Sprint, related_name='backlog_bugs', null=True,
+                               on_delete=models.SET_NULL)
 
     objects = CachedBugManager()
 

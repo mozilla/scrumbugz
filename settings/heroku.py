@@ -30,13 +30,12 @@ STATICFILES_STORAGE = 'storages.backends.s3boto.S3BotoStorage'
 DEFAULT_FILE_STORAGE = STATICFILES_STORAGE
 AWS_ACCESS_KEY_ID = os.environ['AWS_ACCESS_KEY_ID']
 AWS_SECRET_ACCESS_KEY = os.environ['AWS_SECRET_ACCESS_KEY']
-AWS_STORAGE_BUCKET_NAME = 'scrumbugz-static'
+AWS_STORAGE_BUCKET_NAME = os.environ['AWS_STORAGE_BUCKET_NAME']
 STATIC_URL = '//s3.amazonaws.com/%s/' % AWS_STORAGE_BUCKET_NAME
 
 # SENTRY
-SENTRY_DSN = os.environ['SENTRY_DSN']
+SENTRY_DSN = os.environ.get('SENTRY_DSN')
+if SENTRY_DSN:
+    INSTALLED_APPS += ('raven.contrib.django',)
 
-INSTALLED_APPS += (
-    'raven.contrib.django',
-    'storages',
-)
+INSTALLED_APPS += ('storages',)
