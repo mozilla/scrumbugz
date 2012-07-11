@@ -17,7 +17,8 @@ def heroku_django(cmd):
 
 
 def deploy():
-    remote = 'heroku master' if env.app == 'scrumbugz' else 'heroku-dev next'
+    remote = ('heroku master' if env.app == 'scrumbugz'
+              else 'heroku-dev next:master')
     local('git push ' + remote)
     heroku_django('collectstatic --noinput')
     heroku_django('syncdb')

@@ -1,4 +1,3 @@
-import os
 from unipath import Path
 
 
@@ -27,6 +26,7 @@ CONTEXT_SETTINGS = (
     'ENABLE_GA',
     'BZ_SHOW_URL',
     'BZ_FILE_URL',
+    'PROD_MODE',
 )
 
 CACHES = {
