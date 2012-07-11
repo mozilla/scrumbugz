@@ -9,8 +9,11 @@ from .base import *
 urlparse.uses_netloc.append('postgres')
 url = urlparse.urlparse(os.environ['DATABASE_URL'])
 
-ENFORCE_HOSTNAME = 'scrumbu.gs'
-ENABLE_GA = True
+PROD_MODE = os.environ.get('PROD_MODE')
+
+if PROD_MODE:
+    ENFORCE_HOSTNAME = 'scrumbu.gs'
+    ENABLE_GA = True
 
 DATABASES = {
     'default': {
