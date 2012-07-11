@@ -1,4 +1,5 @@
 from django.core.exceptions import ValidationError
+from django.core.validators import validate_comma_separated_integer_list
 
 import floppyforms as forms
 
@@ -69,6 +70,31 @@ class SprintForm(forms.ModelForm):
             'start_date',
             'end_date',
         )
+
+
+class SprintBugsForm(forms.ModelForm):
+    sprint_bugs = forms.CharField(
+        widget=forms.HiddenInput,
+        validators=[validate_comma_separated_integer_list],
+    )
+
+    class Meta:
+        model = Sprint
+        fields = ('sprint_bugs',)
+
+    def clean_sprint_bugs(self):
+        sprint_bugs = self.cleaned_data.get('sprint_bugs')
+        bugs_list = []
+        if sprint_bugs:
+            bugs_list = [int(b) for b in sprint_bugs.split(',')]
+        return bugs_list
+
+    def save(self, commit=False):
+        instance = super(SprintBugsForm, self).save(commit)
+        sprint_bugs = self.cleaned_data.get('sprint_bugs', [])
+        for bug_id in sprint_bugs:
+            instance.backlog_bugs.add(bug_id)
+
 
 
 class CreateFormMixin(forms.ModelForm):

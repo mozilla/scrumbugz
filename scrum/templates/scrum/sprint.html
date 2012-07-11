@@ -9,6 +9,12 @@
     <div class="row">
       <div class="span12">
         {% if perms.scrum.change_sprint %}
+          {% if project.has_backlog %}
+            <a class="btn btn-primary pull-right"
+               href="{% url scrum_sprint_bugs project.slug sprint.slug %}">
+              <i class="icon-list icon-white"></i> Manage Bugs
+            </a>
+          {% endif %}
           <a class="btn btn-primary pull-right"
              href="{% url scrum_sprint_edit project.slug sprint.slug %}">
             <i class="icon-edit icon-white"></i> Update Sprint

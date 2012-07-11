@@ -1,0 +1,15 @@
+{% extends "scrum/base.html" %}
+
+{% block title %}{{ sprint.name }} / {{ block.super }}{% endblock %}
+
+{% block content %}
+  <div class="row">
+    <div class="span12">
+
+      <h1>
+        Manage <a href="{{ project.get_absolute_url }}">{{ project.name }}</a>
+        / {{ sprint.name }} Bugs
+      </h1>
+    </div>
+  </div>
+{% endblock %}

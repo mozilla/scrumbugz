@@ -13,7 +13,7 @@ from django.views.generic import (CreateView, DeleteView, DetailView,
                                   ListView, TemplateView, UpdateView)
 
 from scrum.forms import (CreateProjectForm, CreateSprintForm, BZURLForm,
-                         ProjectForm, SprintForm)
+                         ProjectForm, SprintBugsForm, SprintForm)
 from scrum.models import BugzillaURL, BZError, Project, Sprint, parse_bz_url
 
 
@@ -168,6 +168,11 @@ class SprintView(BugsDataMixin, SprintMixin, DetailView):
 class EditSprintView(SprintMixin, ProjectsMixin, ProtectedUpdateView):
     form_class = SprintForm
     template_name = 'scrum/sprint_form.html'
+
+
+class ManageSprintBugsView(SprintMixin, ProjectsMixin, ProtectedUpdateView):
+    form_class = SprintBugsForm
+    template_name = 'scrum/sprint_bugs.html'
 
 
 class CreateBZUrlView(ProjectOrSprintMixin, ProtectedCreateView):

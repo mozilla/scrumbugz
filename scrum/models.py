@@ -184,6 +184,19 @@ class Sprint(BugsListMixin, models.Model):
         return 'scrum_sprint_edit', (), {'pslug': self.project.slug,
                                          'sslug': self.slug}
 
+    def update_backlog_bugs(self, bug_ids):
+        """
+        Add and remove bugs to sync the list with what we receive.
+        :param bug_ids: list of bug ids
+        :return: None
+        """
+        current_bugs = set(self.backlog_bugs.all())
+        new_bugs = set(CachedBug.objects.filter(id__in=bug_ids))
+        to_add = new_bugs - current_bugs
+        to_remove = current_bugs - new_bugs
+        self.backlog_bugs.add(*to_add)
+        self.backlog_bugs.remove(*to_remove)
+
     def get_burndown(self):
         """Return a list of total point values per day of sprint"""
         now = datetime.utcnow().date()
@@ -446,6 +459,11 @@ class BugSprintLog(models.Model):
 
     class Meta:
         ordering = ('-timestamp',)
+
+    def __unicode__(self):
+        action = self.get_action_display().lower()
+        action += ' to' if self.action == self.ADDED else ' from'
+        return u'Bug %d %s Sprint %d' % (self.bug_id, action, self.sprint_id)
 
 
 def extract_bug_kwargs(data):

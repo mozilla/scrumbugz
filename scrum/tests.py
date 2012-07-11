@@ -127,6 +127,24 @@ class TestSprint(TestCase):
         self.assertEqual(BugSprintLog.ADDED,
                          bug.sprint_actions.all()[0].action)
 
+    def test_backlog_bug_sync(self):
+        self.s.get_bugs()
+        self.s.backlog_bugs.remove(CachedBug.objects.get(id=665747))
+        self.assertEqual(self.s.backlog_bugs.count(), 36)
+        self.s.update_backlog_bugs([665747, 758377, 766608])
+        self.assertEqual(self.s.backlog_bugs.count(), 3)
+        self.assertSetEqual(set(self.s.backlog_bugs.values_list('id',
+                                                                flat=True)),
+                            set([665747, 758377, 766608]))
+        self.assertEqual(self.s.bug_actions.filter(
+            bug_id__in=[758377, 766608],
+            action=BugSprintLog.REMOVED,
+        ).count(), 0)
+        self.assertEqual(self.s.bug_actions.filter(
+            bug_id=665747,
+            action=BugSprintLog.ADDED
+        ).count(), 2)
+
 
 class TestForms(TestCase):
 
