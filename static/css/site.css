@@ -1,5 +1,6 @@
 body {
     padding-bottom: 40px;
+    padding-top: 50px;
 }
 
 div.row {
@@ -237,6 +238,19 @@ a.caldisabled {
     margin-left: 4px;
 }
 
-.navbar .navbar-inner {
-    border-radius: 0;
+.storylist {
+    margin-left: 0;
+}
+
+.storylist li {
+    cursor: move;
+    list-style-type: none;
+    padding: 3px 5px;
+    background-color: #ececec;
+    margin: 2px 0;
+}
+
+.storylist .story_points {
+    font-weight: bold;
+    font-size: 15px;
 }

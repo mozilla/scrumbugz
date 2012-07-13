@@ -59,6 +59,35 @@ class TestBug(TestCase):
                                  getattr(cbug, fieldname))
 
 
+class TestProject(TestCase):
+    fixtures = ['test_data.json']
+
+    def setUp(self):
+        cache.clear()
+        self.s = Sprint.objects.get(slug='2.2')
+        self.p = self.s.project
+
+    def test_refreshing_bugs_not_remove_from_sprint(self):
+        """
+        Refreshing bugs from Bugzilla does not remove them from a sprint.
+        """
+        bugs = self.s.get_bugs(scrum_only=False)
+        self.assertEqual(
+            CachedBug.objects.filter(sprint__isnull=True).count(),
+            len(bugs)
+        )
+        self.s.update_backlog_bugs(bugs)
+        self.assertEqual(
+            CachedBug.objects.filter(sprint__isnull=True).count(),
+            0
+        )
+        self.s.get_bugs(refresh=True)
+        self.assertEqual(
+            CachedBug.objects.filter(sprint__isnull=True).count(),
+            0
+        )
+
+
 class TestSprint(TestCase):
     fixtures = ['test_data.json']
 
@@ -86,12 +115,13 @@ class TestSprint(TestCase):
         self.assertSetEqual(bug_ids, cbug_ids)
         self.assertEqual(0, BugSprintLog.objects.count())
         bugs = self.s.get_bugs(scrum_only=False)
+        self.s.update_backlog_bugs(bugs)
         self.assertEqual(len(bugs), BugSprintLog.objects.count())
         action = CachedBug.objects.all()[0].sprint_actions.all()[0].action
         self.assertEqual(action, BugSprintLog.ADDED)
 
     def test_sprint_bug_move_logging(self):
-        self.s.get_bugs()
+        self.s.update_backlog_bugs(self.s.get_bugs())
         newsprint = Sprint.objects.create(
             name='New Sprint',
             slug='newsprint',
@@ -110,7 +140,7 @@ class TestSprint(TestCase):
                          bug.sprint_actions.all()[0].action)
 
     def test_sprint_bug_steal_logging(self):
-        self.s.get_bugs()
+        self.s.update_backlog_bugs(self.s.get_bugs(scrum_only=False))
         newsprint = Sprint.objects.create(
             name='New Sprint',
             slug='newsprint',
@@ -129,9 +159,9 @@ class TestSprint(TestCase):
                          bug.sprint_actions.all()[0].action)
 
     def test_backlog_bug_sync(self):
-        self.s.get_bugs()
+        self.s.update_backlog_bugs(self.s.get_bugs())
         self.s.backlog_bugs.remove(CachedBug.objects.get(id=665747))
-        self.assertEqual(self.s.backlog_bugs.count(), 36)
+        self.assertEqual(self.s.backlog_bugs.count(), 35)
         new_bug_ids = [665747, 758377, 766608]
         self.s.update_backlog_bugs(new_bug_ids)
         self.assertEqual(self.s.backlog_bugs.count(), 3)
@@ -149,7 +179,7 @@ class TestSprint(TestCase):
         ).count(), 2)
 
     def test_sprint_bug_management(self):
-        self.s.get_bugs()
+        self.s.update_backlog_bugs(self.s.get_bugs(scrum_only=False))
         self.s.backlog_bugs.remove(CachedBug.objects.get(id=665747))
         self.assertEqual(self.s.backlog_bugs.count(), 36)
         new_bug_ids = [665747, 758377, 766608]

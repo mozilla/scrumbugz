@@ -170,7 +170,7 @@ class EditSprintView(SprintMixin, ProjectsMixin, ProtectedUpdateView):
     template_name = 'scrum/sprint_form.html'
 
 
-class ManageSprintBugsView(SprintMixin, ProtectedUpdateView):
+class ManageSprintBugsView(SprintMixin, ProjectsMixin, ProtectedUpdateView):
     form_class = SprintBugsForm
     template_name = 'scrum/sprint_bugs.html'
 

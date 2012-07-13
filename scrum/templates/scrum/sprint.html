@@ -12,7 +12,7 @@
           {% if project.has_backlog %}
             <a class="btn btn-primary pull-right"
                href="{% url scrum_sprint_bugs project.slug sprint.slug %}">
-              <i class="icon-list icon-white"></i> Manage Bugs
+              <i class="icon-list icon-white"></i> Manage Stories
             </a>
           {% endif %}
           <a class="btn btn-primary pull-right"
@@ -35,7 +35,7 @@
           <dt>Total Bugs</dt>
           <dd>{{ bugs_data.total_bugs }}</dd>
           {% if bugs_data.scoreless_bugs %}
-            <dt class="scoreless">Scoreless Bugs</dt>
+            <dt class="scoreless">Scoreless Stories</dt>
             <dd class="scoreless">{{ bugs_data.scoreless_bugs }}</dd>
           {% endif %}
           {% for data in bugs_data.basic_status %}

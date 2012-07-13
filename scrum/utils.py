@@ -1,5 +1,6 @@
 import hashlib
 import time
+from django.conf import settings
 
 from django.http import QueryDict
 from django.utils.encoding import smart_str
@@ -51,12 +52,23 @@ def parse_bz_url(url):
     return qd
 
 
+def get_bz_url_for_buglist(bugs):
+    bug_ids = ','.join(str(bug.id) for bug in bugs)
+    return '%sbug_id=%s&bug_id_type=anyexact' % (
+        settings.BZ_SEARCH_URL,
+        bug_ids
+    )
+
+
 def is_closed(status):
     return status in CLOSED_STATUSES
 
 
 def date_range(sdate, edate, step=1):
-    """Return a list of date objects for every day between sdate and edate inclusive."""
+    """
+    Return a list of date objects for every day
+    between sdate and edate inclusive.
+    """
     dates = []
     cdate = sdate
     while cdate <= edate:

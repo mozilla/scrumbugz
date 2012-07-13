@@ -18,6 +18,7 @@ from django.dispatch import receiver
 import dateutil.parser
 import slumber
 from jsonfield import JSONField
+from scrum.utils import get_bz_url_for_buglist
 
 from .utils import (date_to_js, is_closed, date_range, parse_bz_url,
                     parse_whiteboard)
@@ -96,7 +97,7 @@ class BugsListMixin(object):
         attr_name = "_url_items_%s" % item_name
         if not hasattr(self, attr_name):
             items = set()
-            for url in self.urls.all():
+            for url in self.get_urls():
                 items |= getattr(url, 'get_' + item_name)(*args)
                 if url.date_cached:
                     self.date_cached = url.date_cached
@@ -154,6 +155,20 @@ class Project(BugsListMixin, models.Model):
     def get_edit_url(self):
         return 'scrum_project_edit', [self.slug]
 
+    def get_backlog(self):
+        """
+        Return a list of bugs from this project's backlog not in any sprint.
+        :param sprint: a Sprint instance
+        :return: list of bug objects
+        """
+        backlog = self.get_bugs()
+        backlog_ids = [bug.id for bug in backlog]
+        return CachedBug.objects.filter(id__in=backlog_ids,
+                                        sprint__isnull=True)
+
+    def get_urls(self):
+        return self.urls.all()
+
 
 class Sprint(BugsListMixin, models.Model):
     project = models.ForeignKey(Project, related_name='sprints')
@@ -184,12 +199,24 @@ class Sprint(BugsListMixin, models.Model):
         return 'scrum_sprint_edit', (), {'pslug': self.project.slug,
                                          'sslug': self.slug}
 
+    def get_urls(self):
+        """
+        Get a list of BugzillaURL objects plus one for manually added bugs.
+        """
+        urls = list(self.urls.all())
+        bugs = self.backlog_bugs.all()
+        if bugs:
+            urls += [BugzillaURL(url=get_bz_url_for_buglist(bugs))]
+        return urls
+
     def update_backlog_bugs(self, bug_ids):
         """
         Add and remove bugs to sync the list with what we receive.
-        :param bug_ids: list of bug ids
+        :param bug_ids: list of bugs or bug ids
         :return: None
         """
+        if not isinstance(bug_ids[0], (basestring, int)):
+            bug_ids = [bug.id for bug in bug_ids]
         current_bugs = set(self.backlog_bugs.all())
         new_bugs = set(CachedBug.objects.filter(id__in=bug_ids))
         to_add = new_bugs - current_bugs
@@ -276,7 +303,7 @@ class BugzillaURL(models.Model):
                 except Exception:
                     raise BZError("Couldn't retrieve bugs from Bugzilla")
                 cache.set(self._bugs_cache_key, data, CACHE_BUGS_FOR)
-                store_bugs(data['bugs'], self.sprint)
+                store_bugs(data['bugs'])
             self._bugs = set(Bug(b) for b in data['bugs'])
             if scrum_only:
                 # only show bugs that have at least user and component set
@@ -300,6 +327,15 @@ class BugzillaURL(models.Model):
 
 
 class BugMixin(object):
+    def __eq__(self, other):
+        return int(self.id) == int(other.id)
+
+    def __hash__(self):
+        return hash(int(self.id))
+
+    def get_absolute_url(self):
+        return '%sid=%s' % (settings.BZ_SHOW_URL, self.id)
+
     def is_closed(self):
         return is_closed(self.status)
 
@@ -334,7 +370,9 @@ class BugMixin(object):
 
     @property
     def has_scrum_data(self):
-        return bool(self.story_user and self.story_component)
+        return bool(self.story_points or
+                    self.story_user or
+                    self.story_component)
 
     @property
     def points_history(self):
@@ -379,12 +417,6 @@ class Bug(BugMixin):
             return ''
         raise AttributeError(name)
 
-    def __eq__(self, other):
-        return int(self.id) == int(other.id)
-
-    def __hash__(self):
-        return hash(int(self.id))
-
 
 class CachedBugManager(models.Manager):
     def save_from_data(self, data):
@@ -399,7 +431,7 @@ class CachedBugManager(models.Manager):
         return bug
 
 
-class CachedBug(models.Model, BugMixin):
+class CachedBug(BugMixin, models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     history = CompressedJSONField()
     last_updated = models.DateTimeField(default=datetime.now)
@@ -418,6 +450,12 @@ class CachedBug(models.Model, BugMixin):
                                on_delete=models.SET_NULL)
 
     objects = CachedBugManager()
+
+    class Meta:
+        ordering = ('id',)
+
+    def __unicode__(self):
+        return unicode(self.id)
 
     def fill_from_data(self, data):
         self.__dict__.update(extract_bug_kwargs(self.data))

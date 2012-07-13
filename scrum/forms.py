@@ -92,6 +92,7 @@ class SprintBugsForm(forms.ModelForm):
     def save(self, commit=True):
         sprint_bugs = self.cleaned_data['sprint_bugs']
         self.instance.update_backlog_bugs(sprint_bugs)
+        return self.instance
 
 
 class CreateFormMixin(forms.ModelForm):

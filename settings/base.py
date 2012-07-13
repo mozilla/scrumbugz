@@ -15,6 +15,7 @@ MANAGERS = ADMINS
 BZ_API_URL = 'https://api-dev.bugzilla.mozilla.org/latest/'
 BZ_SHOW_URL = 'https://bugzilla.mozilla.org/show_bug.cgi?'
 BZ_FILE_URL = 'https://bugzilla.mozilla.org/enter_bug.cgi?'
+BZ_SEARCH_URL = 'https://bugzilla.mozilla.org/buglist.cgi?'
 CACHE_BUGS_FOR = 2  # hours
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
