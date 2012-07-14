@@ -38,7 +38,7 @@
       </ul>
     </div>
     <div class="span5">
-      <div class="alert alert-error hidden" id="form_error">
+      <div class="alert alert-error hide" id="form_error">
         <a class="close" data-dismiss="alert" href="#">&times;</a>
         You must select at least one story
       </div>
@@ -50,7 +50,7 @@
         {{ form }}
         <button class="btn btn-primary pull-right">Save</button>
       </form>
-      <h2>Sprint</h2>
+      <h2>Sprint: Points = <span id="current-points"></span></h2>
       <ul class="sprint storylist well">
         {% for bug in sprint.backlog_bugs.all %}
           {% include "scrum/storylist_item.html" %}
