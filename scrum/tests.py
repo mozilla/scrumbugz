@@ -77,15 +77,11 @@ class TestProject(TestCase):
             len(bugs)
         )
         self.s.update_backlog_bugs(bugs)
-        self.assertEqual(
-            CachedBug.objects.filter(sprint__isnull=True).count(),
-            0
-        )
+        self.assertEqual(CachedBug.objects.filter(sprint=self.s).count(),
+                         len(bugs))
         self.s.get_bugs(refresh=True)
-        self.assertEqual(
-            CachedBug.objects.filter(sprint__isnull=True).count(),
-            0
-        )
+        self.assertEqual(CachedBug.objects.filter(sprint=self.s).count(),
+                         len(bugs))
 
 
 class TestSprint(TestCase):

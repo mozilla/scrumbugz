@@ -80,9 +80,9 @@ class BZError(IOError):
 class BugsListMixin(object):
     num_no_data_bugs = 0
 
-    def get_bugs(self, refresh=False, scrum_only=True):
+    def get_bugs(self, **kwargs):
         """Get a unique set of bugs from all bz urls"""
-        return self._get_url_items('bugs', refresh, scrum_only)
+        return self._get_url_items('bugs', **kwargs)
 
     def get_components(self):
         """Get a unique set of bugs from all bz urls"""
@@ -92,13 +92,15 @@ class BugsListMixin(object):
         """Get a unique set of bugs from all bz urls"""
         return self._get_url_items('products')
 
-    def _get_url_items(self, item_name, *args):
+    def _get_url_items(self, item_name, **kwargs):
         """Get a unique set of items from all bz urls"""
         attr_name = "_url_items_%s" % item_name
+        if kwargs.get('refresh', False):
+            delattr(self, attr_name)
         if not hasattr(self, attr_name):
             items = set()
             for url in self.get_urls():
-                items |= getattr(url, 'get_' + item_name)(*args)
+                items |= getattr(url, 'get_' + item_name)(**kwargs)
                 if url.date_cached:
                     self.date_cached = url.date_cached
                 if item_name == 'bugs' and url.num_no_data_bugs:
@@ -419,16 +421,19 @@ class Bug(BugMixin):
 
 
 class CachedBugManager(models.Manager):
-    def save_from_data(self, data):
+    def update_or_create(self, data):
         """
         Create or update a cached bug from the data returned from Bugzilla.
         :param data: dict of bug data from the bugzilla api.
-        :return: CachedBug instance.
+        :return: CachedBug instance, boolean created.
         """
-        bug = self.model(**extract_bug_kwargs(data))
-        bug.last_updated = datetime.now()
-        bug.save()
-        return bug
+        bid = data.copy().pop('id')
+        defaults = extract_bug_kwargs(data)
+        bug, created = self.get_or_create(id=bid, defaults=defaults)
+        if not created:
+            bug.fill_from_data(defaults)
+            bug.save()
+        return bug, created
 
 
 class CachedBug(BugMixin, models.Model):
@@ -458,7 +463,7 @@ class CachedBug(BugMixin, models.Model):
         return unicode(self.id)
 
     def fill_from_data(self, data):
-        self.__dict__.update(extract_bug_kwargs(self.data))
+        self.__dict__.update(data)
         self.last_updated = datetime.now()
 
     def refresh_from_bugzilla(self):
@@ -523,7 +528,7 @@ def store_bugs(bugs, sprint=None):
     for bug in bugs:
         if sprint:
             bug['sprint'] = sprint
-        CachedBug.objects.save_from_data(bug)
+        CachedBug.objects.update_or_create(bug)
 
 
 class DummyBug:
