@@ -95,7 +95,7 @@ class BugsListMixin(object):
     def _get_url_items(self, item_name, **kwargs):
         """Get a unique set of items from all bz urls"""
         attr_name = "_url_items_%s" % item_name
-        if kwargs.get('refresh', False):
+        if kwargs.get('refresh', False) and hasattr(self, attr_name):
             delattr(self, attr_name)
         if not hasattr(self, attr_name):
             items = set()
@@ -314,6 +314,7 @@ class BugzillaURL(models.Model):
                                  if b.has_scrum_data)
                 self.num_no_data_bugs = num_all_bugs - len(self._bugs)
             self.date_cached = data.get('date_received', datetime.now())
+            self.scrum_only = scrum_only
         return self._bugs
 
     def get_products(self):

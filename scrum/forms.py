@@ -105,7 +105,7 @@ class CreateFormMixin(forms.ModelForm):
         return obj
 
 
-class CreateSprintForm(SprintForm, CreateFormMixin):
+class CreateSprintForm(CreateFormMixin, SprintForm):
     """Form for creating new sprints."""
 
 

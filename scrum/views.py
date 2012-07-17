@@ -65,16 +65,14 @@ class ProjectOrSprintMixin(object):
 class BugsDataMixin(object):
     def get_context_data(self, **kwargs):
         context = super(BugsDataMixin, self).get_context_data(**kwargs)
+        bugs_kwargs = {}
         # clear cache if requested
-        refresh = False
         if self.request.META.get('HTTP_CACHE_CONTROL') == 'no-cache':
-            refresh = True
-        scrum_only = True
+            bugs_kwargs['refresh'] = True
         if 'all' in self.request.GET:
-            scrum_only = False
+            bugs_kwargs['scrum_only'] = False
         try:
-            context['bugs'] = self.object.get_bugs(refresh, scrum_only)
-            context['scrum_only'] = scrum_only
+            context['bugs'] = self.object.get_bugs(**bugs_kwargs)
             context['bugs_data'] = self.object.get_graph_bug_data()
             context['bugs_data_json'] = json.dumps(context['bugs_data'])
             context['bzerror'] = False

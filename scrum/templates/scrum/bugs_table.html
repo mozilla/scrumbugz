@@ -1,6 +1,6 @@
 <div class="row">
   <div class="span12">
-    {% if not scrum_only %}
+    {% if not object.scrum_only %}
       <a href="{{ request.path }}" class="btn pull-right">Hide dataless bugs</a>
     {% endif %}
     <h2>Bugs</h2>
@@ -57,7 +57,7 @@
       <tr class="bug-open pull-left">
         <td>Unassigned</td>
       </tr>
-      {% if not scrum_only %}
+      {% if not object.scrum_only %}
         <tr class="bug-dataless pull-left">
           <td>Dataless</td>
         </tr>
