@@ -83,6 +83,8 @@ class BugsListMixin(object):
     def get_bugs(self, **kwargs):
         """Get a unique set of bugs from all bz urls"""
         self.scrum_only = kwargs.get('scrum_only', True)
+        if kwargs.get('refresh', False):
+            self._clear_bugs_data_cache()
         return self._get_url_items('bugs', **kwargs)
 
     def get_components(self):
@@ -135,19 +137,23 @@ class BugsListMixin(object):
                                     data['basic_status']['closed'])
         return data
 
+    @property
+    def _bugs_data_cache_key(self):
+        return '%s:%d:bugs_data' % (self._meta.module_name, self.id)
+
+    def _clear_bugs_data_cache(self):
+        cache.delete(self._bugs_data_cache_key)
+
     def get_bugs_data(self):
         # caching this for storage in the model (for fast display in lists)
-        if not hasattr(self, '_cached_bugs_data'):
-            cache_key = '%s:%d:bugs_data' % (self._meta.module_name, self.id)
-            data = cache.get(cache_key)
-            if data is None:
-                data = self._get_bugs_data()
-                cache.set(cache_key, data, CACHE_BUGS_FOR)
-                if hasattr(self, 'bugs_data_cache'):
-                    self.bugs_data_cache = data
-                    self.save()
-            self._cached_bugs_data = data
-        return self._cached_bugs_data
+        data = cache.get(self._bugs_data_cache_key)
+        if data is None:
+            data = self._get_bugs_data()
+            cache.set(self._bugs_data_cache_key, data, CACHE_BUGS_FOR)
+            if hasattr(self, 'bugs_data_cache'):
+                self.bugs_data_cache = data
+                self.save()
+        return data
 
     def get_graph_bug_data(self):
         data = self.get_bugs_data()
@@ -273,10 +279,8 @@ class Sprint(BugsListMixin, models.Model):
         }
 
     def get_cached_bugs_data(self):
-        data = self.bugs_data_cache
-        if data is None:
-            return self.get_bugs_data()
-        return data
+        # TODO: Process this in some way if None
+        return self.bugs_data_cache
 
 
 class BugzillaURL(models.Model):

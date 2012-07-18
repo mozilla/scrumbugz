@@ -92,6 +92,7 @@ class SprintBugsForm(forms.ModelForm):
     def save(self, commit=True):
         sprint_bugs = self.cleaned_data['sprint_bugs']
         self.instance.update_backlog_bugs(sprint_bugs)
+        self.instance._clear_bugs_data_cache()
         return self.instance
 
 
