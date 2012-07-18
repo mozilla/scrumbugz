@@ -1,15 +1,15 @@
 from fabric.api import local, env
 
 
-env.app = 'scrumbugz-dev'
+env.git_remote = 'dev'
 
 
 def prod():
-    env.app = 'scrumbugz'
+    env.git_remote = 'prod'
 
 
 def heroku(cmd):
-    local("heroku run '{0}' --app {1}".format(cmd, env.app))
+    local("heroku run '{0}' --remote {1}".format(cmd, env.git_remote))
 
 
 def heroku_django(cmd):
@@ -17,10 +17,10 @@ def heroku_django(cmd):
 
 
 def deploy():
-    remote = ('heroku master' if env.app == 'scrumbugz'
-              else 'heroku-dev next:master')
+    remote = ('prod master' if env.git_remote == 'prod'
+              else 'dev next:master')
     local('git push ' + remote)
     heroku_django('collectstatic --noinput')
     heroku_django('syncdb')
-    if env.app == 'scrumbugz-dev':
+    if env.git_remote == 'dev':
         heroku_django('migrate')
