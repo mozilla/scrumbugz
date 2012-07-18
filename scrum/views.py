@@ -136,6 +136,7 @@ class CreateSprintView(ProjectsMixin, ProtectedCreateView):
         sprint = form.save(commit=False)
         sprint.project = self.project
         sprint.save()
+        form.add_url(sprint)
         return redirect(sprint)
 
 

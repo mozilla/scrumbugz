@@ -6,14 +6,15 @@ from mock import Mock, patch
 from nose.tools import eq_, ok_
 
 from django.conf import settings
+from django.contrib.auth.models import User
 from django.core.cache import cache
+from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.utils import simplejson as json
 
-from .forms import BZURLForm, CreateProjectForm
+from .forms import BZURLForm, CreateProjectForm, SprintBugsForm
 from .models import Bug, BugSprintLog, BugzillaURL, CachedBug, Sprint
 from scrum import models as scrum_models
-from scrum.forms import SprintBugsForm
 
 
 scrum_models.BZAPI = Mock()
@@ -90,6 +91,26 @@ class TestSprint(TestCase):
     def setUp(self):
         cache.clear()
         self.s = Sprint.objects.get(slug='2.2')
+
+    def test_sprint_creation(self):
+        User.objects.create_superuser('admin', 'admin@admin.com', 'admin')
+        self.client.login(username='admin', password='admin')
+        p = self.s.project
+        fdata = {
+            'name': '1.3.37',
+            'slug': '1.3.37',
+            'start_date': '2012-01-01',
+            'end_date': '2012-01-15',
+            'url': GOOD_BZ_URL,
+        }
+        url = reverse('scrum_sprint_new', args=[p.slug])
+        resp = self.client.post(url, fdata, follow=True)
+        self.assertRedirects(resp, reverse('scrum_sprint', kwargs={
+            'pslug': p.slug,
+            'sslug': '1.3.37',
+        }))
+        s = Sprint.objects.get(slug='1.3.37')
+        self.assertEqual(s.urls.count(), 1)
 
     def test_get_products(self):
         products = self.s.get_products()

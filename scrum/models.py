@@ -82,6 +82,7 @@ class BugsListMixin(object):
 
     def get_bugs(self, **kwargs):
         """Get a unique set of bugs from all bz urls"""
+        self.scrum_only = kwargs.get('scrum_only', True)
         return self._get_url_items('bugs', **kwargs)
 
     def get_components(self):
@@ -101,6 +102,7 @@ class BugsListMixin(object):
             items = set()
             for url in self.get_urls():
                 items |= getattr(url, 'get_' + item_name)(**kwargs)
+
                 if url.date_cached:
                     self.date_cached = url.date_cached
                 if item_name == 'bugs' and url.num_no_data_bugs:

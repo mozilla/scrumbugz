@@ -100,9 +100,13 @@ class CreateFormMixin(forms.ModelForm):
 
     def save(self, commit=True):
         obj = super(CreateFormMixin, self).save(commit)
+        if commit:
+            self.add_url(obj)
+        return obj
+
+    def add_url(self, obj):
         if self.cleaned_data['url']:
             obj.urls.create(url=self.cleaned_data['url'])
-        return obj
 
 
 class CreateSprintForm(CreateFormMixin, SprintForm):
