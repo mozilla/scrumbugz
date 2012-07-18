@@ -111,7 +111,7 @@ class BugsListMixin(object):
             setattr(self, attr_name, list(items))
         return getattr(self, attr_name)
 
-    def get_bugs_data(self):
+    def _get_bugs_data(self):
         bugs = self.get_bugs()
         data = {
             'users': defaultdict(int),
@@ -131,7 +131,23 @@ class BugsListMixin(object):
                 data['total_points'] += bug.story_points
             else:
                 data['scoreless_bugs'] += 1
+        data['points_remaining'] = (data['total_points'] -
+                                    data['basic_status']['closed'])
         return data
+
+    def get_bugs_data(self):
+        # caching this for storage in the model (for fast display in lists)
+        if not hasattr(self, '_cached_bugs_data'):
+            cache_key = '%s:%d:bugs_data' % (self._meta.module_name, self.id)
+            data = cache.get(cache_key)
+            if data is None:
+                data = self._get_bugs_data()
+                cache.set(cache_key, data, CACHE_BUGS_FOR)
+                if hasattr(self, 'bugs_data_cache'):
+                    self.bugs_data_cache = data
+                    self.save()
+            self._cached_bugs_data = data
+        return self._cached_bugs_data
 
     def get_graph_bug_data(self):
         data = self.get_bugs_data()
@@ -182,6 +198,7 @@ class Sprint(BugsListMixin, models.Model):
     start_date = models.DateField()
     end_date = models.DateField()
     created_date = models.DateTimeField(editable=False, default=datetime.now)
+    bugs_data_cache = JSONField(editable=False, null=True)
 
     date_cached = None
 
@@ -254,6 +271,12 @@ class Sprint(BugsListMixin, models.Model):
             'burndown': self.get_burndown(),
             'burndown_axis': self.get_burndown_axis(),
         }
+
+    def get_cached_bugs_data(self):
+        data = self.bugs_data_cache
+        if data is None:
+            return self.get_bugs_data()
+        return data
 
 
 class BugzillaURL(models.Model):

@@ -38,10 +38,15 @@
             <dt class="scoreless">Scoreless Stories</dt>
             <dd class="scoreless">{{ bugs_data.scoreless_bugs }}</dd>
           {% endif %}
-          {% for data in bugs_data.basic_status %}
-            <dt>{{ data.label|capfirst }} Points</dt>
-            <dd>{{ data.data }}</dd>
-          {% endfor %}
+          <dt>Points Remaining</dt>
+          <dd>{{ bugs_data.points_remaining }}{% if not bugs_data.points_remaining %}
+            <span class="woot">\o/</span>{% endif %}</dd>
+          {% if bugs_data.points_remaining %}
+            {% for data in bugs_data.basic_status %}
+              <dt>{{ data.label|capfirst }} Points</dt>
+              <dd>{{ data.data }}</dd>
+            {% endfor %}
+          {% endif %}
         </dl>
       </div>
       <div class="span9">

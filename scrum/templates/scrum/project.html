@@ -27,6 +27,9 @@
           <th>Name</th>
           <th>Start</th>
           <th>End</th>
+          <th>Points</th>
+          <th>Closed</th>
+          <th>Remaining</th>
         </tr>
       </thead>
       <tbody>
@@ -39,6 +42,15 @@
             </td>
             <td>{{ sprint.start_date }}</td>
             <td>{{ sprint.end_date }}</td>
+            <td>{{ sprint.get_cached_bugs_data.total_points }}</td>
+            <td>{{ sprint.get_cached_bugs_data.basic_status.closed }}</td>
+            <td>{{ sprint.get_cached_bugs_data.points_remaining }}
+              {% if sprint.get_cached_bugs_data.points_remaining %}
+                <span class="badge badge-important">/o\</span>
+              {% else %}
+                <span class="badge badge-success">\o/</span>
+              {% endif %}
+            </td>
           </tr>
         {% endfor %}
       </tbody>
