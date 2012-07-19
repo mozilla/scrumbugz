@@ -1,0 +1,8 @@
+{
+    "globalstrict": true,
+    "browser": true,
+    "jquery": true,
+    "predef": [
+        "_"
+    ]
+}

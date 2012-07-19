@@ -23,20 +23,20 @@
                 hoverable: true,
                 clickable: true,
                 markings: self.weekend_areas
-            },
+            }
         };
         self.actual_plot = {
-            data: bugs_data.burndown, 
+            data: bugs_data.burndown,
             color: '#049cdb',
             label: 'Actual',
             lines: { show: true, fill: 0.4},
             points: {show: true, fill: true, radius: 4}
         };
         self.ideal_plot = {data: [
-            [bugs_data.burndown_axis[0], bugs_data['total_points']],
+            [bugs_data.burndown_axis[0], bugs_data.total_points],
             [bugs_data.burndown_axis[bugs_data.burndown_axis.length-1], 0]
         ], lines: {fill: false}, points: {show: false}, color: '#0f0', label: 'Ideal'};
-        self.bug_plot = {data: bugs_data.bugdown, color: '#db9c04', label: 'Bugs'}
+        self.bug_plot = {data: bugs_data.bugdown, color: '#db9c04', label: 'Bugs'};
         self.completed_data = [];
         for (var i=0;i < bugs_data.burndown_axis.length; i++){
           var prev = i-1;
@@ -58,7 +58,7 @@
 
         self.resize = function(){
             self.$element.css('height', function(){
-                return parseInt($(this).css('width'))/2;
+                return parseInt($(this).css('width'), 10)/2;
             });
         };
 
@@ -89,7 +89,7 @@
             var markings = [];
             var d = new Date(axes.xaxis.min);
             // go to the first Saturday
-            d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 1) % 7))
+            d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 1) % 7));
             d.setUTCSeconds(0);
             d.setUTCMinutes(0);
             d.setUTCHours(0);
@@ -112,7 +112,7 @@
             plothover: self.plothover,
             resize: self.resize
         });
-    }
+    };
 
 
     window.PieFlot = function(selector, data, extra) {
@@ -144,7 +144,7 @@
                 $.each(self.extra, function(key, values){
                     $.each(values, function(item, value){
                         $.each(data, function(i, opts){
-                            if(opts['label'] == item){
+                            if(opts.label === item){
                                 opts[key] = value;
                                 return false;
                             }
@@ -175,7 +175,7 @@
                 label: item.series.label,
                 percent: Math.round(item.series.percent * 100)/100,
                 rawnum: item.series.datapoints.points[1]
-            }
+            };
         };
 
         self.resize();
@@ -218,7 +218,7 @@
     var showTooltip = function(x, y, contents) {
         $tooltip.css({
             top: y + 10,
-            left: x + 10,
+            left: x + 10
         });
         if(contents.key !== cur_key){
             cur_key = contents.key;

@@ -17,10 +17,8 @@ $(function(){
         placeholder: 'alert alert-info',
         forcePlaceholderSize: true
     }).disableSelection();
-    
-    $('ul.sprint').on('sortupdate sortcreate', function(e, ui){
-        set_sprint_points();
-    });
+
+    $('ul.sprint').on('sortupdate sortcreate', set_sprint_points);
 
     $('#sprint-form').on('submit', function(e){
         var bug_ids = $('ul.sprint').sortable('toArray');

@@ -1,3 +1,6 @@
+/*global Spinner:false */
+"use strict";
+
 $(function(){
     // focus first field
     $(this).find('input:visible:first').focus();
@@ -22,12 +25,12 @@ $(function(){
         $('#id_end_date').data('dateinput').onBeforeShow(function(){
             this.setMin($('#id_start_date').data('dateinput').getValue());
         });
-    };
+    }
 
     // url management
     var $btn_icon = $('#add_url_icon');
-    var $add_url_btn = $('#add_url_btn')
-    var add_url_spinner = Spinner({
+    var $add_url_btn = $('#add_url_btn');
+    var add_url_spinner = new Spinner({
         lines: 12,
         length: 5,
         width: 1,
@@ -101,12 +104,12 @@ $(function(){
 jQuery(document).ajaxSend(function(event, xhr, settings) {
     function getCookie(name) {
         var cookieValue = null;
-        if (document.cookie && document.cookie != '') {
+        if (document.cookie && document.cookie !== '') {
             var cookies = document.cookie.split(';');
             for (var i = 0; i < cookies.length; i++) {
                 var cookie = jQuery.trim(cookies[i]);
                 // Does this cookie string begin with the name we want?
-                if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
                     cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
                     break;
                 }
@@ -121,8 +124,8 @@ jQuery(document).ajaxSend(function(event, xhr, settings) {
         var sr_origin = '//' + host;
         var origin = protocol + sr_origin;
         // Allow absolute or scheme relative URLs to same origin
-        return (url == origin || url.slice(0, origin.length + 1) == origin + '/') ||
-            (url == sr_origin || url.slice(0, sr_origin.length + 1) == sr_origin + '/') ||
+        return (url === origin || url.slice(0, origin.length + 1) === origin + '/') ||
+            (url === sr_origin || url.slice(0, sr_origin.length + 1) === sr_origin + '/') ||
             // or any other URL that isn't scheme relative or absolute i.e relative.
             !(/^(\/\/|http:|https:).*/.test(url));
     }

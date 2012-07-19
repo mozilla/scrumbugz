@@ -1,0 +1,9 @@
+static/js/bootstrap.js
+static/js/bootstrap.min.js
+static/js/jquery-1.7.2.min.js
+static/js/jquery.flot.min.js
+static/js/jquery.flot.pie.min.js
+static/js/jquery.flot.resize.min.js
+static/js/jquery.tablesorter.min.js
+static/js/lodash-0.4.2.min.js
+static/js/spin.min.js
