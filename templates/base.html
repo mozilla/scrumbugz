@@ -81,8 +81,13 @@
     <!-- Le javascript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/lodash.js/0.4.2/lodash.min.js"></script>
+    <script>
+      // fall back to local if CDNs are offline
+      window.jQuery || document.write('<script src="{{ STATIC_URl }}js/jquery-1.7.2.min.js"><\/script>');
+      window._ || document.write('<script src="{{ STATIC_URl }}js/lodash-0.4.2.min.js"><\/script>');
+    </script>
     <script src="{{ STATIC_URL }}js/bootstrap.js"></script>
     {% block js %}{% endblock %}
 
