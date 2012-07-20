@@ -52,7 +52,7 @@
       </form>
       <h2>Sprint: Points = <span id="current-points"></span></h2>
       <ul class="sprint storylist well">
-        {% for bug in sprint.backlog_bugs.all %}
+        {% for bug in sprint.cached_bugs.all %}
           {% include "scrum/storylist_item.html" %}
         {% endfor %}
       </ul>

@@ -8,21 +8,15 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-
-        # Changing field 'CachedBug.sprint'
-        db.alter_column('scrum_cachedbug', 'sprint_id', self.gf('django.db.models.fields.related.ForeignKey')(null=True, on_delete=models.SET_NULL, to=orm['scrum.Sprint']))
-        # Adding field 'Sprint.bugs_data_cache'
-        db.add_column('scrum_sprint', 'bugs_data_cache',
-                      self.gf('jsonfield.fields.JSONField')(null=True),
+        # Adding field 'CachedBug.added_manually'
+        db.add_column('scrum_cachedbug', 'added_manually',
+                      self.gf('django.db.models.fields.BooleanField')(default=False),
                       keep_default=False)
 
 
     def backwards(self, orm):
-
-        # Changing field 'CachedBug.sprint'
-        db.alter_column('scrum_cachedbug', 'sprint_id', self.gf('django.db.models.fields.related.ForeignKey')(null=True, to=orm['scrum.Sprint']))
-        # Deleting field 'Sprint.bugs_data_cache'
-        db.delete_column('scrum_sprint', 'bugs_data_cache')
+        # Deleting field 'CachedBug.added_manually'
+        db.delete_column('scrum_cachedbug', 'added_manually')
 
 
     models = {
@@ -43,6 +37,7 @@ class Migration(SchemaMigration):
         },
         'scrum.cachedbug': {
             'Meta': {'ordering': "('id',)", 'object_name': 'CachedBug'},
+            'added_manually': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'assigned_to': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
             'component': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
             'history': ('scrum.models.CompressedJSONField', [], {}),

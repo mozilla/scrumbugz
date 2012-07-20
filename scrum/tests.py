@@ -77,7 +77,7 @@ class TestProject(TestCase):
             CachedBug.objects.filter(sprint__isnull=True).count(),
             len(bugs)
         )
-        self.s.update_backlog_bugs(bugs)
+        self.s.update_bugs(bugs)
         self.assertEqual(CachedBug.objects.filter(sprint=self.s).count(),
                          len(bugs))
         self.s.get_bugs(refresh=True)
@@ -132,13 +132,13 @@ class TestSprint(TestCase):
         self.assertSetEqual(bug_ids, cbug_ids)
         self.assertEqual(0, BugSprintLog.objects.count())
         bugs = self.s.get_bugs(scrum_only=False)
-        self.s.update_backlog_bugs(bugs)
+        self.s.update_bugs(bugs)
         self.assertEqual(len(bugs), BugSprintLog.objects.count())
         action = CachedBug.objects.all()[0].sprint_actions.all()[0].action
         self.assertEqual(action, BugSprintLog.ADDED)
 
     def test_sprint_bug_move_logging(self):
-        self.s.update_backlog_bugs(self.s.get_bugs())
+        self.s.update_bugs(self.s.get_bugs())
         newsprint = Sprint.objects.create(
             name='New Sprint',
             slug='newsprint',
@@ -157,7 +157,7 @@ class TestSprint(TestCase):
                          bug.sprint_actions.all()[0].action)
 
     def test_sprint_bug_steal_logging(self):
-        self.s.update_backlog_bugs(self.s.get_bugs(scrum_only=False))
+        self.s.update_bugs(self.s.get_bugs(scrum_only=False))
         newsprint = Sprint.objects.create(
             name='New Sprint',
             slug='newsprint',
@@ -176,13 +176,13 @@ class TestSprint(TestCase):
                          bug.sprint_actions.all()[0].action)
 
     def test_backlog_bug_sync(self):
-        self.s.update_backlog_bugs(self.s.get_bugs())
-        self.s.backlog_bugs.remove(CachedBug.objects.get(id=665747))
-        self.assertEqual(self.s.backlog_bugs.count(), 35)
+        self.s.update_bugs(self.s.get_bugs())
+        self.s.cached_bugs.remove(CachedBug.objects.get(id=665747))
+        self.assertEqual(self.s.cached_bugs.count(), 35)
         new_bug_ids = [665747, 758377, 766608]
-        self.s.update_backlog_bugs(new_bug_ids)
-        self.assertEqual(self.s.backlog_bugs.count(), 3)
-        all_bl_bug_ids = self.s.backlog_bugs.values_list('id', flat=True)
+        self.s.update_bugs(new_bug_ids)
+        self.assertEqual(self.s.cached_bugs.count(), 3)
+        all_bl_bug_ids = self.s.cached_bugs.values_list('id', flat=True)
         self.assertSetEqual(set(all_bl_bug_ids), set(new_bug_ids))
         # the process of syncing did not remove bugs unnecessarily
         self.assertEqual(self.s.bug_actions.filter(
@@ -196,17 +196,17 @@ class TestSprint(TestCase):
         ).count(), 2)
 
     def test_sprint_bug_management(self):
-        self.s.update_backlog_bugs(self.s.get_bugs(scrum_only=False))
-        self.s.backlog_bugs.remove(CachedBug.objects.get(id=665747))
-        self.assertEqual(self.s.backlog_bugs.count(), 36)
+        self.s.update_bugs(self.s.get_bugs(scrum_only=False))
+        self.s.cached_bugs.remove(CachedBug.objects.get(id=665747))
+        self.assertEqual(self.s.cached_bugs.count(), 36)
         new_bug_ids = [665747, 758377, 766608]
         form = SprintBugsForm(instance=self.s, data={
             'sprint_bugs': ','.join(str(bid) for bid in new_bug_ids),
         })
         self.assertTrue(form.is_valid())
         form.save()
-        self.assertEqual(self.s.backlog_bugs.count(), 3)
-        all_bl_bug_ids = self.s.backlog_bugs.values_list('id', flat=True)
+        self.assertEqual(self.s.cached_bugs.count(), 3)
+        all_bl_bug_ids = self.s.cached_bugs.values_list('id', flat=True)
         self.assertSetEqual(set(all_bl_bug_ids), set(new_bug_ids))
 
     def test_sprint_bugs_form_validation(self):

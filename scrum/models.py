@@ -231,12 +231,12 @@ class Sprint(BugsListMixin, models.Model):
         Get a list of BugzillaURL objects plus one for manually added bugs.
         """
         urls = list(self.urls.all())
-        bugs = self.backlog_bugs.all()
+        bugs = self.cached_bugs.all()
         if bugs:
             urls += [BugzillaURL(url=get_bz_url_for_buglist(bugs))]
         return urls
 
-    def update_backlog_bugs(self, bug_ids):
+    def update_bugs(self, bug_ids, manual=False):
         """
         Add and remove bugs to sync the list with what we receive.
         :param bug_ids: list of bugs or bug ids
@@ -244,12 +244,19 @@ class Sprint(BugsListMixin, models.Model):
         """
         if not isinstance(bug_ids[0], (basestring, int)):
             bug_ids = [bug.id for bug in bug_ids]
-        current_bugs = set(self.backlog_bugs.all())
+        current_bugs = set(self.cached_bugs.all())
         new_bugs = set(CachedBug.objects.filter(id__in=bug_ids))
         to_add = new_bugs - current_bugs
         to_remove = current_bugs - new_bugs
-        self.backlog_bugs.add(*to_add)
-        self.backlog_bugs.remove(*to_remove)
+        # saving individually to fire signals
+        for bug in to_add:
+            bug.sprint = self
+            bug.added_manually = manual
+            bug.save()
+        for bug in to_remove:
+            bug.sprint = None
+            bug.added_manually = False
+            bug.save()
 
     def get_burndown(self):
         """Return a list of total point values per day of sprint"""
@@ -334,7 +341,7 @@ class BugzillaURL(models.Model):
                 except Exception:
                     raise BZError("Couldn't retrieve bugs from Bugzilla")
                 cache.set(self._bugs_cache_key, data, CACHE_BUGS_FOR)
-                store_bugs(data['bugs'])
+                store_bugs(data['bugs'], self.sprint)
             self._bugs = set(Bug(b) for b in data['bugs'])
             if scrum_only:
                 # only show bugs that have at least user and component set
@@ -481,7 +488,8 @@ class CachedBug(BugMixin, models.Model):
     story_component = models.CharField(max_length=50, blank=True)
     story_points = models.PositiveSmallIntegerField(default=0)
 
-    sprint = models.ForeignKey(Sprint, related_name='backlog_bugs', null=True,
+    added_manually = models.BooleanField()
+    sprint = models.ForeignKey(Sprint, related_name='cached_bugs', null=True,
                                on_delete=models.SET_NULL)
 
     objects = CachedBugManager()
@@ -556,9 +564,9 @@ def extract_bug_kwargs(data):
 @transaction.commit_on_success
 def store_bugs(bugs, sprint=None):
     for bug in bugs:
-        if sprint:
-            bug['sprint'] = sprint
         CachedBug.objects.update_or_create(bug)
+    if sprint:
+        sprint.update_bugs([bug['id'] for bug in bugs])
 
 
 class DummyBug:
