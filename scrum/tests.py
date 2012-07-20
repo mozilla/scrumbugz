@@ -13,7 +13,7 @@ from django.test import TestCase
 from django.utils import simplejson as json
 
 from .forms import BZURLForm, CreateProjectForm, SprintBugsForm
-from .models import Bug, BugSprintLog, BugzillaURL, CachedBug, Sprint
+from .models import BugSprintLog, BugzillaURL, CachedBug, Sprint
 from scrum import models as scrum_models
 
 
@@ -37,7 +37,7 @@ class TestBug(TestCase):
         cache.clear()
         self.s = Sprint.objects.get(slug='2.2')
 
-    @patch.object(Bug, 'points_history')
+    @patch.object(CachedBug, 'points_history')
     def test_points_for_date_default(self, mock_bug):
         """ should default to points in whiteboard """
         bugs = self.s.get_bugs()
@@ -73,13 +73,9 @@ class TestProject(TestCase):
         Refreshing bugs from Bugzilla does not remove them from a sprint.
         """
         bugs = self.s.get_bugs(scrum_only=False)
-        self.assertEqual(
-            CachedBug.objects.filter(sprint__isnull=True).count(),
-            len(bugs)
-        )
-        self.s.update_bugs(bugs)
         self.assertEqual(CachedBug.objects.filter(sprint=self.s).count(),
-                         len(bugs))
+                         len(bugs)
+        )
         self.s.get_bugs(refresh=True)
         self.assertEqual(CachedBug.objects.filter(sprint=self.s).count(),
                          len(bugs))

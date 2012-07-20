@@ -326,30 +326,42 @@ class BugzillaURL(models.Model):
     def _bugs_cache_key(self):
         return hashlib.sha1(self.url).hexdigest()
 
+    def _get_bugs_from_api(self):
+        """Do the actual work of getting bugs from the BZ API"""
+        try:
+            args = self._get_bz_args()
+            args = dict((k.encode('utf-8'), v) for k, v in
+                args.iterlists())
+            data = BZAPI.bug.get(**args)
+            data['date_received'] = datetime.now()
+        except Exception:
+            raise BZError("Couldn't retrieve bugs from Bugzilla")
+        return data
+
     def get_bugs(self, refresh=False, scrum_only=True):
         if refresh:
             self._clear_cache()
         if not hasattr(self, '_bugs'):
-            data = cache.get(self._bugs_cache_key)
-            if data is None:
-                try:
-                    args = self._get_bz_args()
-                    args = dict((k.encode('utf-8'), v) for k, v in
-                                args.iterlists())
-                    data = BZAPI.bug.get(**args)
-                    data['date_received'] = datetime.now()
-                except Exception:
-                    raise BZError("Couldn't retrieve bugs from Bugzilla")
-                cache.set(self._bugs_cache_key, data, CACHE_BUGS_FOR)
-                store_bugs(data['bugs'], self.sprint)
-            self._bugs = set(Bug(b) for b in data['bugs'])
+            cached_data = cache.get(self._bugs_cache_key)
+            if not cached_data:
+                data = self._get_bugs_from_api()
+                cache.set(self._bugs_cache_key, {
+                    'date_received': data['date_received'],
+                    'bug_ids': [int(bug['id']) for bug in data['bugs']],
+                }, CACHE_BUGS_FOR)
+                self._bugs = set(store_bugs(data['bugs'], self.sprint))
+                self.date_cached = data['date_received']
+            else:
+                self._bugs = set(CachedBug.objects.filter(
+                    id__in=cached_data['bug_ids'])
+                )
+                self.date_cached = cached_data['date_received']
             if scrum_only:
                 # only show bugs that have at least user and component set
                 num_all_bugs = len(self._bugs)
                 self._bugs = set(b for b in self._bugs
                                  if b.has_scrum_data)
                 self.num_no_data_bugs = num_all_bugs - len(self._bugs)
-            self.date_cached = data.get('date_received', datetime.now())
             self.scrum_only = scrum_only
         return self._bugs
 
@@ -365,12 +377,60 @@ class BugzillaURL(models.Model):
         return self._get_bz_args().get('status_whiteboard')
 
 
-class BugMixin(object):
-    def __eq__(self, other):
-        return int(self.id) == int(other.id)
+class CachedBugManager(models.Manager):
+    def update_or_create(self, data):
+        """
+        Create or update a cached bug from the data returned from Bugzilla.
+        :param data: dict of bug data from the bugzilla api.
+        :return: CachedBug instance, boolean created.
+        """
+        bid = data.copy().pop('id')
+        defaults = extract_bug_kwargs(data)
+        bug, created = self.get_or_create(id=bid, defaults=defaults)
+        if not created:
+            bug.fill_from_data(defaults)
+            bug.save()
+        return bug, created
 
-    def __hash__(self):
-        return hash(int(self.id))
+
+class CachedBug(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    history = CompressedJSONField()
+    last_updated = models.DateTimeField(default=datetime.now)
+    product = models.CharField(max_length=200)
+    component = models.CharField(max_length=200)
+    assigned_to = models.CharField(max_length=200)
+    status = models.CharField(max_length=20)
+    summary = models.CharField(max_length=500)
+    priority = models.CharField(max_length=2, blank=True)
+    whiteboard = models.CharField(max_length=200, blank=True)
+    story_user = models.CharField(max_length=50, blank=True)
+    story_component = models.CharField(max_length=50, blank=True)
+    story_points = models.PositiveSmallIntegerField(default=0)
+
+    added_manually = models.BooleanField()
+    sprint = models.ForeignKey(Sprint, related_name='cached_bugs', null=True,
+                               on_delete=models.SET_NULL)
+
+    objects = CachedBugManager()
+
+    class Meta:
+        ordering = ('id',)
+
+    def __unicode__(self):
+        return unicode(self.id)
+
+    def fill_from_data(self, data):
+        self.__dict__.update(data)
+        self.last_updated = datetime.now()
+
+    def refresh_from_bugzilla(self):
+        data = BZAPI.bug.get(
+            id=self.id,
+            id_mode='include',
+            include_fields=','.join(BZ_FIELDS),
+        )
+        self.fill_from_data(data['bugs'][0])
 
     def get_absolute_url(self):
         return '%sid=%s' % (settings.BZ_SHOW_URL, self.id)
@@ -445,74 +505,6 @@ class BugMixin(object):
         return self._points_history
 
 
-class Bug(BugMixin):
-    def __init__(self, data):
-        self.__dict__.update(data)
-        for key, value in self.scrum_data.iteritems():
-            setattr(self, 'story_' + key, value)
-
-    def __getattr__(self, name):
-        if name in BZ_FIELDS:
-            return ''
-        raise AttributeError(name)
-
-
-class CachedBugManager(models.Manager):
-    def update_or_create(self, data):
-        """
-        Create or update a cached bug from the data returned from Bugzilla.
-        :param data: dict of bug data from the bugzilla api.
-        :return: CachedBug instance, boolean created.
-        """
-        bid = data.copy().pop('id')
-        defaults = extract_bug_kwargs(data)
-        bug, created = self.get_or_create(id=bid, defaults=defaults)
-        if not created:
-            bug.fill_from_data(defaults)
-            bug.save()
-        return bug, created
-
-
-class CachedBug(BugMixin, models.Model):
-    id = models.PositiveIntegerField(primary_key=True)
-    history = CompressedJSONField()
-    last_updated = models.DateTimeField(default=datetime.now)
-    product = models.CharField(max_length=200)
-    component = models.CharField(max_length=200)
-    assigned_to = models.CharField(max_length=200)
-    status = models.CharField(max_length=20)
-    summary = models.CharField(max_length=500)
-    priority = models.CharField(max_length=2, blank=True)
-    whiteboard = models.CharField(max_length=200, blank=True)
-    story_user = models.CharField(max_length=50, blank=True)
-    story_component = models.CharField(max_length=50, blank=True)
-    story_points = models.PositiveSmallIntegerField(default=0)
-
-    added_manually = models.BooleanField()
-    sprint = models.ForeignKey(Sprint, related_name='cached_bugs', null=True,
-                               on_delete=models.SET_NULL)
-
-    objects = CachedBugManager()
-
-    class Meta:
-        ordering = ('id',)
-
-    def __unicode__(self):
-        return unicode(self.id)
-
-    def fill_from_data(self, data):
-        self.__dict__.update(data)
-        self.last_updated = datetime.now()
-
-    def refresh_from_bugzilla(self):
-        data = BZAPI.bug.get(
-            id=self.id,
-            id_mode='include',
-            include_fields=','.join(BZ_FIELDS),
-        )
-        self.fill_from_data(data['bugs'][0])
-
-
 class BugSprintLogManager(models.Manager):
     def _record_action(self, bug, sprint, action):
         self.create(bug=bug, sprint=sprint, action=action)
@@ -563,10 +555,12 @@ def extract_bug_kwargs(data):
 
 @transaction.commit_on_success
 def store_bugs(bugs, sprint=None):
+    bug_objs = []
     for bug in bugs:
-        CachedBug.objects.update_or_create(bug)
+        bug_objs.append(CachedBug.objects.update_or_create(bug)[0])
     if sprint:
         sprint.update_bugs([bug['id'] for bug in bugs])
+    return bug_objs
 
 
 class DummyBug:
