@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 from copy import deepcopy
 from datetime import date, timedelta
 
@@ -12,9 +11,9 @@ from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.utils import simplejson as json
 
-from .forms import BZURLForm, CreateProjectForm, SprintBugsForm
-from .models import BugSprintLog, BugzillaURL, CachedBug, Sprint
 from scrum import models as scrum_models
+from scrum.forms import BZURLForm, CreateProjectForm, SprintBugsForm
+from scrum.models import BugSprintLog, BugzillaURL, CachedBug, Sprint
 
 
 scrum_models.BZAPI = Mock()

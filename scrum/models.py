@@ -250,10 +250,14 @@ class Sprint(BugsListMixin, models.Model):
         to_remove = current_bugs - new_bugs
         # saving individually to fire signals
         for bug in to_add:
+            if bug.sprint and bug.added_manually:
+                continue
             bug.sprint = self
             bug.added_manually = manual
             bug.save()
         for bug in to_remove:
+            if bug.sprint and bug.added_manually and not manual:
+                continue
             bug.sprint = None
             bug.added_manually = False
             bug.save()
@@ -506,14 +510,15 @@ class CachedBug(models.Model):
 
 
 class BugSprintLogManager(models.Manager):
-    def _record_action(self, bug, sprint, action):
-        self.create(bug=bug, sprint=sprint, action=action)
+    def _record_action(self, bug, sprint, action, manual):
+        self.create(bug=bug, sprint=sprint, action=action,
+                    manual=manual)
 
-    def added_to_sprint(self, bug, sprint):
-        self._record_action(bug, sprint, BugSprintLog.ADDED)
+    def added_to_sprint(self, bug, sprint, manual):
+        self._record_action(bug, sprint, BugSprintLog.ADDED, manual)
 
-    def removed_from_sprint(self, bug, sprint):
-        self._record_action(bug, sprint, BugSprintLog.REMOVED)
+    def removed_from_sprint(self, bug, sprint, manual):
+        self._record_action(bug, sprint, BugSprintLog.REMOVED, manual)
 
 
 class BugSprintLog(models.Model):
@@ -528,6 +533,7 @@ class BugSprintLog(models.Model):
     sprint = models.ForeignKey(Sprint, related_name='bug_actions')
     action = models.PositiveSmallIntegerField(choices=ACTION_CHOICES)
     timestamp = models.DateTimeField(default=datetime.now)
+    manual = models.BooleanField()
 
     objects = BugSprintLogManager()
 
@@ -576,6 +582,8 @@ def log_bug_actions(sender, instance, **kwargs):
         old_bug = DummyBug()
     if old_bug.sprint_id != instance.sprint_id:
         if old_bug.sprint:
-            BugSprintLog.objects.removed_from_sprint(instance, old_bug.sprint)
+            BugSprintLog.objects.removed_from_sprint(instance, old_bug.sprint,
+                                                     old_bug.added_manually)
         if instance.sprint:
-            BugSprintLog.objects.added_to_sprint(instance, instance.sprint)
+            BugSprintLog.objects.added_to_sprint(instance, instance.sprint,
+                                                 instance.added_manually)
