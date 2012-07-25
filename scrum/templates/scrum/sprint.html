@@ -8,66 +8,82 @@
   {% else %}
     <div class="row">
       <div class="span12">
+          
+        <button class="btn btn-primary pull-right active stats-toggle" data-toggle="button" >Stats</button>        
+
         {% if perms.scrum.change_sprint %}
+          
           {% if project.has_backlog %}
             <a class="btn btn-primary pull-right"
                href="{% url scrum_sprint_bugs project.slug sprint.slug %}">
               <i class="icon-list icon-white"></i> Manage Stories
             </a>
           {% endif %}
+
           <a class="btn btn-primary pull-right"
              href="{% url scrum_sprint_edit project.slug sprint.slug %}">
             <i class="icon-edit icon-white"></i> Update Sprint
           </a>
         {% endif %}
+
         <h1>
           <a href="{{ project.get_absolute_url }}">{{ project.name }}</a>
           / {{ sprint.name }}
         </h1>
       </div>
     </div>
-    <div class="row">
-      <div class="span3">
-        <h2>Numbers</h2>
-        <dl class="well sprint-numbers">
-          <dt>Total Points</dt>
-          <dd>{{ bugs_data.total_points }}</dd>
-          <dt>Total Bugs</dt>
-          <dd>{{ bugs_data.total_bugs }}</dd>
-          {% if bugs_data.scoreless_bugs %}
-            <dt class="scoreless">Scoreless Stories</dt>
-            <dd class="scoreless">{{ bugs_data.scoreless_bugs }}</dd>
-          {% endif %}
-          <dt>Points Remaining</dt>
-          <dd>{{ bugs_data.points_remaining }}{% if not bugs_data.points_remaining %}
-            <span class="woot">\o/</span>{% endif %}</dd>
-          {% if bugs_data.points_remaining %}
-            {% for data in bugs_data.basic_status %}
-              <dt>{{ data.label|capfirst }} Points</dt>
-              <dd>{{ data.data }}</dd>
-            {% endfor %}
-          {% endif %}
-        </dl>
+
+      
+
+    <div class="stats-container">
+
+
+      <div class="row">
+        <div class="span3">
+          <h2>Numbers</h2>
+          <dl class="well sprint-numbers">
+            <dt>Total Points</dt>
+            <dd>{{ bugs_data.total_points }}</dd>
+            <dt>Total Bugs</dt>
+            <dd>{{ bugs_data.total_bugs }}</dd>
+            {% if bugs_data.scoreless_bugs %}
+              <dt class="scoreless">Scoreless Stories</dt>
+              <dd class="scoreless">{{ bugs_data.scoreless_bugs }}</dd>
+            {% endif %}
+            <dt>Points Remaining</dt>
+            <dd>{{ bugs_data.points_remaining }}{% if not bugs_data.points_remaining %}
+              <span class="woot">\o/</span>{% endif %}</dd>
+            {% if bugs_data.points_remaining %}
+              {% for data in bugs_data.basic_status %}
+                <dt>{{ data.label|capfirst }} Points</dt>
+                <dd>{{ data.data }}</dd>
+              {% endfor %}
+            {% endif %}
+          </dl>
+        </div>
+        <div class="span9">
+          <h2>Burninate!!!</h2>
+          <div id="burndown"></div>
+        </div>
       </div>
-      <div class="span9">
-        <h2>Burninate!!!</h2>
-        <div id="burndown"></div>
+      <div class="row">
+        <div class="span4">
+          <h2>Status</h2>
+          <div class="piegraph" id="status-pie"></div>
+        </div>
+        <div class="span4">
+          <h2>Component</h2>
+          <div class="piegraph" id="component-pie"></div>
+        </div>
+        <div class="span4">
+          <h2>Story User</h2>
+          <div class="piegraph" id="user-pie"></div>
+        </div>
       </div>
     </div>
-    <div class="row">
-      <div class="span4">
-        <h2>Status</h2>
-        <div class="piegraph" id="status-pie"></div>
-      </div>
-      <div class="span4">
-        <h2>Component</h2>
-        <div class="piegraph" id="component-pie"></div>
-      </div>
-      <div class="span4">
-        <h2>Story User</h2>
-        <div class="piegraph" id="user-pie"></div>
-      </div>
-    </div>
+
+
+
     {% include "scrum/bugs_table.html" %}
   {% endif %}
 {% endblock %}

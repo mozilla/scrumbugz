@@ -258,3 +258,8 @@ a.caldisabled {
 .woot {
     color: #468847;
 }
+
+.offscreen-hide {
+    position:absolute;
+    left:-100000px;
+}
