@@ -11,15 +11,15 @@ Project details
 ===============
 
 Code:
-    https://github.com/pmclanahan/scrumbugz
+    https://github.com/mozilla/scrumbugz
 
 Issues:
-    https://github.com/pmclanahan/scrumbugz/issues
+    https://github.com/mozilla/scrumbugz/issues
 
 CI:
-    .. image:: https://secure.travis-ci.org/pmclanahan/scrumbugz.png
+    .. image:: https://secure.travis-ci.org/mozilla/scrumbugz.png
        :alt: Travis CI
-       :target: http://travis-ci.org/pmclanahan/scrumbugz
+       :target: http://travis-ci.org/mozilla/scrumbugz
 
 IRC:
     #scrum on irc.mozilla.org
@@ -39,7 +39,7 @@ the parameters in the search url to a form which it then uses with the Bugzilla
 API.
 
 Thus, in order to use scrumbugz, you need a Bugzilla instance that's running
-a recent version of Bugzilla and the Bugzilla API. We think the minimum 
+a recent version of Bugzilla and the Bugzilla API. We think the minimum
 version is Bugzilla 4, but haven't verified this.
 
 

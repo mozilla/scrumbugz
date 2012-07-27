@@ -10,10 +10,10 @@ Project details
 ===============
 
 Code:
-    https://github.com/pmclanahan/scrumbugz
+    https://github.com/mozilla/scrumbugz
 
 Issues:
-    https://github.com/pmclanahan/scrumbugz/issues
+    https://github.com/mozilla/scrumbugz/issues
 
 Documentation:
     http://scrumbugz.readthedocs.org/
