@@ -87,7 +87,7 @@
             <tr data-bugid="{{ bug.id }}" id="bug{{ bug.id }}" class="bug-{{ bug.basic_status }}">
                 <td><a href="{{ BZ_SHOW_URL }}id={{ bug.id }}">{{ bug.id }}</a></td>
               <td>{{ bug.priority }}</td>
-              <td>{{ bug.summary }}</td>
+              <td>{% if bug.id in blocked_bugs %}<span class="label label-important">BLOCKED</span>{% endif %} {{ bug.summary }}</td>
               <td class="ttip" title="{{ bug.assigned_to.real_name }}">{{ bug.assigned_to.name }}</td>
               <td>{{ bug.user }}</td>
               <td>{{ bug.component }}</td>
