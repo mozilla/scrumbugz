@@ -61,9 +61,10 @@ STATICFILES_DIRS = (
 JINGO_EXCLUDE_APPS = (
     'admin',
     'auth',
+    'context_processors',  # needed for django tests
     'debug_toolbar',
     'floppyforms',
-    'registration',
+    'registration',  # needed for django tests
 )
 
 JINJA_CONFIG = {
