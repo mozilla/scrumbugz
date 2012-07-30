@@ -60,8 +60,10 @@ STATICFILES_DIRS = (
 
 JINGO_EXCLUDE_APPS = (
     'admin',
+    'auth',
     'debug_toolbar',
     'floppyforms',
+    'registration',
 )
 
 JINJA_CONFIG = {
