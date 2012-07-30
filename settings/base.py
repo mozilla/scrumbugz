@@ -58,6 +58,19 @@ STATICFILES_DIRS = (
     str(PROJECT_DIR.child('static')),
 )
 
+JINGO_EXCLUDE_APPS = (
+    'debug_toolbar',
+    'admin',
+)
+
+JINJA_CONFIG = {
+    'extensions': (
+        'jinja2.ext.do',
+        'jinja2.ext.loopcontrols',
+        'jinja2.ext.with_',
+    ),
+}
+
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
@@ -66,6 +79,7 @@ STATICFILES_FINDERS = (
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
+    'jingo.Loader',
     'django.template.loaders.filesystem.Loader',
     'django.template.loaders.app_directories.Loader',
 #     'django.template.loaders.eggs.Loader',
@@ -94,7 +108,7 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.admin',
-    'bootstrapform',
+    'bootstrap',
     'floppyforms',
     'scrum',
     'south',

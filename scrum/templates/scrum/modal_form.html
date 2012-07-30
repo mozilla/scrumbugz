@@ -2,17 +2,17 @@
 <div class="modal hide fade" id="modal_form">
   <div class="modal-header">
     <a class="close" href="#" data-dismiss="modal">&times;</a>
-    <h3>{{ object|yesno:"Update,New" }} {{ form.template_title }}</h3>
+    <h3>{{ "Update" if object else "New" }} {{ form.template_title }}</h3>
   </div>
-  <form action="{{ request.get_full_path }}"
+  <form action="{{ request.get_full_path() }}"
         class="form-horizontal modal-form"
         method="post">
-    {% csrf_token %}
+    {{ csrf() }}
     <div class="modal-body">
       {{ form|bootstrap }}
     </div>
     <div class="modal-footer">
-      <button class="btn btn-primary" type="submit">{{ object|yesno:"Update,Create" }}</button>
+      <button class="btn btn-primary" type="submit">{{ "Update" if object else "Create" }}</button>
       <button class="btn" data-dismiss="modal">Cancel</button>
     </div>
   </form>

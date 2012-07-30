@@ -1,30 +1,35 @@
 {% extends "scrum/base.html" %}
-{% load bootstrap %}
+{% from "bootstrap/forms/macros.html" import field %}
 
 {% block main_content %}
   {% if sprint %}
-    <h1>Edit <a href="{% url scrum_project project.slug %}">{{ project.name }}</a> / <a href="{% url scrum_sprint project.slug sprint.slug %}">{{ sprint.name }}</a></h1>
+    <h1>Edit <a href="{{ url('scrum_project', project.slug) }}">{{ project.name }}</a> / <a href="{{ url('scrum_sprint', project.slug, sprint.slug) }}">{{ sprint.name }}</a></h1>
   {% else %}
-    <h1>Create <a href="{% url scrum_project project.slug %}">{{ project.name }}</a> Sprint</h1>
+    <h1>Create <a href="{{ url('scrum_project', project.slug) }}">{{ project.name }}</a> Sprint</h1>
   {% endif %}
   <hr>
-  <form action="{{ request.get_full_path }}"
+  <form action="{{ request.get_full_path() }}"
         class="form-horizontal"
         method="post">
-    {% csrf_token %}
-    {{ form|bootstrap }}
+    {{ csrf() }}
+    {% for f in form %}
+      {{ field(f) }}
+    {% endfor %}
     <div class="form-actions">
-      <button class="btn btn-primary" type="submit">{{ sprint|yesno:"Update,Create" }}</button>
-      <a href="{% if sprint %}{{ sprint.get_absolute_url }}{% else %}{% url scrum_project project.slug %}{% endif %}" class="btn">Cancel</a>
+      <button class="btn btn-primary" type="submit">{{ 'Update' if sprint else 'Create' }}</button>
+      <a href="{% if sprint %}{{ sprint.get_absolute_url() }}{% else %}{{ url('scrum_project', project.slug) }}{% endif %}" class="btn">Cancel</a>
     </div>
   </form>
   {% if sprint %}
     <h2>Bugzilla URLs</h2>
-    <div id="bzurl_list_wrapper" data-url="{% url scrum_sprint_urls project.slug sprint.slug %}">
-      {% include "scrum/bzurl_list.html" with bzurls=sprint.urls.all %}
-    </div>
-    {% url scrum_sprint_urls project.slug sprint.slug as bzurl_form_url %}
-    {% include "scrum/bzurl_form.html" %}
+      {% with bzurl_form_url=url('scrum_sprint_urls', project.slug, sprint.slug) %}
+        <div id="bzurl_list_wrapper" data-url="{{ bzurl_form_url }}">
+        {% with bzurls=sprint.urls.all() %}
+          {% include "scrum/bzurl_list.html" %}
+        {% endwith %}
+      </div>
+      {% include "scrum/bzurl_form.html" %}
+    {% endwith %}
   {% endif %}
 {% endblock %}
 

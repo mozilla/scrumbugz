@@ -1,6 +1,6 @@
 {% extends "scrum/base.html" %}
 
-{% block title %}{{ sprint.name }} / {{ block.super }}{% endblock %}
+{% block title %}{{ sprint.name }} / {{ super() }}{% endblock %}
 
 {% block content %}
   {% if bzerror %}
@@ -11,17 +11,17 @@
         {% if perms.scrum.change_sprint %}
           {% if project.has_backlog %}
             <a class="btn btn-primary pull-right"
-               href="{% url scrum_sprint_bugs project.slug sprint.slug %}">
+               href="{{ url('scrum_sprint_bugs', project.slug, sprint.slug) }}">
               <i class="icon-list icon-white"></i> Manage Stories
             </a>
           {% endif %}
           <a class="btn btn-primary pull-right"
-             href="{% url scrum_sprint_edit project.slug sprint.slug %}">
+             href="{{ url('scrum_sprint_edit', project.slug, sprint.slug) }}">
             <i class="icon-edit icon-white"></i> Update Sprint
           </a>
         {% endif %}
         <h1>
-          <a href="{{ project.get_absolute_url }}">{{ project.name }}</a>
+          <a href="{{ project.get_absolute_url() }}">{{ project.name }}</a>
           / {{ sprint.name }}
         </h1>
       </div>
@@ -43,7 +43,7 @@
             <span class="woot">\o/</span>{% endif %}</dd>
           {% if bugs_data.points_remaining %}
             {% for data in bugs_data.basic_status %}
-              <dt>{{ data.label|capfirst }} Points</dt>
+              <dt>{{ data.label|capitalize }} Points</dt>
               <dd>{{ data.data }}</dd>
             {% endfor %}
           {% endif %}

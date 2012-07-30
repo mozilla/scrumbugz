@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ project.name|default:"Projects" }} / {{ block.super }}{% endblock %}
+{% block title %}{{ project.name if project else "Projects" }} / {{ super() }}{% endblock %}
 
 {% block content %}
   <div class="row">
@@ -10,7 +10,7 @@
           <li class="nav-header">Projects</li>
           {% for proj in projects %}
             <li{% if proj == project %} class="active"{% endif %}>
-              <a href="{{ proj.get_absolute_url }}">{{ proj.name }}</a>
+              <a href="{{ proj.get_absolute_url() }}">{{ proj.name }}</a>
             </li>
           {% endfor %}
           {% block sidebar %}{% endblock %}
