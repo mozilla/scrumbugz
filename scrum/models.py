@@ -205,7 +205,9 @@ class Sprint(BugsListMixin, models.Model):
                             db_index=True)
     start_date = models.DateField()
     end_date = models.DateField()
-    notes = models.TextField(blank=True)
+    notes = models.TextField(blank=True, help_text='This field uses '
+        '<a href="http://daringfireball.net/projects/markdown/syntax"'
+        'target="_blank">Markdown syntax</a> for conversion to HTML.')
     notes_html = models.TextField(blank=True, editable=False)
     created_date = models.DateTimeField(editable=False, default=datetime.now)
     bugs_data_cache = JSONField(editable=False, null=True)
