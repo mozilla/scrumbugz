@@ -1,13 +1,11 @@
 from __future__ import absolute_import
 
 import os
-import urlparse
+
+import dj_database_url
 
 from .base import *
 
-
-urlparse.uses_netloc.append('postgres')
-url = urlparse.urlparse(os.environ['DATABASE_URL'])
 
 PROD_MODE = os.environ.get('PROD_MODE')
 
@@ -15,16 +13,7 @@ if PROD_MODE:
     ENFORCE_HOSTNAME = 'scrumbu.gs'
     ENABLE_GA = True
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': url.path[1:],
-        'USER': url.username,
-        'PASSWORD': url.password,
-        'HOST': url.hostname,
-        'PORT': url.port,
-    }
-}
+DATABASES = {'default': dj_database_url.config()}
 
 SECRET_KEY = os.environ['SECRET_KEY']
 
