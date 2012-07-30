@@ -1,8 +1,7 @@
-from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_comma_separated_integer_list
 
-#import floppyforms as forms
+import floppyforms as forms
 
 from scrum.models import BugzillaURL, Project, Sprint
 
@@ -21,7 +20,7 @@ class BZURLField(forms.URLField):
         super(BZURLField, self).__init__(*args, **kwargs)
         if self.label is None:
             self.label = u'Bugzilla URL'
-        self.widget = forms.TextInput(attrs={
+        self.widget = forms.URLInput(attrs={
             'placeholder': 'https://bugzilla.mozilla.org/...',
         })
         self.validators.append(validate_bzurl)
@@ -29,7 +28,6 @@ class BZURLField(forms.URLField):
 
 date5 = forms.DateInput(attrs={
     'placeholder': 'YYYY-MM-DD',
-    'class': 'date-field',
 })
 
 

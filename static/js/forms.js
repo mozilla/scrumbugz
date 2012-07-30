@@ -11,7 +11,7 @@ $(function(){
     });
 
     // cool date picker stuffs
-    var $date_fields = $('.date-field');
+    var $date_fields = $(':date');
     if($date_fields.length){
         $date_fields.dateinput({
             format: 'yyyy-mm-dd'
