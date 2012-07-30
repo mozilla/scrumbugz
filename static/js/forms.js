@@ -11,8 +11,9 @@ $(function(){
     });
 
     // cool date picker stuffs
-    if($('#id_start_date').length){
-        $(':date').dateinput({
+    var $date_fields = $('.date-field');
+    if($date_fields.length){
+        $date_fields.dateinput({
             format: 'yyyy-mm-dd'
         });
         $('#id_start_date').data('dateinput').change(function(){

@@ -29,7 +29,7 @@ def pluralize(value, s1='s', s2=None):
     try:
         if int(value) != 1:
             return plural_suffix
-    except TypeError: # not a string or a number; maybe it's a list?
+    except TypeError:  # not a string or a number; maybe it's a list?
         if len(value) != 1:
             return plural_suffix
     return singular_suffix

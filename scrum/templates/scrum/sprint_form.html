@@ -12,9 +12,9 @@
         class="form-horizontal"
         method="post">
     {{ csrf() }}
-    {% for f in form %}
+    {% for f in form -%}
       {{ field(f) }}
-    {% endfor %}
+    {%- endfor %}
     <div class="form-actions">
       <button class="btn btn-primary" type="submit">{{ 'Update' if sprint else 'Create' }}</button>
       <a href="{% if sprint %}{{ sprint.get_absolute_url() }}{% else %}{{ url('scrum_project', project.slug) }}{% endif %}" class="btn">Cancel</a>

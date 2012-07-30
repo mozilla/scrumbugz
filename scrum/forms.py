@@ -29,6 +29,7 @@ class BZURLField(forms.URLField):
 
 date5 = forms.DateInput(attrs={
     'placeholder': 'YYYY-MM-DD',
+    'class': 'date-field',
 })
 
 
