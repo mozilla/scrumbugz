@@ -6,6 +6,7 @@ import zlib
 from base64 import b64decode, b64encode
 from collections import defaultdict
 from datetime import datetime
+from markdown import markdown
 from operator import itemgetter
 
 from django.conf import settings
@@ -14,6 +15,7 @@ from django.core.validators import RegexValidator
 from django.db import models, transaction
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
+from django.utils.encoding import force_unicode
 
 import dateutil.parser
 import slumber
@@ -203,6 +205,8 @@ class Sprint(BugsListMixin, models.Model):
                             db_index=True)
     start_date = models.DateField()
     end_date = models.DateField()
+    notes = models.TextField(blank=True)
+    notes_html = models.TextField(blank=True, editable=False)
     created_date = models.DateTimeField(editable=False, default=datetime.now)
     bugs_data_cache = JSONField(editable=False, null=True)
 
@@ -587,3 +591,13 @@ def log_bug_actions(sender, instance, **kwargs):
         if instance.sprint:
             BugSprintLog.objects.added_to_sprint(instance, instance.sprint,
                                                  instance.added_manually)
+
+
+@receiver(pre_save, sender=Sprint)
+def process_notes(sender, instance, **kwargs):
+    if instance.notes:
+        instance.notes_html = markdown(
+            force_unicode(instance.notes),
+            output_format='html5',
+            safe_mode=True,
+        )
