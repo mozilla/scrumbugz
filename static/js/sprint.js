@@ -236,4 +236,10 @@
             $('#tooltip').stop(true, true).fadeOut(200);
         }
     };
+
+    /* Show hide stats area, must use negative position due to flot rendering */
+    $(".stats-toggle").click(function() {
+        $('.stats-container').toggleClass('offscreen-hide');
+    });
+
 })(jQuery);
