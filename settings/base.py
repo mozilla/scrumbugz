@@ -113,6 +113,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django.contrib.admin',
     'bootstrap',
+    'django_nose',
     'floppyforms',
     'scrum',
     'south',
