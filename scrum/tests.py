@@ -13,7 +13,7 @@ from django.utils import simplejson as json
 
 from scrum import models as scrum_models
 from scrum.forms import BZURLForm, CreateProjectForm, SprintBugsForm
-from scrum.models import BugSprintLog, BugzillaURL, CachedBug, Sprint
+from scrum.models import BugSprintLog, BugzillaURL, Bug, Sprint
 
 
 scrum_models.BZAPI = Mock()
@@ -36,7 +36,7 @@ class TestBug(TestCase):
         cache.clear()
         self.s = Sprint.objects.get(slug='2.2')
 
-    @patch.object(CachedBug, 'points_history')
+    @patch.object(Bug, 'points_history')
     def test_points_for_date_default(self, mock_bug):
         """ should default to points in whiteboard """
         bugs = self.s.get_bugs()
@@ -53,7 +53,7 @@ class TestBug(TestCase):
             'component',
         ]
         for bug in bugs:
-            cbug = CachedBug.objects.get(id=bug.id)
+            cbug = Bug.objects.get(id=bug.id)
             for fieldname in compare_fields:
                 self.assertEqual(getattr(bug, fieldname),
                                  getattr(cbug, fieldname))
@@ -72,11 +72,11 @@ class TestProject(TestCase):
         Refreshing bugs from Bugzilla does not remove them from a sprint.
         """
         bugs = self.s.get_bugs(scrum_only=False)
-        self.assertEqual(CachedBug.objects.filter(sprint=self.s).count(),
+        self.assertEqual(Bug.objects.filter(sprint=self.s).count(),
                          len(bugs)
         )
         self.s.get_bugs(refresh=True)
-        self.assertEqual(CachedBug.objects.filter(sprint=self.s).count(),
+        self.assertEqual(Bug.objects.filter(sprint=self.s).count(),
                          len(bugs))
 
 
@@ -123,13 +123,13 @@ class TestSprint(TestCase):
         )
         bugs = bzurl.get_bugs(scrum_only=False)
         bug_ids = set(int(bug.id) for bug in bugs)
-        cbug_ids = set(bug.id for bug in CachedBug.objects.all())
+        cbug_ids = set(bug.id for bug in Bug.objects.all())
         self.assertSetEqual(bug_ids, cbug_ids)
         self.assertEqual(0, BugSprintLog.objects.count())
         bugs = self.s.get_bugs(scrum_only=False)
         self.s.update_bugs(bugs)
         self.assertEqual(len(bugs), BugSprintLog.objects.count())
-        action = CachedBug.objects.all()[0].sprint_actions.all()[0].action
+        action = Bug.objects.all()[0].sprint_actions.all()[0].action
         self.assertEqual(action, BugSprintLog.ADDED)
 
     def test_sprint_bug_move_logging(self):
@@ -141,7 +141,7 @@ class TestSprint(TestCase):
             end_date=date.today() + timedelta(days=10),
             project=self.s.project
         )
-        bug = CachedBug.objects.get(id=665747)
+        bug = Bug.objects.get(id=665747)
         bug.sprint = None
         bug.save()
         self.assertEqual(BugSprintLog.REMOVED,
@@ -160,7 +160,7 @@ class TestSprint(TestCase):
             end_date=date.today() + timedelta(days=10),
             project=self.s.project
         )
-        bug = CachedBug.objects.get(id=665747)
+        bug = Bug.objects.get(id=665747)
         self.assertEqual(bug.sprint, self.s)
         bug.sprint = newsprint
         bug.save()
@@ -172,7 +172,7 @@ class TestSprint(TestCase):
 
     def test_backlog_bug_sync(self):
         self.s.update_bugs(self.s.get_bugs())
-        self.s.cached_bugs.remove(CachedBug.objects.get(id=665747))
+        self.s.cached_bugs.remove(Bug.objects.get(id=665747))
         self.assertEqual(self.s.cached_bugs.count(), 35)
         new_bug_ids = [665747, 758377, 766608]
         self.s.update_bugs(new_bug_ids)
@@ -192,7 +192,7 @@ class TestSprint(TestCase):
 
     def test_sprint_bug_management(self):
         self.s.update_bugs(self.s.get_bugs(scrum_only=False))
-        self.s.cached_bugs.remove(CachedBug.objects.get(id=665747))
+        self.s.cached_bugs.remove(Bug.objects.get(id=665747))
         self.assertEqual(self.s.cached_bugs.count(), 36)
         new_bug_ids = [665747, 758377, 766608]
         form = SprintBugsForm(instance=self.s, data={

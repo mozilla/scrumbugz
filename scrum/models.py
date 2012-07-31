@@ -189,7 +189,7 @@ class Project(BugsListMixin, models.Model):
         """
         backlog = self.get_bugs()
         backlog_ids = [bug.id for bug in backlog]
-        return CachedBug.objects.filter(id__in=backlog_ids,
+        return Bug.objects.filter(id__in=backlog_ids,
                                         sprint__isnull=True)
 
     def get_urls(self):
@@ -245,7 +245,7 @@ class Sprint(BugsListMixin, models.Model):
         if not isinstance(bug_ids[0], (basestring, int)):
             bug_ids = [bug.id for bug in bug_ids]
         current_bugs = set(self.cached_bugs.all())
-        new_bugs = set(CachedBug.objects.filter(id__in=bug_ids))
+        new_bugs = set(Bug.objects.filter(id__in=bug_ids))
         to_add = new_bugs - current_bugs
         to_remove = current_bugs - new_bugs
         # saving individually to fire signals
@@ -356,7 +356,7 @@ class BugzillaURL(models.Model):
                 self._bugs = set(store_bugs(data['bugs'], self.sprint))
                 self.date_cached = data['date_received']
             else:
-                self._bugs = set(CachedBug.objects.filter(
+                self._bugs = set(Bug.objects.filter(
                     id__in=cached_data['bug_ids'])
                 )
                 self.date_cached = cached_data['date_received']
@@ -381,12 +381,12 @@ class BugzillaURL(models.Model):
         return self._get_bz_args().get('status_whiteboard')
 
 
-class CachedBugManager(models.Manager):
+class BugManager(models.Manager):
     def update_or_create(self, data):
         """
         Create or update a cached bug from the data returned from Bugzilla.
         :param data: dict of bug data from the bugzilla api.
-        :return: CachedBug instance, boolean created.
+        :return: Bug instance, boolean created.
         """
         bid = data.copy().pop('id')
         defaults = extract_bug_kwargs(data)
@@ -397,7 +397,7 @@ class CachedBugManager(models.Manager):
         return bug, created
 
 
-class CachedBug(models.Model):
+class Bug(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     history = CompressedJSONField()
     last_updated = models.DateTimeField(default=datetime.now)
@@ -416,7 +416,7 @@ class CachedBug(models.Model):
     sprint = models.ForeignKey(Sprint, related_name='cached_bugs', null=True,
                                on_delete=models.SET_NULL)
 
-    objects = CachedBugManager()
+    objects = BugManager()
 
     class Meta:
         ordering = ('id',)
@@ -529,7 +529,7 @@ class BugSprintLog(models.Model):
         (REMOVED, 'Removed'),
     )
 
-    bug = models.ForeignKey(CachedBug, related_name='sprint_actions')
+    bug = models.ForeignKey(Bug, related_name='sprint_actions')
     sprint = models.ForeignKey(Sprint, related_name='bug_actions')
     action = models.PositiveSmallIntegerField(choices=ACTION_CHOICES)
     timestamp = models.DateTimeField(default=datetime.now)
@@ -563,7 +563,7 @@ def extract_bug_kwargs(data):
 def store_bugs(bugs, sprint=None):
     bug_objs = []
     for bug in bugs:
-        bug_objs.append(CachedBug.objects.update_or_create(bug)[0])
+        bug_objs.append(Bug.objects.update_or_create(bug)[0])
     if sprint:
         sprint.update_bugs([bug['id'] for bug in bugs])
     return bug_objs
@@ -574,11 +574,11 @@ class DummyBug:
     sprint_id = None
 
 
-@receiver(pre_save, sender=CachedBug)
+@receiver(pre_save, sender=Bug)
 def log_bug_actions(sender, instance, **kwargs):
     try:
-        old_bug = CachedBug.objects.get(id=instance.id)
-    except CachedBug.DoesNotExist:
+        old_bug = Bug.objects.get(id=instance.id)
+    except Bug.DoesNotExist:
         old_bug = DummyBug()
     if old_bug.sprint_id != instance.sprint_id:
         if old_bug.sprint:
