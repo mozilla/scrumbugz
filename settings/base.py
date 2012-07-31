@@ -128,3 +128,5 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "django.contrib.messages.context_processors.messages",
     "context_processors.context_settings",
 )
+
+TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'

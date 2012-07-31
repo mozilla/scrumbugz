@@ -4,3 +4,4 @@
 nose==1.1.2
 mock==0.8.0
 Sphinx
+django-nose

@@ -1,10 +1,8 @@
-from django import http
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse, HttpResponseForbidden
-from django.shortcuts import get_object_or_404, redirect
-from django.template import loader
+from django.shortcuts import get_object_or_404, redirect, render
 from django.template.context import Context
 from django.utils import simplejson as json
 from django.views.generic import (CreateView, DeleteView, DetailView,
@@ -232,5 +230,5 @@ def server_error(request):
         'STATIC_URL': getattr(settings, 'STATIC_URL', '/static/'),
         'ENABLE_GA': getattr(settings, 'ENABLE_GA', False),
     }
-    t = loader.get_template('500.html')
-    return http.HttpResponseServerError(t.render(Context(context)))
+    return render(request, '500.html', context_instance=Context(context),
+                  status=500)
