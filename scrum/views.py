@@ -119,7 +119,7 @@ class SprintView(ProjectsMixin, ProtectedUpdateView):
                     continue
                 blockers = [blocker for blocker in bug.depends_on
                             if (blocker in id_to_bug and
-                                id_to_bug[blocker].status.lower() != 'resolved')]
+                                not id_to_bug[blocker].is_closed())]
                 if blockers:
                     blocked_bugs.append(bug.id)
 
