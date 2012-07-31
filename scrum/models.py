@@ -27,6 +27,7 @@ BZ_FIELDS = (
     'priority',
     'product',
     'component',
+    'depends_on',
 )
 BZAPI = slumber.API(settings.BZ_API_URL)
 slug_re = re.compile(r'^[-.\w]+$')
