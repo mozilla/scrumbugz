@@ -164,11 +164,18 @@ class BugsListMixin(object):
         return data
 
 
+class Team(models.Model):
+    name = models.CharField(max_length=200)
+    slug = models.CharField(max_length=50, validators=[validate_slug],
+                            db_index=True, unique=True)
+
+
 class Project(BugsListMixin, models.Model):
     name = models.CharField(max_length=200)
     slug = models.CharField(max_length=50, validators=[validate_slug],
                             db_index=True, unique=True)
     has_backlog = models.BooleanField('Use a backlog', default=False)
+    team = models.ForeignKey(Team, related_name='projects', null=True)
 
     def __unicode__(self):
         return self.name
@@ -204,6 +211,8 @@ class Sprint(BugsListMixin, models.Model):
     start_date = models.DateField()
     end_date = models.DateField()
     created_date = models.DateTimeField(editable=False, default=datetime.now)
+    bz_url = models.URLField(verbose_name='Bugzilla URL', max_length=2048,
+                             null=True, blank=True)
     bugs_data_cache = JSONField(editable=False, null=True)
 
     date_cached = None
