@@ -58,6 +58,23 @@ STATICFILES_DIRS = (
     str(PROJECT_DIR.child('static')),
 )
 
+JINGO_EXCLUDE_APPS = (
+    'admin',
+    'auth',
+    'context_processors',  # needed for django tests
+    'debug_toolbar',
+    'floppyforms',
+    'registration',  # needed for django tests
+)
+
+JINJA_CONFIG = {
+    'extensions': (
+        'jinja2.ext.do',
+        'jinja2.ext.loopcontrols',
+        'jinja2.ext.with_',
+    ),
+}
+
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
@@ -66,6 +83,7 @@ STATICFILES_FINDERS = (
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
+    'jingo.Loader',
     'django.template.loaders.filesystem.Loader',
     'django.template.loaders.app_directories.Loader',
 #     'django.template.loaders.eggs.Loader',
@@ -94,10 +112,11 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.admin',
-    'bootstrapform',
+    'bootstrap',
     'floppyforms',
     'scrum',
     'south',
+    'django_nose',
 )
 
 TEMPLATE_CONTEXT_PROCESSORS = (
@@ -110,3 +129,5 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "django.contrib.messages.context_processors.messages",
     "context_processors.context_settings",
 )
+
+TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'

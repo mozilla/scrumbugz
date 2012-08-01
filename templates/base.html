@@ -18,13 +18,13 @@
       <script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
 
-    {% comment %} TODO: Get favicon
+    {# TODO: Get favicon
     <!-- Le fav and touch icons -->
     <link rel="shortcut icon" href="images/favicon.ico">
     <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
     <link rel="apple-touch-icon" sizes="72x72" href="images/apple-touch-icon-72x72.png">
     <link rel="apple-touch-icon" sizes="114x114" href="images/apple-touch-icon-114x114.png">
-    {% endcomment %}
+    #}
   </head>
 
   <body>
@@ -36,14 +36,14 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </a>
-          <a class="brand" href="{% url scrum_home %}">ScrumBugs{% if not PROD_MODE %}-DEV{% endif %}</a>
+          <a class="brand" href="{{ url('scrum_home') }}">ScrumBugs{% if not PROD_MODE %}-DEV{% endif %}</a>
           <div class="nav-collapse">
             <ul class="nav">
-              <li{% if not projects %} class="active"{% endif %}><a href="{% url scrum_home %}">Home</a></li>
-              <li{% if projects %} class="active"{% endif %}><a href="{% url scrum_projects_list %}">Projects</a></li>
+              <li{% if not projects %} class="active"{% endif %}><a href="{{ url('scrum_home') }}">Home</a></li>
+              <li{% if projects %} class="active"{% endif %}><a href="{{ url('scrum_projects_list') }}">Projects</a></li>
             </ul>
             <ul class="nav pull-right">
-              <li><a href="{% url admin:index %}">Admin</a></li>
+              <li><a href="{{ url('admin:index') }}">Admin</a></li>
             </ul>
           </div><!--/.nav-collapse -->
         </div>
@@ -53,19 +53,16 @@
     {% block breadcrumbs %}{% endblock %}
 
     <div class="container">
-      {% for message in messages %}
-        <div class="span6 offset3 alert alert-{{ message.tags }}">
-          <a class="close" data-dismiss="alert" href="#">&times;</a>
-          {{ message }}
-        </div>
-      {% endfor %}
+      <div class="span6 offset3">
+        {% include "bootstrap/includes/messages.html" %}
+      </div>
 
       {% block content %}{% endblock %}
 
       <hr>
 
       <footer>
-        <p>&copy; {% now "Y" %} Mozilla Foundation &amp; Contributors</p>
+        <p>&copy; {{ now("%Y") }} Mozilla Foundation &amp; Contributors</p>
         <p>
           Check out
           <a href="https://github.com/mozilla/scrumbugz">

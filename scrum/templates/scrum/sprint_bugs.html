@@ -1,20 +1,20 @@
 {% extends "scrum/base.html" %}
 
-{% block title %}{{ sprint.name }} / {{ block.super }}{% endblock %}
+{% block title %}{{ sprint.name }} / {{ super() }}{% endblock %}
 
 {% block content %}
   <div class="row">
     <div class="span12">
       {% if perms.scrum.change_sprint %}
         <a class="btn btn-primary pull-right"
-           href="{% url scrum_sprint_edit project.slug sprint.slug %}">
+           href="{{ url('scrum_sprint_edit', project.slug, sprint.slug) }}">
           <i class="icon-edit icon-white"></i> Update Sprint
         </a>
       {% endif %}
 
       <h1>
-        Manage <a href="{{ project.get_absolute_url }}">{{ project.name }}</a>
-        / <a href="{{ sprint.get_absolute_url }}">{{ sprint.name }}</a> Stories
+        Manage <a href="{{ project.get_absolute_url() }}">{{ project.name }}</a>
+        / <a href="{{ sprint.get_absolute_url() }}">{{ sprint.name }}</a> Stories
       </h1>
     </div>
   </div>
@@ -23,8 +23,8 @@
       <div class="well sidebar-nav">
         <ul class="nav nav-list">
           <li class="nav-header">Sprints</li>
-          {% for s in project.sprints.all %}
-            <li{% if s == sprint %} class="active"{% endif %}><a href="{% url scrum_sprint_bugs project.slug s.slug %}">{{ s.name }}</a></li>
+          {% for s in project.sprints.all() %}
+            <li{% if s == sprint %} class="active"{% endif %}><a href="{{ url('scrum_sprint_bugs', project.slug, s.slug) }}">{{ s.name }}</a></li>
           {% endfor %}
         </ul>
       </div>
@@ -32,7 +32,7 @@
     <div class="span5">
       <h2>Backlog</h2>
       <ul class="backlog storylist well">
-        {% for bug in project.get_backlog %}
+        {% for bug in project.get_backlog() %}
           {% include "scrum/storylist_item.html" %}
         {% endfor %}
       </ul>
@@ -46,13 +46,13 @@
             method="post"
             class="pull-right"
             id="sprint-form">
-        {% csrf_token %}
-        {{ form }}
+        {{ csrf() }}
+        {{ form|safe }}
         <button class="btn btn-primary pull-right">Save</button>
       </form>
       <h2>Sprint: Points = <span id="current-points"></span></h2>
       <ul class="sprint storylist well">
-        {% for bug in sprint.cached_bugs.all %}
+        {% for bug in sprint.cached_bugs.all() %}
           {% include "scrum/storylist_item.html" %}
         {% endfor %}
       </ul>

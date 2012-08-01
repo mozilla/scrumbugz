@@ -9,18 +9,18 @@
     </tr>
   </thead>
   <tbody>
-    {% for url in bzurls %}
+    {% for bzurl in bzurls %}
       <tr>
-        <td><a href="{{ url.url }}"
-               target="_blank">{{ url.url|truncatechars:30 }}</a></td>
-        <td>{{ url.get_products|join:", " }}</td>
-        <td>{{ url.get_components|join:", " }}</td>
-        <td>{{ url.get_whiteboard }}</td>
+        <td><a href="{{ bzurl.url }}"
+               target="_blank">{{ bzurl.url|truncate(30, True) }}</a></td>
+        <td>{{ bzurl.get_products()|join(", ") }}</td>
+        <td>{{ bzurl.get_components()|join(", ") }}</td>
+        <td>{{ bzurl.get_whiteboard() }}</td>
         <td width="1">
-          <a href="{% url scrum_url_delete url.pk %}" class="btn btn-mini btn-danger bzurl-remove" title="Remove URL"><i class="icon-remove icon-white"></i></a>
+          <a href="{{ url('scrum_url_delete', bzurl.pk) }}" class="btn btn-mini btn-danger bzurl-remove" title="Remove URL"><i class="icon-remove icon-white"></i></a>
         </td>
       </tr>
-    {% empty %}
+    {% else %}
       <tr>
         <td colspan="5">No URLs so far</td>
       </tr>

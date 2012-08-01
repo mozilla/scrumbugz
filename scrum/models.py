@@ -455,6 +455,17 @@ class Bug(models.Model):
             cpoints = h['points']
         return cpoints
 
+    def _parse_assigned(self):
+        return self.assigned_to.split('||', 1)
+
+    @property
+    def assigned_name(self):
+        return self._parse_assigned()[0]
+
+    @property
+    def assigned_real_name(self):
+        return self._parse_assigned()[-1]
+
     @property
     def basic_status(self):
         if not self.has_scrum_data:
@@ -548,7 +559,8 @@ class BugSprintLog(models.Model):
 
 def extract_bug_kwargs(data):
     kwargs = data.copy()
-    kwargs['assigned_to'] = kwargs['assigned_to']['name']
+    kwargs['assigned_to'] = '||'.join([kwargs['assigned_to']['name'],
+                                       kwargs['assigned_to']['real_name']])
     if 'url' in kwargs:
         del kwargs['url']
     if 'whiteboard' in kwargs:
