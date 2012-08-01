@@ -113,10 +113,10 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django.contrib.admin',
     'bootstrap',
-    'django_nose',
     'floppyforms',
     'scrum',
     'south',
+    'django_nose',
 )
 
 TEMPLATE_CONTEXT_PROCESSORS = (
