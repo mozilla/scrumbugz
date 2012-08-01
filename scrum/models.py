@@ -600,6 +600,14 @@ def process_notes(sender, instance, **kwargs):
     if instance.notes:
         instance.notes_html = markdown(
             force_unicode(instance.notes),
+            # http://packages.python.org/Markdown/extensions/index.html
+            extensions=[
+                'nl2br',
+                'fenced_code',
+                'tables',
+                'smart_strong',
+                'sane_lists',
+            ],
             output_format='html5',
             safe_mode=True,
         )
