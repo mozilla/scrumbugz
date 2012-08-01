@@ -3,7 +3,7 @@
     {% if not object.scrum_only %}
       <a href="{{ request.path }}" class="btn pull-right">Hide dataless bugs</a>
     {% endif %}
-    <h2>Bugs</h2>
+    <h2>Stories</h2>
     {% if object.num_no_data_bugs %}
       <div class="alert">
         <button class="close" data-dismiss="alert">&times;</button>
@@ -27,10 +27,10 @@
       <tbody>
       {% for bug in bugs %}
         <tr data-bugid="{{ bug.id }}" id="bug{{ bug.id }}" class="bug-{{ bug.basic_status }}">
-          <td><a href="{{ bug.get_absolute_url }}">{{ bug.id }}</a></td>
+          <td><a href="{{ bug.get_absolute_url() }}">{{ bug.id }}</a></td>
           <td>{{ bug.priority }}</td>
           <td>{{ bug.summary }}</td>
-          <td class="ttip" title="{{ bug.assigned_to.real_name }}">{{ bug.assigned_to.name }}</td>
+          <td class="ttip" title="{{ bug.assigned_real_name }}">{{ bug.assigned_name }}</td>
           <td>{{ bug.story_user }}</td>
           <td>{{ bug.story_component }}</td>
           <td>{{ bug.story_points }}</td>
@@ -67,7 +67,7 @@
   </div>
   <div class="span6">
     <div class="btn-group">
-      {% for product in object.get_products %}
+      {% for product in object.get_products() %}
         <a class="btn" href="{{ BZ_FILE_URL }}product={{ product }}"><i class="icon-plus-sign"></i> {{ product }} bug</a>
       {% endfor %}
     </div>

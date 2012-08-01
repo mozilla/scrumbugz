@@ -1,6 +1,5 @@
 # Dev and testing requirements.
 -r requirements-base.txt
 
-nose==1.1.2
 mock==0.8.0
 Sphinx

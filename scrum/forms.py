@@ -63,12 +63,16 @@ class SprintForm(forms.ModelForm):
             'slug': SlugInput,
             'start_date': date5,
             'end_date': date5,
+            'notes': forms.Textarea(attrs={
+                'class': 'span5',
+            })
         }
         fields = (
             'name',
             'slug',
             'start_date',
             'end_date',
+            'notes',
         )
 
 

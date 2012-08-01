@@ -6,6 +6,7 @@ import zlib
 from base64 import b64decode, b64encode
 from collections import defaultdict
 from datetime import datetime
+from markdown import markdown
 from operator import itemgetter
 
 from django.conf import settings
@@ -14,6 +15,7 @@ from django.core.validators import RegexValidator
 from django.db import models, transaction
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
+from django.utils.encoding import force_unicode
 
 import dateutil.parser
 import slumber
@@ -210,6 +212,10 @@ class Sprint(BugsListMixin, models.Model):
                             db_index=True)
     start_date = models.DateField()
     end_date = models.DateField()
+    notes = models.TextField(blank=True, help_text='This field uses '
+        '<a href="http://daringfireball.net/projects/markdown/syntax"'
+        'target="_blank">Markdown syntax</a> for conversion to HTML.')
+    notes_html = models.TextField(blank=True, editable=False)
     created_date = models.DateTimeField(editable=False, default=datetime.now)
     bz_url = models.URLField(verbose_name='Bugzilla URL', max_length=2048,
                              null=True, blank=True)
@@ -464,6 +470,17 @@ class Bug(models.Model):
             cpoints = h['points']
         return cpoints
 
+    def _parse_assigned(self):
+        return self.assigned_to.split('||', 1)
+
+    @property
+    def assigned_name(self):
+        return self._parse_assigned()[0]
+
+    @property
+    def assigned_real_name(self):
+        return self._parse_assigned()[-1]
+
     @property
     def basic_status(self):
         if not self.has_scrum_data:
@@ -557,7 +574,8 @@ class BugSprintLog(models.Model):
 
 def extract_bug_kwargs(data):
     kwargs = data.copy()
-    kwargs['assigned_to'] = kwargs['assigned_to']['name']
+    kwargs['assigned_to'] = '||'.join([kwargs['assigned_to']['name'],
+                                       kwargs['assigned_to']['real_name']])
     if 'url' in kwargs:
         del kwargs['url']
     if 'whiteboard' in kwargs:
@@ -596,3 +614,21 @@ def log_bug_actions(sender, instance, **kwargs):
         if instance.sprint:
             BugSprintLog.objects.added_to_sprint(instance, instance.sprint,
                                                  instance.added_manually)
+
+
+@receiver(pre_save, sender=Sprint)
+def process_notes(sender, instance, **kwargs):
+    if instance.notes:
+        instance.notes_html = markdown(
+            force_unicode(instance.notes),
+            # http://packages.python.org/Markdown/extensions/index.html
+            extensions=[
+                'nl2br',
+                'fenced_code',
+                'tables',
+                'smart_strong',
+                'sane_lists',
+            ],
+            output_format='html5',
+            safe_mode=True,
+        )

@@ -99,6 +99,7 @@ class TestSprint(TestCase):
             'url': GOOD_BZ_URL,
         }
         url = reverse('scrum_sprint_new', args=[p.slug])
+        print 'SUCCESS \o/'
         resp = self.client.post(url, fdata, follow=True)
         self.assertRedirects(resp, reverse('scrum_sprint', kwargs={
             'pslug': p.slug,

@@ -1,32 +1,37 @@
 {% extends "scrum/base.html" %}
-{% load bootstrap %}
+{% from "bootstrap/forms/macros.html" import field %}
 
 {% block main_content %}
   {% if project %}
-    <h1>Edit <a href="{% url scrum_project project.slug %}">{{ project.name }}</a></h1>
+    <h1>Edit <a href="{{ url('scrum_project', project.slug) }}">{{ project.name }}</a></h1>
   {% else %}
     <h1>Create Project</h1>
   {% endif %}
   <hr>
-  <form action="{{ request.get_full_path }}"
+  <form action="{{ request.get_full_path() }}"
         class="form-horizontal"
         method="post"
-        id="project_form_{{ project|yesno:'edit,create' }}">
-    {% csrf_token %}
-    {{ form|bootstrap }}
+        id="project_form_{{ 'edit' if project else 'create' }}">
+    {{ csrf() }}
+    {% for f in form %}
+      {{ field(f) }}
+    {% endfor %}
     <div class="form-actions">
-      <button class="btn btn-primary" type="submit">{{ project|yesno:"Update,Create" }}</button>
-      <a href="{% if project %}{{ project.get_absolute_url }}{% else %}{% url scrum_projects_list %}{% endif %}" class="btn">Cancel</a>
+      <button class="btn btn-primary" type="submit">{{ 'Update' if project else 'Create' }}</button>
+      <a href="{% if project %}{{ project.get_absolute_url() }}{% else %}{{ url('scrum_projects_list') }}{% endif %}" class="btn">Cancel</a>
     </div>
   </form>
   {% if project %}
     <div id="bzurls_container"{% if not project.has_backlog %} class="hide"{% endif %}>
       <h2 id="bzurls">Bugzilla URLs</h2>
-      <div id="bzurl_list_wrapper" data-url="{% url scrum_project_urls project.slug %}">
-        {% include "scrum/bzurl_list.html" with bzurls=project.urls.all %}
+      <div id="bzurl_list_wrapper" data-url="{{ url('scrum_project_urls', project.slug) }}">
+        {% with bzurls=project.urls.all() %}
+          {% include "scrum/bzurl_list.html" %}
+        {% endwith %}
       </div>
-      {% url scrum_project_urls project.slug as bzurl_form_url %}
-      {% include "scrum/bzurl_form.html" %}
+      {% with bzurl_form_url=url('scrum_project_urls', project.slug) %}
+        {% include "scrum/bzurl_form.html" %}
+      {% endwith %}
     </div>
   {% endif %}
 {% endblock %}
