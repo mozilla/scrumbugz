@@ -79,6 +79,10 @@
     </div>
 
     {% include "scrum/bugs_table.html" %}
+    {% if sprint.notes %}
+      <h2>Notes</h2>
+      {{ sprint.notes_html|safe }}
+    {% endif %}
   {% endif %}
 {% endblock %}
 

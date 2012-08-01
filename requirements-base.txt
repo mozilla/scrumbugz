@@ -12,5 +12,6 @@ South==0.7.5
 Jinja2==2.6
 jingo==0.4
 git+https://github.com/auzigog/jinja-bootstrap.git@v0.3.0
+Markdown==2.2.0
 nose
 django-nose
