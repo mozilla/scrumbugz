@@ -1,29 +1,32 @@
-from django.conf.urls.defaults import patterns, url
+from django.conf.urls import patterns, url
 
 from scrum.views import (CreateBZUrlView, CreateProjectView, CreateSprintView,
-                         DeleteBZUlrView, EditProjectView, EditSprintView,
-                         ListProjectsView, ManageSprintBugsView, ProjectView,
-                         SprintView)
+                         CreateTeamView, DeleteBZUlrView, EditProjectView,
+                         EditSprintView, ListProjectsView, ListTeamsView,
+                         ManageSprintBugsView, ProjectView, RedirectOldURLsView,
+                         SprintView, TeamView)
 
 
 urlpatterns = patterns('',
-    url(r'^$', ListProjectsView.as_view(), name='scrum_projects_list'),
-    url(r'^new/$', CreateProjectView.as_view(), name='scrum_project_new'),
-    url(r'^url/(?P<pk>\d+)/delete/$', DeleteBZUlrView.as_view(),
+    url(r'^p/$', ListProjectsView.as_view(), name='scrum_projects_list'),
+    url(r'^t/$', ListTeamsView.as_view(), name='scrum_teams_list'),
+    url(r'^p/new/$', CreateProjectView.as_view(), name='scrum_project_new'),
+    url(r'^t/new/$', CreateTeamView.as_view(), name='scrum_team_new'),
+    url(r'^p/url/(?P<pk>\d+)/delete/$', DeleteBZUlrView.as_view(),
         name='scrum_url_delete'),
-    url(r'^(?P<pslug>[-\w]+)/$', ProjectView.as_view(), name='scrum_project'),
-    url(r'^(?P<pslug>[-\w]+)/new/$', CreateSprintView.as_view(),
+    url(r'^p/(?P<slug>[-\w]+)/$', ProjectView.as_view(), name='scrum_project'),
+    url(r'^t/(?P<slug>[-\w]+)/$', TeamView.as_view(), name='scrum_team'),
+    url(r'^t/(?P<slug>[-\w]+)/new/$', CreateSprintView.as_view(),
         name='scrum_sprint_new'),
-    url(r'^(?P<pslug>[-\w]+)/edit/$', EditProjectView.as_view(),
+    url(r'^p/(?P<slug>[-\w]+)/edit/$', EditProjectView.as_view(),
         name='scrum_project_edit'),
-    url(r'^(?P<pslug>[-\w]+)/urls/$', CreateBZUrlView.as_view(),
+    url(r'^p/(?P<slug>[-\w]+)/urls/$', CreateBZUrlView.as_view(),
         name='scrum_project_urls'),
-    url(r'^(?P<pslug>[-\w]+)/(?P<sslug>[-\w\.]+)/$', SprintView.as_view(),
+    url(r'^t/(?P<slug>[-\w]+)/(?P<sslug>[-\w\.]+)/$', SprintView.as_view(),
         name='scrum_sprint'),
-    url(r'^(?P<pslug>[-\w]+)/(?P<sslug>[-\w\.]+)/edit/$',
+    url(r'^t/(?P<slug>[-\w]+)/(?P<sslug>[-\w\.]+)/edit/$',
         EditSprintView.as_view(), name='scrum_sprint_edit'),
-    url(r'^(?P<pslug>[-\w]+)/(?P<sslug>[-\w\.]+)/bugs/$',
+    url(r'^t/(?P<slug>[-\w]+)/(?P<sslug>[-\w\.]+)/bugs/$',
         ManageSprintBugsView.as_view(), name='scrum_sprint_bugs'),
-    url(r'^(?P<pslug>[-\w]+)/(?P<sslug>[-\w\.]+)/urls/$',
-        CreateBZUrlView.as_view(), name='scrum_sprint_urls'),
+    url(r'^projects/(?P<path>.*)', RedirectOldURLsView.as_view()),
 )

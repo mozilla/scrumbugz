@@ -1,16 +1,17 @@
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
-from django.http import HttpResponse, HttpResponseForbidden
+from django.http import (HttpResponse, HttpResponseForbidden,
+                         HttpResponsePermanentRedirect)
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.context import Context
 from django.utils import simplejson as json
 from django.views.generic import (CreateView, DeleteView, DetailView,
-                                  ListView, TemplateView, UpdateView)
+                                  ListView, TemplateView, UpdateView, View)
 
-from scrum.forms import (CreateProjectForm, CreateSprintForm, BZURLForm,
+from scrum.forms import (CreateProjectForm, CreateTeamForm, BZURLForm,
                          ProjectForm, SprintBugsForm, SprintForm)
-from scrum.models import BugzillaURL, BZError, Project, Sprint
+from scrum.models import BugzillaURL, BZError, Project, Sprint, Team
 
 
 class ProtectedCreateView(CreateView):
@@ -43,23 +44,6 @@ class ProtectedDeleteView(DeleteView):
         return wrap(request, *args, **kwargs)
 
 
-class ProjectOrSprintMixin(object):
-    def get_project_or_sprint(self):
-        """Returns a project or sprint object based on the url kwargs."""
-        if not hasattr(self, 'target_obj'):
-            pslug = self.kwargs.get('pslug')
-            sslug = self.kwargs.get('sslug')
-            if sslug:
-                self.target_obj = get_object_or_404(Sprint,
-                                                    project__slug=pslug,
-                                                    slug=sslug)
-                self.target_obj_type = 'sprint'
-            else:
-                self.target_obj = get_object_or_404(Project, slug=pslug)
-                self.target_obj_type = 'project'
-        return self.target_obj, self.target_obj_type
-
-
 class BugsDataMixin(object):
     def get_context_data(self, **kwargs):
         context = super(BugsDataMixin, self).get_context_data(**kwargs)
@@ -79,9 +63,8 @@ class BugsDataMixin(object):
         return context
 
 
-class ProjectsMixin(ProjectOrSprintMixin):
+class ProjectsMixin(object):
     model = Project
-    slug_url_kwarg = 'pslug'
 
     def get_context_data(self, **kwargs):
         context = super(ProjectsMixin, self).get_context_data(**kwargs)
@@ -98,6 +81,23 @@ home = HomeView.as_view()
 
 class ProjectView(BugsDataMixin, ProjectsMixin, DetailView):
     template_name = 'scrum/project.html'
+
+
+class TeamView(DetailView):
+    model = Team
+    template_name = 'scrum/team.html'
+
+
+class ListTeamsView(ListView):
+    model = Team
+    template_name = 'scrum/teams_list.html'
+    context_object_name = 'teams'
+
+
+class CreateTeamView(ProtectedCreateView):
+    model = Team
+    form_class = CreateTeamForm
+    template_name = 'scrum/team_form.html'
 
 
 class ListProjectsView(ProjectsMixin, ListView):
@@ -118,7 +118,7 @@ class EditProjectView(ProjectsMixin, ProtectedUpdateView):
 
 class CreateSprintView(ProjectsMixin, ProtectedCreateView):
     model = Sprint
-    form_class = CreateSprintForm
+    form_class = SprintForm
     template_name = 'scrum/sprint_form.html'
 
     def get_context_data(self, **kwargs):
@@ -127,7 +127,7 @@ class CreateSprintView(ProjectsMixin, ProtectedCreateView):
         return context
 
     def get_initial(self):
-        self.project = self.get_project_or_sprint()[0]
+        self.project = get_object_or_404(Project, slug=self.kwargs['slug'])
         return super(CreateSprintView, self).get_initial()
 
     def form_valid(self, form):
@@ -138,12 +138,12 @@ class CreateSprintView(ProjectsMixin, ProtectedCreateView):
         return redirect(sprint)
 
 
-class SprintMixin(ProjectOrSprintMixin):
+class SprintMixin(object):
     model = Sprint
     context_object_name = 'sprint'
 
     def get_object(self, queryset=None):
-        pslug = self.kwargs.get('pslug')
+        pslug = self.kwargs.get('slug')
         sslug = self.kwargs.get('sslug')
         sprint = get_object_or_404(Sprint, project__slug=pslug, slug=sslug)
         self.project = sprint.project
@@ -172,7 +172,7 @@ class ManageSprintBugsView(SprintMixin, ProjectsMixin, ProtectedUpdateView):
     template_name = 'scrum/sprint_bugs.html'
 
 
-class CreateBZUrlView(ProjectOrSprintMixin, ProtectedCreateView):
+class CreateBZUrlView(ProtectedCreateView):
     model = BugzillaURL
     form_class = BZURLForm
     template_name = 'scrum/bzurl_list.html'
@@ -183,15 +183,14 @@ class CreateBZUrlView(ProjectOrSprintMixin, ProtectedCreateView):
         return super(CreateBZUrlView, self).get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
-        obj, objtype = self.get_project_or_sprint()
+        obj = get_object_or_404(Project, slug=self.kwargs['slug'])
         kwargs['target_obj'] = obj
-        kwargs['target_obj_type'] = objtype
         kwargs['bzurls'] = obj.urls.all()
         return super(CreateBZUrlView, self).get_context_data(**kwargs)
 
     def form_valid(self, form):
         url = form.save(commit=False)
-        url.set_project_or_sprint(*self.get_project_or_sprint())
+        url.project = get_object_or_404(Project, slug=self.kwargs['slug'])
         url.save()
         if self.request.is_ajax():
             return self.render_to_response(self.get_context_data(form=form))
@@ -202,7 +201,7 @@ class CreateBZUrlView(ProjectOrSprintMixin, ProtectedCreateView):
         if self.request.is_ajax():
             return HttpResponse(json.dumps(form.errors), status=400)
         else:
-            target_obj = self.get_project_or_sprint()[0]
+            target_obj = get_object_or_404(Project, slug=self.kwargs['slug'])
             messages.error(self.request, form['url'].errors[0])
             return redirect(target_obj.get_edit_url())
 
@@ -232,3 +231,9 @@ def server_error(request):
     }
     return render(request, '500.html', context_instance=Context(context),
                   status=500)
+
+
+class RedirectOldURLsView(View):
+    def get(self, request, *args, **kwargs):
+        path = kwargs.get('path', '')
+        return HttpResponsePermanentRedirect('/p/' + path)

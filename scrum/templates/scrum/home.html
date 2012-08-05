@@ -3,14 +3,15 @@
 {% block content %}
   <div class="hero-unit">
     <h1>Scrumify your Bugzilla</h1>
-    <p>This site allows you to see all the scrummy details of the sprints
+    <p>This site allows you to see all the scrummy details of the projects
     you're managing in Bugzilla. Just craft a search in Bugzilla that includes
-    the bugs in your sprint, copy the url to that search result, and paste it
-    into the "New Sprint" form on the page for your project.</p>
+    the bugs in your project, copy the url to that search result, and paste it
+    into the "New Project" form. You'll then be able to manage sprints using
+    this backlog for your project.</p>
 
     <p>
       <a class="btn btn-primary btn-large"
-         href="{{ url('scrum_projects_list') }}">Go To Projects &raquo;</a>
+         href="{{ url('scrum_teams_list') }}">Go To Teams &raquo;</a>
     </p>
   </div>
 {% endblock %}

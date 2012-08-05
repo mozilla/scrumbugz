@@ -3,7 +3,7 @@ from django.core.validators import validate_comma_separated_integer_list
 
 import floppyforms as forms
 
-from scrum.models import BugzillaURL, Project, Sprint
+from scrum.models import BugzillaURL, Project, Sprint, Team
 
 
 def validate_bzurl(url):
@@ -114,12 +114,18 @@ class CreateFormMixin(forms.ModelForm):
             obj.urls.create(url=self.cleaned_data['url'])
 
 
-class CreateSprintForm(CreateFormMixin, SprintForm):
-    """Form for creating new sprints."""
-
-
 class CreateProjectForm(CreateFormMixin, ProjectForm):
     """Form for creating new projects."""
+
+
+class CreateTeamForm(forms.ModelForm):
+
+    class Meta:
+        model = Team
+        fields = (
+            'name',
+            'slug',
+        )
 
 
 class BZURLForm(forms.ModelForm):

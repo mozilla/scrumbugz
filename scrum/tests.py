@@ -102,7 +102,7 @@ class TestSprint(TestCase):
         print 'SUCCESS \o/'
         resp = self.client.post(url, fdata, follow=True)
         self.assertRedirects(resp, reverse('scrum_sprint', kwargs={
-            'pslug': p.slug,
+            'slug': p.slug,
             'sslug': '1.3.37',
         }))
         s = Sprint.objects.get(slug='1.3.37')

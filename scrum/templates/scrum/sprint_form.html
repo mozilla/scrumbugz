@@ -20,17 +20,6 @@
       <a href="{% if sprint %}{{ sprint.get_absolute_url() }}{% else %}{{ url('scrum_project', project.slug) }}{% endif %}" class="btn">Cancel</a>
     </div>
   </form>
-  {% if sprint %}
-    <h2>Bugzilla URLs</h2>
-      {% with bzurl_form_url=url('scrum_sprint_urls', project.slug, sprint.slug) %}
-        <div id="bzurl_list_wrapper" data-url="{{ bzurl_form_url }}">
-        {% with bzurls=sprint.urls.all() %}
-          {% include "scrum/bzurl_list.html" %}
-        {% endwith %}
-      </div>
-      {% include "scrum/bzurl_form.html" %}
-    {% endwith %}
-  {% endif %}
 {% endblock %}
 
 {% block js %}

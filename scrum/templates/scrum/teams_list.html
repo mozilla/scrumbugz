@@ -1,0 +1,16 @@
+{% extends "scrum/base.html" %}
+
+{% block main_content %}
+  <div class="hero-unit">
+    <h1>Teams</h1>
+
+    <p>Sorry. Not much here yet. Choose a team on the left, and go. Just go.</p>
+    {% if perms.scrum.add_team %}
+      <a class="btn btn-primary btn-large"
+         href="{{ url('scrum_team_new') }}">
+        <i class="icon-plus icon-white"></i> New Team
+      </a>
+    {% endif %}
+  </div>
+
+{% endblock %}

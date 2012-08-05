@@ -3,9 +3,11 @@
 *.swp
 *.un~
 *.db
+*.dump
 static_root/
 settings/local.py
 .codeintel
 *.sublime*
 .coverage
 _coverage/*
+

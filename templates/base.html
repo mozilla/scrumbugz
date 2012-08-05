@@ -39,8 +39,9 @@
           <a class="brand" href="{{ url('scrum_home') }}">ScrumBugs{% if not PROD_MODE %}-DEV{% endif %}</a>
           <div class="nav-collapse">
             <ul class="nav">
-              <li{% if not projects %} class="active"{% endif %}><a href="{{ url('scrum_home') }}">Home</a></li>
-              <li{% if projects %} class="active"{% endif %}><a href="{{ url('scrum_projects_list') }}">Projects</a></li>
+              <li{% if request.path == '/' %} class="active"{% endif %}><a href="{{ url('scrum_home') }}">Home</a></li>
+              <li{% if request.path.startswith('/t') %} class="active"{% endif %}><a href="{{ url('scrum_teams_list') }}">Teams</a></li>
+              <li{% if request.path.startswith('/p') %} class="active"{% endif %}><a href="{{ url('scrum_projects_list') }}">Projects</a></li>
             </ul>
             <ul class="nav pull-right">
               <li><a href="{{ url('admin:index') }}">Admin</a></li>

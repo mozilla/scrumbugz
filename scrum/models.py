@@ -59,6 +59,7 @@ BZ_FIELDS = (
     'id',
     'url',
     'status',
+    'resolution',
     'summary',
     'history',
     'whiteboard',
@@ -66,6 +67,8 @@ BZ_FIELDS = (
     'priority',
     'product',
     'component',
+    'blocks',
+    'depends_on',
 )
 BZAPI = slumber.API(settings.BZ_API_URL)
 slug_re = re.compile(r'^[-.\w]+$')
@@ -83,37 +86,13 @@ class BugsListMixin(object):
     num_no_data_bugs = 0
 
     def get_bugs(self, **kwargs):
-        """Get a unique set of bugs from all bz urls"""
-        self.scrum_only = kwargs.get('scrum_only', True)
-        if kwargs.get('refresh', False):
-            self._clear_bugs_data_cache()
-        return self._get_url_items('bugs', **kwargs)
+        raise NotImplementedError
 
     def get_components(self):
-        """Get a unique set of bugs from all bz urls"""
-        return self._get_url_items('components')
+        raise NotImplementedError
 
     def get_products(self):
-        """Get a unique set of bugs from all bz urls"""
-        return self._get_url_items('products')
-
-    def _get_url_items(self, item_name, **kwargs):
-        """Get a unique set of items from all bz urls"""
-        attr_name = "_url_items_%s" % item_name
-        if kwargs.get('refresh', False) and hasattr(self, attr_name):
-            delattr(self, attr_name)
-        if not hasattr(self, attr_name):
-            items = set()
-            for url in self.get_urls():
-                items |= getattr(url, 'get_' + item_name)(**kwargs)
-
-                if url.date_cached:
-                    self.date_cached = url.date_cached
-                if item_name == 'bugs' and url.num_no_data_bugs:
-                    self.num_no_data_bugs += url.num_no_data_bugs
-
-            setattr(self, attr_name, list(items))
-        return getattr(self, attr_name)
+        raise NotImplementedError
 
     def _get_bugs_data(self):
         bugs = self.get_bugs()
@@ -171,6 +150,14 @@ class Team(models.Model):
     slug = models.CharField(max_length=50, validators=[validate_slug],
                             db_index=True, unique=True)
 
+    @models.permalink
+    def get_absolute_url(self):
+        return 'scrum_team', [self.slug]
+
+    @models.permalink
+    def get_edit_url(self):
+        return 'scrum_team_edit', [self.slug]
+
 
 class Project(BugsListMixin, models.Model):
     name = models.CharField(max_length=200)
@@ -181,6 +168,39 @@ class Project(BugsListMixin, models.Model):
 
     def __unicode__(self):
         return self.name
+
+    def get_bugs(self, **kwargs):
+        """Get a unique set of bugs from all bz urls"""
+        self.scrum_only = kwargs.get('scrum_only', True)
+        if kwargs.get('refresh', False):
+            self._clear_bugs_data_cache()
+        return self._get_url_items('bugs', **kwargs)
+
+    def get_components(self):
+        """Get a unique set of bugs from all bz urls"""
+        return self._get_url_items('components')
+
+    def get_products(self):
+        """Get a unique set of bugs from all bz urls"""
+        return self._get_url_items('products')
+
+    def _get_url_items(self, item_name, **kwargs):
+        """Get a unique set of items from all bz urls"""
+        attr_name = "_url_items_%s" % item_name
+        if kwargs.get('refresh', False) and hasattr(self, attr_name):
+            delattr(self, attr_name)
+        if not hasattr(self, attr_name):
+            items = set()
+            for url in self.get_urls():
+                items |= getattr(url, 'get_' + item_name)(**kwargs)
+
+                if url.date_cached:
+                    self.date_cached = url.date_cached
+                if item_name == 'bugs' and url.num_no_data_bugs:
+                    self.num_no_data_bugs += url.num_no_data_bugs
+
+            setattr(self, attr_name, list(items))
+        return getattr(self, attr_name)
 
     @models.permalink
     def get_absolute_url(self):
@@ -204,9 +224,24 @@ class Project(BugsListMixin, models.Model):
     def get_urls(self):
         return self.urls.all()
 
+    def update_bugs(self, bugs):
+        """
+        Add and remove bugs to sync the list with what we receive.
+        :param bug_ids: list of bugs or bug ids
+        :return: None
+        """
+        to_add, to_remove = get_sync_bugs(self.bugs.all(), bugs)
+        # saving individually to fire signals
+        for bug in to_add:
+            bug.project = self
+            bug.save()
+        for bug in to_remove:
+            bug.project = None
+            bug.save()
+
 
 class Sprint(BugsListMixin, models.Model):
-    project = models.ForeignKey(Project, related_name='sprints')
+    team = models.ForeignKey(Team, related_name='sprints')
     name = models.CharField(max_length=200)
     slug = models.CharField(max_length=200, validators=[validate_slug],
                             db_index=True)
@@ -226,55 +261,72 @@ class Sprint(BugsListMixin, models.Model):
     class Meta:
         get_latest_by = 'created_date'
         ordering = ['-start_date']
-        unique_together = ('project', 'slug')
+        unique_together = ('team', 'slug')
 
     def __unicode__(self):
         return u'{0} - {1}'.format(self.project.name, self.name)
 
+    def get_bugs(self, **kwargs):
+        """Get a unique set of bugs from all bz urls"""
+        self.scrum_only = kwargs.get('scrum_only', True)
+        if kwargs.get('refresh', False):
+            self.refresh_bugs_data()
+        bugs = self.bugs.all()
+        if self.scrum_only:
+            num_bugs = len(bugs)
+            bugs = [b for b in bugs if b.has_scrum_data]
+            self.num_no_data_bugs = num_bugs - len(bugs)
+        return bugs
+
+    def get_components(self):
+        return self._get_bug_attr_values('component')
+
+    def get_products(self):
+        return self._get_bug_attr_values('product')
+
+    def _get_bug_attr_values(self, attr):
+        attr_values = {}
+        for bug in self.get_bugs(scrum_only=False):
+            attr_values[getattr(bug, attr)] = 0
+        return attr_values.keys()
+
     @models.permalink
     def get_absolute_url(self):
-        return 'scrum_sprint', (), {'pslug': self.project.slug,
+        return 'scrum_sprint', (), {'slug': self.team.slug,
                                     'sslug': self.slug}
 
     @models.permalink
     def get_edit_url(self):
-        return 'scrum_sprint_edit', (), {'pslug': self.project.slug,
+        return 'scrum_sprint_edit', (), {'slug': self.team.slug,
                                          'sslug': self.slug}
 
-    def get_urls(self):
-        """
-        Get a list of BugzillaURL objects plus one for manually added bugs.
-        """
-        urls = list(self.urls.all())
-        bugs = self.cached_bugs.all()
-        if bugs:
-            urls += [BugzillaURL(url=get_bz_url_for_buglist(bugs))]
-        return urls
+    def sync_bugs_from_bz_url(self):
+        if self.bz_url:
+            bzurl = BugzillaURL(url=self.bz_url)
+            bugs = bzurl.get_bugs(scrum_only=False)
+            self.update_bugs(bugs)
 
-    def update_bugs(self, bug_ids, manual=False):
+    def get_bz_search_url(self):
+        return BugzillaURL(url=get_bz_url_for_buglist(self.bugs.all()))
+
+    def refresh_bugs_data(self):
+        self._clear_bugs_data_cache()
+        bzurl = self.get_bz_search_url()
+        bzurl.get_bugs(refresh=True)
+
+    def update_bugs(self, bugs):
         """
         Add and remove bugs to sync the list with what we receive.
-        :param bug_ids: list of bugs or bug ids
+        :param bugs: list of bugs or bug ids
         :return: None
         """
-        if not isinstance(bug_ids[0], (basestring, int)):
-            bug_ids = [bug.id for bug in bug_ids]
-        current_bugs = set(self.cached_bugs.all())
-        new_bugs = set(Bug.objects.filter(id__in=bug_ids))
-        to_add = new_bugs - current_bugs
-        to_remove = current_bugs - new_bugs
+        to_add, to_remove = get_sync_bugs(self.bugs.all(), bugs)
         # saving individually to fire signals
         for bug in to_add:
-            if bug.sprint and bug.added_manually:
-                continue
             bug.sprint = self
-            bug.added_manually = manual
             bug.save()
         for bug in to_remove:
-            if bug.sprint and bug.added_manually and not manual:
-                continue
             bug.sprint = None
-            bug.added_manually = False
             bug.save()
 
     def get_burndown(self):
@@ -306,27 +358,22 @@ class Sprint(BugsListMixin, models.Model):
 
     def get_cached_bugs_data(self):
         # TODO: Process this in some way if None
-        return self.bugs_data_cache
+        bugs_data = self.bugs_data_cache
+        if bugs_data is None:
+            bugs_data = self.get_bugs_data()
+        return bugs_data
 
 
 class BugzillaURL(models.Model):
     url = models.URLField(verbose_name='Bugzilla URL', max_length=2048)
     project = models.ForeignKey(Project, null=True, blank=True,
                                 related_name='urls')
-    sprint = models.ForeignKey(Sprint, null=True, blank=True,
-                               related_name='urls')
 
     date_cached = None
     num_no_data_bugs = 0
 
     class Meta:
         ordering = ('id',)
-
-    def set_project_or_sprint(self, obj, obj_type=None):
-        """Figure out if obj is a project or sprint, and set it as such."""
-        if obj_type is None:
-            obj_type = obj._meta.module_name
-        setattr(self, obj_type, obj)
 
     def _get_bz_args(self):
         """Return a dict of the arguments from the bz_url"""
@@ -368,7 +415,7 @@ class BugzillaURL(models.Model):
                     'date_received': data['date_received'],
                     'bug_ids': [int(bug['id']) for bug in data['bugs']],
                 }, CACHE_BUGS_FOR)
-                self._bugs = set(store_bugs(data['bugs'], self.sprint))
+                self._bugs = set(store_bugs(data['bugs']))
                 self.date_cached = data['date_received']
             else:
                 self._bugs = set(Bug.objects.filter(
@@ -420,16 +467,20 @@ class Bug(models.Model):
     component = models.CharField(max_length=200)
     assigned_to = models.CharField(max_length=200)
     status = models.CharField(max_length=20)
+    resolution = models.CharField(max_length=20, blank=True)
     summary = models.CharField(max_length=500)
     priority = models.CharField(max_length=2, blank=True)
     whiteboard = models.CharField(max_length=200, blank=True)
+    blocks = JSONField(blank=True)
+    depends_on = JSONField(blank=True)
     story_user = models.CharField(max_length=50, blank=True)
     story_component = models.CharField(max_length=50, blank=True)
     story_points = models.PositiveSmallIntegerField(default=0)
 
-    added_manually = models.BooleanField()
-    sprint = models.ForeignKey(Sprint, related_name='cached_bugs', null=True,
+    sprint = models.ForeignKey(Sprint, related_name='bugs', null=True,
                                on_delete=models.SET_NULL)
+    project = models.ForeignKey(Project, related_name='bugs', null=True,
+                                on_delete=models.SET_NULL)
 
     objects = BugManager()
 
@@ -527,24 +578,21 @@ class Bug(models.Model):
                         if pts != cpoints:
                             cpoints = pts
                             if not closed:
-                                phistory.append({
-                                    'date': hdate,
-                                    'points': pts,
-                                    })
+                                phistory.append({'date': hdate,
+                                                 'points': pts})
             self._points_history = phistory
         return self._points_history
 
 
 class BugSprintLogManager(models.Manager):
-    def _record_action(self, bug, sprint, action, manual):
-        self.create(bug=bug, sprint=sprint, action=action,
-                    manual=manual)
+    def _record_action(self, bug, sprint, action):
+        self.create(bug=bug, sprint=sprint, action=action)
 
-    def added_to_sprint(self, bug, sprint, manual):
-        self._record_action(bug, sprint, BugSprintLog.ADDED, manual)
+    def added_to_sprint(self, bug, sprint):
+        self._record_action(bug, sprint, BugSprintLog.ADDED)
 
-    def removed_from_sprint(self, bug, sprint, manual):
-        self._record_action(bug, sprint, BugSprintLog.REMOVED, manual)
+    def removed_from_sprint(self, bug, sprint):
+        self._record_action(bug, sprint, BugSprintLog.REMOVED)
 
 
 class BugSprintLog(models.Model):
@@ -559,7 +607,6 @@ class BugSprintLog(models.Model):
     sprint = models.ForeignKey(Sprint, related_name='bug_actions')
     action = models.PositiveSmallIntegerField(choices=ACTION_CHOICES)
     timestamp = models.DateTimeField(default=datetime.now)
-    manual = models.BooleanField()
 
     objects = BugSprintLogManager()
 
@@ -574,8 +621,10 @@ class BugSprintLog(models.Model):
 
 def extract_bug_kwargs(data):
     kwargs = data.copy()
-    kwargs['assigned_to'] = '||'.join([kwargs['assigned_to']['name'],
-                                       kwargs['assigned_to']['real_name']])
+    kwargs['assigned_to'] = '||'.join([
+        kwargs['assigned_to']['name'],
+        kwargs['assigned_to'].get('real_name', kwargs['assigned_to']['name']),
+    ])
     if 'url' in kwargs:
         del kwargs['url']
     if 'whiteboard' in kwargs:
@@ -583,17 +632,41 @@ def extract_bug_kwargs(data):
         for key, val in scrum_data.iteritems():
             if val:
                 kwargs['story_' + key] = val
+    # The bzapi docs are wrong and say that 'depends_on' is a list of integers
+    # when in fact it could be a single string, or a list of strings.
+    # 'blocks' is the same type but is always a list of strings.
+    if 'depends_on' in kwargs and not isinstance(kwargs['depends_on'], list):
+        kwargs['depends_on'] = list(kwargs['depends_on'])
+
     return kwargs
 
 
 @transaction.commit_on_success
-def store_bugs(bugs, sprint=None):
+def store_bugs(bugs):
     bug_objs = []
     for bug in bugs:
         bug_objs.append(Bug.objects.update_or_create(bug)[0])
-    if sprint:
-        sprint.update_bugs([bug['id'] for bug in bugs])
     return bug_objs
+
+
+def get_sync_bugs(current_bugs, new_bugs):
+    """
+    Take two lists of bugs and return two lists of which to add and remove.
+    :param current_bugs: Iterator of current bugs
+    :param new_bugs: Iterator of new bugs
+    :return: tuple (bugs to add, bugs to remove)
+    """
+    if new_bugs:
+        if isinstance(list(new_bugs)[0], Bug):
+            new_bugs = set(new_bugs)
+        else:
+            new_bugs = set(Bug.objects.filter(id__in=new_bugs))
+    else:
+        new_bugs = set()
+    current_bugs = set(current_bugs)
+    to_add = new_bugs - current_bugs
+    to_remove = current_bugs - new_bugs
+    return to_add, to_remove
 
 
 class DummyBug:
@@ -609,11 +682,9 @@ def log_bug_actions(sender, instance, **kwargs):
         old_bug = DummyBug()
     if old_bug.sprint_id != instance.sprint_id:
         if old_bug.sprint:
-            BugSprintLog.objects.removed_from_sprint(instance, old_bug.sprint,
-                                                     old_bug.added_manually)
+            BugSprintLog.objects.removed_from_sprint(instance, old_bug.sprint)
         if instance.sprint:
-            BugSprintLog.objects.added_to_sprint(instance, instance.sprint,
-                                                 instance.added_manually)
+            BugSprintLog.objects.added_to_sprint(instance, instance.sprint)
 
 
 @receiver(pre_save, sender=Sprint)

@@ -1,16 +1,16 @@
 {% extends "base.html" %}
 
-{% block title %}{{ project.name if project else "Projects" }} / {{ super() }}{% endblock %}
+{% block title %}{{ team.name if team else "Teams" }} / {{ super() }}{% endblock %}
 
 {% block content %}
   <div class="row">
     <div class="span3">
       <div class="well sidebar-nav">
         <ul class="nav nav-list">
-          <li class="nav-header">Projects</li>
-          {% for proj in projects %}
-            <li{% if proj == project %} class="active"{% endif %}>
-              <a href="{{ proj.get_absolute_url() }}">{{ proj.name }}</a>
+          <li class="nav-header">Teams</li>
+          {% for t in teams %}
+            <li{% if t == team %} class="active"{% endif %}>
+              <a href="{{ t.get_absolute_url() }}">{{ t.name }}</a>
             </li>
           {% endfor %}
           {% block sidebar %}{% endblock %}
