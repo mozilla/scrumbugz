@@ -69,6 +69,9 @@ BZ_FIELDS = (
     'component',
     'blocks',
     'depends_on',
+    'comments',
+    'creation_time',
+    'last_change_time',
 )
 BZAPI = slumber.API(settings.BZ_API_URL)
 slug_re = re.compile(r'^[-.\w]+$')
@@ -450,8 +453,8 @@ class BugManager(models.Manager):
         :param data: dict of bug data from the bugzilla api.
         :return: Bug instance, boolean created.
         """
-        bid = data.copy().pop('id')
-        defaults = extract_bug_kwargs(data)
+        defaults = clean_bug_data(data)
+        bid = defaults.pop('id')
         bug, created = self.get_or_create(id=bid, defaults=defaults)
         if not created:
             bug.fill_from_data(defaults)
@@ -462,7 +465,7 @@ class BugManager(models.Manager):
 class Bug(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     history = CompressedJSONField()
-    last_updated = models.DateTimeField(default=datetime.now)
+    last_synced_time = models.DateTimeField(default=datetime.utcnow)
     product = models.CharField(max_length=200)
     component = models.CharField(max_length=200)
     assigned_to = models.CharField(max_length=200)
@@ -473,6 +476,12 @@ class Bug(models.Model):
     whiteboard = models.CharField(max_length=200, blank=True)
     blocks = JSONField(blank=True)
     depends_on = JSONField(blank=True)
+    comments = CompressedJSONField(blank=True)
+    comments_count = models.PositiveSmallIntegerField(default=0)
+    # not a URLField b/c don't want URL validation
+    url = models.CharField(max_length=2048, blank=True)
+    creation_time = models.DateTimeField()
+    last_change_time = models.DateTimeField()
     story_user = models.CharField(max_length=50, blank=True)
     story_component = models.CharField(max_length=50, blank=True)
     story_points = models.PositiveSmallIntegerField(default=0)
@@ -492,7 +501,7 @@ class Bug(models.Model):
 
     def fill_from_data(self, data):
         self.__dict__.update(data)
-        self.last_updated = datetime.now()
+        self.last_synced_time = datetime.utcnow()
 
     def refresh_from_bugzilla(self):
         data = BZAPI.bug.get(
@@ -619,24 +628,37 @@ class BugSprintLog(models.Model):
         return u'Bug %d %s Sprint %d' % (self.bug_id, action, self.sprint_id)
 
 
-def extract_bug_kwargs(data):
-    kwargs = data.copy()
-    kwargs['assigned_to'] = '||'.join([
-        kwargs['assigned_to']['name'],
-        kwargs['assigned_to'].get('real_name', kwargs['assigned_to']['name']),
-    ])
-    if 'url' in kwargs:
-        del kwargs['url']
-    if 'whiteboard' in kwargs:
-        scrum_data = parse_whiteboard(kwargs['whiteboard'])
-        for key, val in scrum_data.iteritems():
-            if val:
-                kwargs['story_' + key] = val
+_bug_data_cleaners = {
+    'id': int,
+    'last_change_time': dateutil.parser.parse,
+    'creation_time': dateutil.parser.parse,
+    'assigned_to': lambda x: '||'.join([x['name'],
+                                        x.get('real_name', x['name'])]),
     # The bzapi docs are wrong and say that 'depends_on' is a list of integers
     # when in fact it could be a single string, or a list of strings.
     # 'blocks' is the same type but is always a list of strings.
-    if 'depends_on' in kwargs and not isinstance(kwargs['depends_on'], list):
-        kwargs['depends_on'] = list(kwargs['depends_on'])
+    'depends_on': list,
+}
+
+
+def clean_bug_data(data):
+    """
+    Clean and prepare the data we get from Bugzilla for the db.
+
+    :param data: dict of raw Bugzilla API data for a single bug.
+    :return: dict of cleaned data for a single bug ready for the db.
+    """
+    kwargs = data.copy()
+    for key in _bug_data_cleaners:
+        if key in kwargs:
+            kwargs[key] = _bug_data_cleaners[key](kwargs[key])
+
+    if 'whiteboard' in kwargs:
+        scrum_data = parse_whiteboard(kwargs['whiteboard'])
+        kwargs.update(dict(('story_' + k, v) for k, v in scrum_data.items()
+                           if v))
+    if 'comments' in kwargs:
+        kwargs['comments_count'] = len(kwargs['comments'])
 
     return kwargs
 
