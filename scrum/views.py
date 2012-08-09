@@ -185,9 +185,17 @@ class EditTeamView(ProtectedUpdateView):
     template_name = 'scrum/team_form.html'
 
 
-class ManageSprintBugsView(SprintMixin, ProtectedUpdateView):
+class ManageSprintBugsView(BugsDataMixin, SprintMixin, ProtectedUpdateView):
     form_class = SprintBugsForm
     template_name = 'scrum/sprint_bugs.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(ManageSprintBugsView, self).get_context_data(**kwargs)
+        context['project'] = self.project
+        if not context['bzerror']:
+            context['bugs_data'].update(self.object.get_burndown_data())
+            context['bugs_data_json'] = json.dumps(context['bugs_data'])
+        return context
 
 
 class ManageProjectBugsView(ProtectedUpdateView):

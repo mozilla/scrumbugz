@@ -1,11 +1,10 @@
 {% extends "scrum/base_team.html" %}
-{% from "scrum/macros.html" import bugs_table with context %}
-
-{% block title %}{{ sprint.name }} / {{ super() }}{% endblock %}
+{% from "scrum/includes/macros.html" import bugs_table with context %}
 
 {% block content %}
   <div class="row">
     <div class="span12">
+      <button class="btn btn-primary pull-right stats-toggle" data-toggle="button">Stats</button>
       {% if perms.scrum.change_sprint %}
         <a class="btn btn-primary pull-right"
            href="{{ url('scrum_sprint_edit', team.slug, sprint.slug) }}">
@@ -14,31 +13,93 @@
       {% endif %}
 
       <h1>
-        Manage <a href="{{ team.get_absolute_url() }}">{{ team.name }}</a>
+        <a href="{{ team.get_absolute_url() }}">{{ team.name }}</a>
         / <a href="{{ sprint.get_absolute_url() }}">{{ sprint.name }}</a> Stories
       </h1>
     </div>
-  </div>
-  <div class="row">
-    <div class="span12">
-      <h2 class="pull-right">Points = <span id="current-points">0</span></h2>
-      <h2>Sprint Stories</h2>
-      {{ bugs_table(sprint.get_bugs(), 'sprint-bugs', is_sprint=True) }}
-      <hr>
-      <h2>Ready Backlog</h2>
-      {{ bugs_table(team.get_bugs(), 'backlog-bugs', is_backlog=True) }}
+
+    <div class="stats-container offscreen-hide">
+      <div class="row">
+        <div class="span3">
+          <h2>Numbers</h2>
+          <dl class="well sprint-numbers">
+            <dt>Total Points</dt>
+            <dd>{{ bugs_data.total_points }}</dd>
+            <dt>Total Bugs</dt>
+            <dd>{{ bugs_data.total_bugs }}</dd>
+            {% if bugs_data.scoreless_bugs %}
+            <dt class="scoreless">Scoreless Stories</dt>
+            <dd class="scoreless">{{ bugs_data.scoreless_bugs }}</dd>
+            {% endif %}
+            <dt>Points Remaining</dt>
+            <dd>{{ bugs_data.points_remaining }}{% if not bugs_data.points_remaining %}
+              <span class="woot">\o/</span>{% endif %}</dd>
+            {% if bugs_data.points_remaining %}
+            {% for data in bugs_data.basic_status %}
+            <dt>{{ data.label|capitalize }} Points</dt>
+            <dd>{{ data.data }}</dd>
+            {% endfor %}
+            {% endif %}
+          </dl>
+        </div>
+        <div class="span3">
+          <h2>Status</h2>
+          <div class="piegraph" id="status-pie"></div>
+        </div>
+          <div class="span3">
+            <h2>Component</h2>
+            <div class="piegraph" id="component-pie"></div>
+          </div>
+          <div class="span3">
+            <h2>Story User</h2>
+            <div class="piegraph" id="user-pie"></div>
+          </div>
+        </div>
     </div>
 
+    <form action="{{ request.path }}"
+          method="post"
+          class="pull-right"
+          id="sprint-form">
+      {{ csrf() }}
+      {{ form|safe }}
+      <button class="btn btn-primary pull-right">Save</button>
+    </form>
 
+    <h2>Stories: [Points = <span id="current-points">0</span>]</h2>
+    {{ bug_table('bugs_table', sprint.cached_bugs.all(), ['toggle-sprint']) }}
 
+    <h2>Backlog:</h2>
+    {{ bug_table('backlog_table', project.get_backlog(), ['toggle-sprint']) }}
+  </div>
+{% endblock %}
 
+{% block js %}
+  <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.flot.min.js"></script>
+  <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.flot.pie.min.js"></script>
+  <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.flot.resize.min.js"></script>
+  <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.tablesorter.min.js"></script>
+  <script type="text/javascript" src="{{ STATIC_URL }}js/sprint.js"></script>
+  <script type="text/javascript">
+    $(function(){
+      "use strict";
 
-
-
-
-
-
-
+      var BUGS_DATA = {{ bugs_data_json|safe }};
+      init_sprint();
+      new PieFlot('#component-pie', BUGS_DATA.components);
+      new PieFlot('#user-pie', BUGS_DATA.users);
+      new PieFlot('#status-pie', BUGS_DATA.basic_status, {
+        color: {
+          open: "rgb(237, 194, 64)",
+          closed: "rgb(77, 167, 77)",
+          assigned: "rgb(175, 216, 248)"
+        }
+      });
+    });
+  </script>
+  <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"></script>
+  <script src="{{ STATIC_URL }}js/sprint_bug_management.js"></script>
+{% endblock %}
 
 
 
@@ -66,14 +127,7 @@
         <a class="close" data-dismiss="alert" href="#">&times;</a>
         You must select at least one story
       </div>
-      <form action="{{ request.path }}"
-            method="post"
-            class="pull-right"
-            id="sprint-form">
-        {{ csrf() }}
-        {{ form|safe }}
-        <button class="btn btn-primary pull-right">Save</button>
-      </form>
+
       <h2>Sprint: Points = <span id="current-points"></span></h2>
       <ul class="sprint storylist well">
         {% for bug in sprint.cached_bugs.all() %}
@@ -81,10 +135,3 @@
         {% endfor %}
       </ul>
     </div>#}
-  </div>
-{% endblock %}
-
-{% block js %}
-  <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.tablesorter.min.js"></script>
-  <script src="{{ STATIC_URL }}js/sprint_bug_management.js"></script>
-{% endblock %}
