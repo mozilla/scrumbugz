@@ -167,9 +167,17 @@ class EditSprintView(SprintMixin, ProjectsMixin, ProtectedUpdateView):
     template_name = 'scrum/sprint_form.html'
 
 
-class ManageSprintBugsView(SprintMixin, ProjectsMixin, ProtectedUpdateView):
+class ManageSprintBugsView(BugsDataMixin, SprintMixin, ProjectsMixin, ProtectedUpdateView):
     form_class = SprintBugsForm
     template_name = 'scrum/sprint_bugs.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(ManageSprintBugsView, self).get_context_data(**kwargs)
+        context['project'] = self.project
+        if not context['bzerror']:
+            context['bugs_data'].update(self.object.get_burndown_data())
+            context['bugs_data_json'] = json.dumps(context['bugs_data'])
+        return context
 
 
 class CreateBZUrlView(ProjectOrSprintMixin, ProtectedCreateView):
