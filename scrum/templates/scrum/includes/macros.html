@@ -1,0 +1,39 @@
+{% macro bug_table(id=None, bugs=None, actions=None) %}
+  <table class="table table-striped table-condensed" id="{{ id }}">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Priority</th>
+        <th>Summary</th>
+        <th>Assigned</th>
+        <th>User</th>
+        <th>Component</th>
+        <th>Points</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for bug in bugs %}
+        <tr data-bugid="{{ bug.id }}" data-points="{{ bug.story_points }}" id="bug{{ bug.id }}" class="bug-{{ bug.basic_status }}">
+          <td><a href="{{ bug.get_absolute_url() }}">{{ bug.id }}</a></td>
+          <td>{{ bug.priority }}</td>
+          <td>{{ bug.summary }}</td>
+          <td class="ttip" title="{{ bug.assigned_real_name }}">{{ bug.assigned_name }}</td>
+          <td>{{ bug.story_user }}</td>
+          <td>{{ bug.story_component }}</td>
+          <td>{{ bug.story_points }}</td>
+          <td>{{ bug.status }}</td>
+          <td width="1">
+            {% if actions %}
+              {% for action in actions %}
+                <a class="btn btn-mini btn-inverse act-{{ action }}"><i class="icon-white"></i></a>
+              {% endfor %}
+            {% else %}
+              <a class="btn btn-mini btn-inverse" href="{{ BZ_FILE_URL }}blocked={{ bug.id }}&product={{ bug.product }}&component={{ bug.component }}" title="Add Blocking Bug"><i class="icon-ban-circle icon-white"></i></a>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endmacro %}
