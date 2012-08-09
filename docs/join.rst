@@ -13,7 +13,7 @@ Code:
     https://github.com/pmclanahan/scrumbugz
 
 Issues:
-    https://github.com/pmclanahan/scrumbugz/issues
+    https://github.com/mozilla/scrumbugz/issues
 
 Documentation:
     http://scrumbugz.readthedocs.org/
