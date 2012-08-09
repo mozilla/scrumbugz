@@ -14,7 +14,7 @@ Code:
     https://github.com/pmclanahan/scrumbugz
 
 Issues:
-    https://github.com/pmclanahan/scrumbugz/issues
+    https://github.com/mozilla/scrumbugz/issues
 
 CI:
     .. image:: https://secure.travis-ci.org/pmclanahan/scrumbugz.png
