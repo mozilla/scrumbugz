@@ -1,9 +1,9 @@
-{% extends "scrum/base.html" %}
+{% extends "scrum/base_team.html" %}
 
 {% block content %}
   {% if perms.scrum.add_sprint %}
     <a class="btn btn-primary pull-right"
-       href="{{ url('scrum_sprint_new', project.slug) }}">
+       href="{{ url('scrum_sprint_new', team.slug) }}">
       <i class="icon-plus icon-white"></i> New Sprint
     </a>
   {% endif %}
@@ -24,13 +24,13 @@
       <th>Start</th>
       <th>End</th>
       <th>Points</th>
-      <th>Closed</th>
       <th>Remaining</th>
     </tr>
     </thead>
     <tbody>
     {% for sprint in team.sprints.all() %}
-      <tr>
+      {% set bugs_data=sprint.get_cached_bugs_data() %}
+      <tr{% if sprint.is_active() %} class="active"{% endif %}>
         <td>
           <a href="{{ sprint.get_absolute_url() }}">
             {{ sprint.name }}
@@ -38,14 +38,11 @@
         </td>
         <td>{{ sprint.start_date }}</td>
         <td>{{ sprint.end_date }}</td>
-        <td>{{ sprint.get_cached_bugs_data().total_points }}</td>
-        <td>{{ sprint.get_cached_bugs_data().basic_status.closed }}</td>
-        <td>{{ sprint.get_cached_bugs_data().points_remaining }}
-          {% if sprint.get_cached_bugs_data().points_remaining %}
-            <span class="badge badge-important">/o\</span>
-          {% else %}
-            <span class="badge badge-success">\o/</span>
-          {% endif %}
+        <td>{{ bugs_data.total_points }}</td>
+        <td>
+          <span class="badge badge-{{ 'important' if bugs_data.points_remaining else 'success' }}">
+            {{ bugs_data.points_remaining }}
+          </span>
         </td>
       </tr>
     {% endfor %}

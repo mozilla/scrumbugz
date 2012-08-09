@@ -1,5 +1,4 @@
 {% extends "scrum/base_team.html" %}
-{% from "scrum/macros.html" import bugs_table with context %}
 
 {% block title %}{{ sprint.name }} / {{ super() }}{% endblock %}
 
@@ -8,25 +7,20 @@
     <div class="span12">
       {% if perms.scrum.change_sprint %}
         <a class="btn btn-primary pull-right"
-           href="{{ url('scrum_sprint_edit', team.slug, sprint.slug) }}">
+           href="{{ url('scrum_sprint_edit', project.slug, sprint.slug) }}">
           <i class="icon-edit icon-white"></i> Update Sprint
         </a>
       {% endif %}
 
       <h1>
-        Manage <a href="{{ team.get_absolute_url() }}">{{ team.name }}</a>
+        Manage <a href="{{ project.get_absolute_url() }}">{{ project.name }}</a>
         / <a href="{{ sprint.get_absolute_url() }}">{{ sprint.name }}</a> Stories
       </h1>
     </div>
   </div>
   <div class="row">
     <div class="span12">
-      <h2 class="pull-right">Points = <span id="current-points">0</span></h2>
-      <h2>Sprint Stories</h2>
-      {{ bugs_table(sprint.get_bugs(), 'sprint-bugs', is_sprint=True) }}
-      <hr>
-      <h2>Ready Backlog</h2>
-      {{ bugs_table(team.get_bugs(), 'backlog-bugs', is_backlog=True) }}
+      <h2></h2>
     </div>
 
 
@@ -41,22 +35,10 @@
 
 
 
-
-{#
-    <div class="span2">
-      <div class="well sidebar-nav">
-        <ul class="nav nav-list">
-          <li class="nav-header">Sprints</li>
-          {% for s in team.sprints.all() %}
-            <li{% if s == sprint %} class="active"{% endif %}><a href="{{ url('scrum_sprint_bugs', team.slug, s.slug) }}">{{ s.name }}</a></li>
-          {% endfor %}
-        </ul>
-      </div>
-    </div>
     <div class="span5">
       <h2>Backlog</h2>
       <ul class="backlog storylist well">
-        {% for bug in team.get_backlog() %}
+        {% for bug in project.get_backlog() %}
           {% include "scrum/storylist_item.html" %}
         {% endfor %}
       </ul>
@@ -80,11 +62,11 @@
           {% include "scrum/storylist_item.html" %}
         {% endfor %}
       </ul>
-    </div>#}
+    </div>
   </div>
 {% endblock %}
 
 {% block js %}
-  <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.tablesorter.min.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"></script>
   <script src="{{ STATIC_URL }}js/sprint_bug_management.js"></script>
 {% endblock %}

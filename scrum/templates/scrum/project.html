@@ -1,15 +1,9 @@
-{% extends "scrum/base.html" %}
+{% extends "scrum/base_project.html" %}
 
 {% block content %}
   {% if bzerror %}
     {% include "scrum/bzerror.html" %}
   {% else %}
-    {% if perms.scrum.add_sprint %}
-      <a class="btn btn-primary pull-right"
-         href="{{ url('scrum_sprint_new', project.slug) }}">
-        <i class="icon-plus icon-white"></i> New Sprint
-      </a>
-    {% endif %}
     {% if perms.scrum.change_project %}
       <a class="btn btn-primary pull-right"
          href="{{ url('scrum_project_edit', project.slug) }}">
@@ -18,45 +12,17 @@
     {% endif %}
     <h1>{{ project.name }}</h1>
     <hr>
-    <h2>Sprints</h2>
-
-    <table class="table table-striped table-condensed">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Start</th>
-          <th>End</th>
-          <th>Points</th>
-          <th>Closed</th>
-          <th>Remaining</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for sprint in project.sprints.all() %}
-          <tr>
-            <td>
-              <a href="{{ sprint.get_absolute_url() }}">
-                {{ sprint.name }}
-              </a>
-            </td>
-            <td>{{ sprint.start_date }}</td>
-            <td>{{ sprint.end_date }}</td>
-            <td>{{ sprint.get_cached_bugs_data().total_points }}</td>
-            <td>{{ sprint.get_cached_bugs_data().basic_status.closed }}</td>
-            <td>{{ sprint.get_cached_bugs_data().points_remaining }}
-              {% if sprint.get_cached_bugs_data().points_remaining %}
-                <span class="badge badge-important">/o\</span>
-              {% else %}
-                <span class="badge badge-success">\o/</span>
-              {% endif %}
-            </td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    {% if project.has_backlog %}
-      {% include "scrum/bugs_table.html" %}
+    <h2>Currently Coding</h2>
+    <p>PUT STUFF HERE</p>
+    <hr>
+    {% if perms.scrum.change_project %}
+      <a class="btn btn-small btn-primary pull-right"
+         href="{{ url('scrum_project_bugs', project.slug) }}">
+        <i class="icon-list icon-white"></i> Manage Ready Stories
+      </a>
     {% endif %}
+    <h2>Ready Backlog</h2>
+    <p>PUT STUFF HERE</p>
   {% endif %}
 {% endblock %}
 

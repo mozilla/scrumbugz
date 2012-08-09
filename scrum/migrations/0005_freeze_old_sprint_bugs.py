@@ -5,7 +5,8 @@ from south.db import db
 from south.v2 import DataMigration
 from django.db import models
 
-from scrum.models import Sprint
+from scrum.models import BugzillaURL, Sprint
+
 
 class Migration(DataMigration):
 
@@ -13,7 +14,14 @@ class Migration(DataMigration):
         print '   - Importing sprint data from Bugzilla.'
         print '   - ',
         for sprint in Sprint.objects.all():
-            sprint.sync_bugs_from_bz_url()
+            if sprint.bz_url:
+                bzurl = BugzillaURL(url=sprint.bz_url)
+                bugs = bzurl.get_bugs(scrum_only=False)
+                for bug in bugs:
+                    # at this point project and sprint ids are equal
+                    bug.project_id = sprint.team_id
+                    bug.sprint = sprint
+                    bug.save()
             sys.stdout.write('.')
             sys.stdout.flush()
         print '\n   - Done.'

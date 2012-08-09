@@ -1,4 +1,4 @@
-{% extends "scrum/base.html" %}
+{% extends "scrum/base_team.html" %}
 
 {% block title %}{{ sprint.name }} / {{ super() }}{% endblock %}
 
@@ -12,22 +12,18 @@
         <button class="btn btn-primary pull-right active stats-toggle" data-toggle="button">Stats</button>
 
         {% if perms.scrum.change_sprint %}
-
-          {% if project.has_backlog %}
-            <a class="btn btn-primary pull-right"
-               href="{{ url('scrum_sprint_bugs', project.slug, sprint.slug) }}">
-              <i class="icon-list icon-white"></i> Manage Stories
-            </a>
-          {% endif %}
-
           <a class="btn btn-primary pull-right"
-             href="{{ url('scrum_sprint_edit', project.slug, sprint.slug) }}">
+             href="{{ url('scrum_sprint_bugs', team.slug, sprint.slug) }}">
+            <i class="icon-list icon-white"></i> Manage Stories
+          </a>
+          <a class="btn btn-primary pull-right"
+             href="{{ url('scrum_sprint_edit', team.slug, sprint.slug) }}">
             <i class="icon-edit icon-white"></i> Update Sprint
           </a>
         {% endif %}
 
         <h1>
-          <a href="{{ project.get_absolute_url() }}">{{ project.name }}</a>
+          <a href="{{ team.get_absolute_url() }}">{{ team.name }}</a>
           / {{ sprint.name }}
         </h1>
       </div>

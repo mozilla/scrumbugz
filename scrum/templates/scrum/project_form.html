@@ -1,4 +1,4 @@
-{% extends "scrum/base.html" %}
+{% extends "scrum/base_project.html" %}
 {% from "bootstrap/forms/macros.html" import field %}
 
 {% block main_content %}
@@ -22,7 +22,7 @@
     </div>
   </form>
   {% if project %}
-    <div id="bzurls_container"{% if not project.has_backlog %} class="hide"{% endif %}>
+    <div id="bzurls_container">
       <h2 id="bzurls">Bugzilla URLs</h2>
       <div id="bzurl_list_wrapper" data-url="{{ url('scrum_project_urls', project.slug) }}">
         {% with bzurls=project.urls.all() %}

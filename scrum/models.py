@@ -5,7 +5,7 @@ import re
 import zlib
 from base64 import b64decode, b64encode
 from collections import defaultdict
-from datetime import datetime
+from datetime import date, datetime
 from markdown import markdown
 from operator import itemgetter
 
@@ -88,6 +88,9 @@ class BZError(IOError):
 class BugsListMixin(object):
     num_no_data_bugs = 0
 
+    def needs_refresh(self):
+        return (datetime.now() - self.date_cached).seconds > CACHE_BUGS_FOR
+
     def get_bugs(self, **kwargs):
         raise NotImplementedError
 
@@ -148,10 +151,23 @@ class BugsListMixin(object):
         return data
 
 
-class Team(models.Model):
+class Team(BugsListMixin, models.Model):
     name = models.CharField(max_length=200)
     slug = models.CharField(max_length=50, validators=[validate_slug],
                             db_index=True, unique=True)
+
+    def __unicode__(self):
+        return self.name
+
+    def get_bugs(self):
+        """
+        Get all bugs from the ready backlogs of the projects.
+        :return: list of bugs
+        """
+        ready_bugs = set()
+        for project in self.projects.all():
+            ready_bugs &= set(project.get_bugs(ready=True))
+        return ready_bugs
 
     @models.permalink
     def get_absolute_url(self):
@@ -166,18 +182,39 @@ class Project(BugsListMixin, models.Model):
     name = models.CharField(max_length=200)
     slug = models.CharField(max_length=50, validators=[validate_slug],
                             db_index=True, unique=True)
-    has_backlog = models.BooleanField('Use a backlog', default=False)
     team = models.ForeignKey(Team, related_name='projects', null=True)
+
+    _date_cached = None
 
     def __unicode__(self):
         return self.name
 
+    @property
+    def date_cached(self):
+        if self._date_cached is None:
+            # warm cache
+            self.get_bugs()
+        return self._date_cached if self._date_cached else datetime.now()
+
+    def get_bz_search_url(self):
+        return BugzillaURL(url=get_bz_url_for_buglist(self.bugs.all()))
+
+    def refresh_bugs_data(self):
+        bzurl = self.get_bz_search_url()
+        bzurl.get_bugs(refresh=True)
+
     def get_bugs(self, **kwargs):
         """Get a unique set of bugs from all bz urls"""
-        self.scrum_only = kwargs.get('scrum_only', True)
-        if kwargs.get('refresh', False):
-            self._clear_bugs_data_cache()
-        return self._get_url_items('bugs', **kwargs)
+        refresh = kwargs.get('refresh', False)
+        if not kwargs.get('ready', False):
+            self.scrum_only = kwargs.get('scrum_only', True)
+            if refresh:
+                self._clear_bugs_data_cache()
+            return self._get_url_items('bugs', **kwargs)
+        else:
+            if refresh:
+                self.refresh_bugs_data()
+            return self.bugs.all()
 
     def get_components(self):
         """Get a unique set of bugs from all bz urls"""
@@ -197,8 +234,9 @@ class Project(BugsListMixin, models.Model):
             for url in self.get_urls():
                 items |= getattr(url, 'get_' + item_name)(**kwargs)
 
-                if url.date_cached:
-                    self.date_cached = url.date_cached
+                if (self._date_cached is None or
+                    (url.date_cached and url.date_cached < self._date_cached)):
+                    self._date_cached = url.date_cached
                 if item_name == 'bugs' and url.num_no_data_bugs:
                     self.num_no_data_bugs += url.num_no_data_bugs
 
@@ -259,18 +297,30 @@ class Sprint(BugsListMixin, models.Model):
                              null=True, blank=True)
     bugs_data_cache = JSONField(editable=False, null=True)
 
-    date_cached = None
-
     class Meta:
         get_latest_by = 'created_date'
         ordering = ['-start_date']
         unique_together = ('team', 'slug')
 
     def __unicode__(self):
-        return u'{0} - {1}'.format(self.project.name, self.name)
+        return u'{0} - {1}'.format(self.team.name, self.name)
+
+    def is_active(self):
+        return self.start_date <= date.today() <= self.end_date
+
+    @property
+    def date_cached(self):
+        """
+        Returns the datetime of the bug least recently synced from Bugzila.
+        :return: datetime
+        """
+        try:
+            return self.bugs.order_by('last_synced_time')[0].last_synced_time
+        except IndexError:
+            return datetime.now()
 
     def get_bugs(self, **kwargs):
-        """Get a unique set of bugs from all bz urls"""
+        """Get the bugs for the sprint"""
         self.scrum_only = kwargs.get('scrum_only', True)
         if kwargs.get('refresh', False):
             self.refresh_bugs_data()
@@ -302,12 +352,6 @@ class Sprint(BugsListMixin, models.Model):
     def get_edit_url(self):
         return 'scrum_sprint_edit', (), {'slug': self.team.slug,
                                          'sslug': self.slug}
-
-    def sync_bugs_from_bz_url(self):
-        if self.bz_url:
-            bzurl = BugzillaURL(url=self.bz_url)
-            bugs = bzurl.get_bugs(scrum_only=False)
-            self.update_bugs(bugs)
 
     def get_bz_search_url(self):
         return BugzillaURL(url=get_bz_url_for_buglist(self.bugs.all()))
@@ -501,7 +545,7 @@ class Bug(models.Model):
 
     def fill_from_data(self, data):
         self.__dict__.update(data)
-        self.last_synced_time = datetime.utcnow()
+        self.last_synced_time = datetime.now()
 
     def refresh_from_bugzilla(self):
         data = BZAPI.bug.get(

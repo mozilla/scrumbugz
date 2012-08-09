@@ -263,3 +263,7 @@ a.caldisabled {
     position:absolute;
     left:-100000px;
 }
+
+tr.active td {
+    background-color: #dff0d8 !important;
+}

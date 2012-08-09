@@ -13,6 +13,8 @@ class Migration(DataMigration):
                 name=project.name,
                 slug=project.slug,
             )
+            project.team_id = project.id
+            project.save()
         for sprint in orm.Sprint.objects.all():
             sprint.team_id = sprint.project_id
             sprint.save()

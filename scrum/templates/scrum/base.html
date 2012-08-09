@@ -1,20 +1,10 @@
 {% extends "base.html" %}
 
-{% block title %}{{ team.name if team else "Teams" }} / {{ super() }}{% endblock %}
-
 {% block content %}
   <div class="row">
     <div class="span3">
       <div class="well sidebar-nav">
-        <ul class="nav nav-list">
-          <li class="nav-header">Teams</li>
-          {% for t in teams %}
-            <li{% if t == team %} class="active"{% endif %}>
-              <a href="{{ t.get_absolute_url() }}">{{ t.name }}</a>
-            </li>
-          {% endfor %}
-          {% block sidebar %}{% endblock %}
-        </ul>
+        {% block left_nav_list %}{% endblock %}
       </div><!--/well-->
     </div><!--/span3-->
     <div class="span9">

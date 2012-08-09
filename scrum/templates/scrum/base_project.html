@@ -1,0 +1,8 @@
+{% extends "scrum/base.html" %}
+{% from "scrum/macros.html" import left_nav %}
+
+{% block title %}{{ project.name if project else "Projects" }} / {{ super() }}{% endblock %}
+
+{% block left_nav_list %}
+  {{ left_nav('Projects', projects, project) }}
+{% endblock %}

@@ -2,7 +2,8 @@ from django.conf.urls import patterns, url
 
 from scrum.views import (CreateBZUrlView, CreateProjectView, CreateSprintView,
                          CreateTeamView, DeleteBZUlrView, EditProjectView,
-                         EditSprintView, ListProjectsView, ListTeamsView,
+                         EditSprintView, EditTeamView, ListProjectsView,
+                         ListTeamsView, ManageProjectBugsView,
                          ManageSprintBugsView, ProjectView, RedirectOldURLsView,
                          SprintView, TeamView)
 
@@ -20,8 +21,12 @@ urlpatterns = patterns('',
         name='scrum_sprint_new'),
     url(r'^p/(?P<slug>[-\w]+)/edit/$', EditProjectView.as_view(),
         name='scrum_project_edit'),
+    url(r'^t/(?P<slug>[-\w]+)/edit/$', EditTeamView.as_view(),
+        name='scrum_team_edit'),
     url(r'^p/(?P<slug>[-\w]+)/urls/$', CreateBZUrlView.as_view(),
         name='scrum_project_urls'),
+    url(r'^p/(?P<slug>[-\w]+)/bugs/$', ManageProjectBugsView.as_view(),
+        name='scrum_project_bugs'),
     url(r'^t/(?P<slug>[-\w]+)/(?P<sslug>[-\w\.]+)/$', SprintView.as_view(),
         name='scrum_sprint'),
     url(r'^t/(?P<slug>[-\w]+)/(?P<sslug>[-\w\.]+)/edit/$',

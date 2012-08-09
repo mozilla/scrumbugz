@@ -15,3 +15,4 @@ git+https://github.com/auzigog/jinja-bootstrap.git@v0.3.0
 Markdown==2.2.0
 nose
 django-nose
+pytz==2012d

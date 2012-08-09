@@ -49,7 +49,7 @@ class ProjectForm(forms.ModelForm):
         fields = (
             'name',
             'slug',
-            'has_backlog',
+            'team',
         )
 
 
@@ -76,28 +76,44 @@ class SprintForm(forms.ModelForm):
         )
 
 
+class TeamForm(forms.ModelForm):
+
+    class Meta:
+        model = Team
+        fields = (
+            'name',
+            'slug',
+        )
+
+
 class SprintBugsForm(forms.ModelForm):
-    sprint_bugs = forms.CharField(
+    new_bugs = forms.CharField(
         widget=forms.HiddenInput,
         validators=[validate_comma_separated_integer_list],
     )
 
     class Meta:
         model = Sprint
-        fields = ('sprint_bugs',)
+        fields = ('new_bugs',)
 
-    def clean_sprint_bugs(self):
-        sprint_bugs = self.cleaned_data['sprint_bugs']
+    def clean_new_bugs(self):
+        new_bugs = self.cleaned_data['new_bugs']
         bugs_list = []
-        if sprint_bugs:
-            bugs_list = [int(b) for b in sprint_bugs.split(',')]
+        if new_bugs:
+            bugs_list = [int(b) for b in new_bugs.split(',')]
         return bugs_list
 
     def save(self, commit=True):
-        sprint_bugs = self.cleaned_data['sprint_bugs']
-        self.instance.update_bugs(sprint_bugs, manual=True)
+        new_bugs = self.cleaned_data['new_bugs']
+        self.instance.update_bugs(new_bugs)
         self.instance._clear_bugs_data_cache()
         return self.instance
+
+
+class ProjectBugsForm(SprintBugsForm):
+    class Meta:
+        model = Project
+        fields = ('new_bugs',)
 
 
 class CreateFormMixin(forms.ModelForm):

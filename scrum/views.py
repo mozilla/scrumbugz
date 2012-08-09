@@ -10,7 +10,8 @@ from django.views.generic import (CreateView, DeleteView, DetailView,
                                   ListView, TemplateView, UpdateView, View)
 
 from scrum.forms import (CreateProjectForm, CreateTeamForm, BZURLForm,
-                         ProjectForm, SprintBugsForm, SprintForm)
+                         ProjectBugsForm, ProjectForm, SprintBugsForm,
+                         SprintForm, TeamForm)
 from scrum.models import BugzillaURL, BZError, Project, Sprint, Team
 
 
@@ -49,10 +50,16 @@ class BugsDataMixin(object):
         context = super(BugsDataMixin, self).get_context_data(**kwargs)
         bugs_kwargs = {}
         # clear cache if requested
-        if self.request.META.get('HTTP_CACHE_CONTROL') == 'no-cache':
+        if (self.request.META.get('HTTP_CACHE_CONTROL') == 'no-cache' or
+            self.object.needs_refresh()):
             bugs_kwargs['refresh'] = True
         if 'all' in self.request.GET:
             bugs_kwargs['scrum_only'] = False
+        try:
+            context['bz_search_url'] = self.object.get_bz_search_url().url
+        except AttributeError:
+            pass
+        context['scrum_only'] = bugs_kwargs.get('scrum_only', True)
         try:
             context['bugs'] = self.object.get_bugs(**bugs_kwargs)
             context['bugs_data'] = self.object.get_graph_bug_data()
@@ -143,11 +150,16 @@ class SprintMixin(object):
     context_object_name = 'sprint'
 
     def get_object(self, queryset=None):
-        pslug = self.kwargs.get('slug')
+        tslug = self.kwargs.get('slug')
         sslug = self.kwargs.get('sslug')
-        sprint = get_object_or_404(Sprint, project__slug=pslug, slug=sslug)
-        self.project = sprint.project
+        sprint = get_object_or_404(Sprint, team__slug=tslug, slug=sslug)
+        self.team = sprint.team
         return sprint
+
+    def get_context_data(self, **kwargs):
+        context = super(SprintMixin, self).get_context_data(**kwargs)
+        context['team'] = self.team
+        return context
 
 
 class SprintView(BugsDataMixin, SprintMixin, DetailView):
@@ -155,7 +167,7 @@ class SprintView(BugsDataMixin, SprintMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super(SprintView, self).get_context_data(**kwargs)
-        context['project'] = self.project
+        context['team'] = self.team
         if not context['bzerror']:
             context['bugs_data'].update(self.object.get_burndown_data())
             context['bugs_data_json'] = json.dumps(context['bugs_data'])
@@ -167,9 +179,21 @@ class EditSprintView(SprintMixin, ProjectsMixin, ProtectedUpdateView):
     template_name = 'scrum/sprint_form.html'
 
 
-class ManageSprintBugsView(SprintMixin, ProjectsMixin, ProtectedUpdateView):
+class EditTeamView(ProtectedUpdateView):
+    model = Team
+    form_class = TeamForm
+    template_name = 'scrum/team_form.html'
+
+
+class ManageSprintBugsView(SprintMixin, ProtectedUpdateView):
     form_class = SprintBugsForm
     template_name = 'scrum/sprint_bugs.html'
+
+
+class ManageProjectBugsView(ProtectedUpdateView):
+    model = Project
+    form_class = ProjectBugsForm
+    template_name = 'scrum/project_bugs.html'
 
 
 class CreateBZUrlView(ProtectedCreateView):

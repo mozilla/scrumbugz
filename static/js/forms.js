@@ -85,19 +85,6 @@ $(function(){
                 $('#bzurl_list_wrapper').load($('#bzurl_list_wrapper').data('url'));
             });
     });
-
-    // show and hide the backlog urls
-    var $has_backlog = $('#id_has_backlog').on('click', function(e){
-        var action = $(this).is(':checked') ? 'removeClass' : 'addClass';
-        $('#bzurls_container,#id_url_control_group')[action]('hide');
-        $('#id_url').val('');
-    });
-    var $url_control_group = $('#project_form_create #id_url')
-        .closest('.control-group')
-        .prop('id', 'id_url_control_group');
-    if (!$has_backlog.is(':checked')) {
-        $url_control_group.addClass('hide');
-    }
 });
 
 // Django recommended CSRF code
