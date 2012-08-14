@@ -220,8 +220,7 @@ class Project(DBBugsMixin, BugsListMixin, models.Model):
 
     def get_bugs(self, **kwargs):
         bugs = self._get_bugs(**kwargs)
-        bugs.filter(sprint__isnull=True)
-        return bugs
+        return bugs.filter(sprint__isnull=True)
 
     def get_backlog(self, **kwargs):
         """Get a unique set of bugs from all bz urls"""
