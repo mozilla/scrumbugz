@@ -150,7 +150,7 @@ class Migration(SchemaMigration):
             'history': ('scrum.models.CompressedJSONField', [], {}),
             'id': ('django.db.models.fields.PositiveIntegerField', [], {'primary_key': 'True'}),
             'last_change_time': ('django.db.models.fields.DateTimeField', [], {}),
-            'last_sync_time': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.utcnow'}),
+            'last_synced_time': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.utcnow'}),
             'priority': ('django.db.models.fields.CharField', [], {'max_length': '2', 'blank': 'True'}),
             'product': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
             'project': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'bugs'", 'null': 'True', 'on_delete': 'models.SET_NULL', 'to': "orm['scrum.Project']"}),

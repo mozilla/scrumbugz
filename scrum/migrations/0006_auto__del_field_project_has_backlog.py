@@ -8,33 +8,15 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Removing unique constraint on 'Sprint', fields ['project', 'slug']
-        db.delete_unique('scrum_sprint', ['project_id', 'slug'])
-
-        # Deleting field 'Sprint.project'
-        db.delete_column('scrum_sprint', 'project_id')
-
-
-        # Changing field 'Sprint.team'
-        db.alter_column('scrum_sprint', 'team_id', self.gf('django.db.models.fields.related.ForeignKey')(default=1, to=orm['scrum.Team']))
-        # Adding unique constraint on 'Sprint', fields ['slug', 'team']
-        db.create_unique('scrum_sprint', ['slug', 'team_id'])
+        # Deleting field 'Project.has_backlog'
+        db.delete_column('scrum_project', 'has_backlog')
 
 
     def backwards(self, orm):
-        # Removing unique constraint on 'Sprint', fields ['slug', 'team']
-        db.delete_unique('scrum_sprint', ['slug', 'team_id'])
-
-        # Adding field 'Sprint.project'
-        db.add_column('scrum_sprint', 'project',
-                      self.gf('django.db.models.fields.related.ForeignKey')(default=1, related_name='sprints', to=orm['scrum.Project']),
+        # Adding field 'Project.has_backlog'
+        db.add_column('scrum_project', 'has_backlog',
+                      self.gf('django.db.models.fields.BooleanField')(default=False),
                       keep_default=False)
-
-
-        # Changing field 'Sprint.team'
-        db.alter_column('scrum_sprint', 'team_id', self.gf('django.db.models.fields.related.ForeignKey')(null=True, to=orm['scrum.Team']))
-        # Adding unique constraint on 'Sprint', fields ['project', 'slug']
-        db.create_unique('scrum_sprint', ['project_id', 'slug'])
 
 
     models = {
@@ -80,7 +62,6 @@ class Migration(SchemaMigration):
         },
         'scrum.project': {
             'Meta': {'object_name': 'Project'},
-            'has_backlog': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
             'slug': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '50', 'db_index': 'True'}),

@@ -2,7 +2,11 @@
 import datetime
 from south.db import db
 from south.v2 import DataMigration
-from django.db import models
+from django.db import connection, models, transaction
+
+
+cursor = connection.cursor()
+
 
 class Migration(DataMigration):
 
@@ -18,6 +22,9 @@ class Migration(DataMigration):
         for sprint in orm.Sprint.objects.all():
             sprint.team_id = sprint.project_id
             sprint.save()
+        # reset the postgres autoincrement next value for team table.
+        cursor.execute("SELECT setval('scrum_team_id_seq', (SELECT MAX(id) FROM scrum_team)+1)")
+        transaction.commit_unless_managed()
 
     def backwards(self, orm):
         pass
@@ -35,7 +42,7 @@ class Migration(DataMigration):
             'history': ('scrum.models.CompressedJSONField', [], {}),
             'id': ('django.db.models.fields.PositiveIntegerField', [], {'primary_key': 'True'}),
             'last_change_time': ('django.db.models.fields.DateTimeField', [], {}),
-            'last_sync_time': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.utcnow'}),
+            'last_synced_time': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.utcnow'}),
             'priority': ('django.db.models.fields.CharField', [], {'max_length': '2', 'blank': 'True'}),
             'product': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
             'project': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'bugs'", 'null': 'True', 'on_delete': 'models.SET_NULL', 'to': "orm['scrum.Project']"}),
