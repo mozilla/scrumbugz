@@ -13,6 +13,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.core.validators import RegexValidator
 from django.db import models, transaction
+from django.db.models.query_utils import Q
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.utils.encoding import force_unicode
@@ -177,16 +178,18 @@ class Team(BugsListMixin, models.Model):
 
 class DBBugsMixin(object):
 
-    def get_bugs(self, **kwargs):
+    def _get_bugs(self, **kwargs):
         """Get the db associated bugs (sprint/ready backlog)"""
         self.scrum_only = kwargs.get('scrum_only', True)
         if kwargs.get('refresh', False):
             self.refresh_bugs_data()
         bugs = self.bugs.all()
         if self.scrum_only:
-            num_bugs = len(bugs)
-            bugs = [b for b in bugs if b.has_scrum_data]
-            self.num_no_data_bugs = num_bugs - len(bugs)
+            num_bugs = bugs.count()
+            bugs = bugs.filter(~Q(story_component='') |
+                               ~Q(story_user__isnull='') |
+                               Q(story_points__gt=0))
+            self.num_no_data_bugs = num_bugs - bugs.count()
         return bugs
 
 
@@ -215,6 +218,11 @@ class Project(DBBugsMixin, BugsListMixin, models.Model):
         bzurl = self.get_bz_search_url()
         bzurl.get_bugs(refresh=True)
 
+    def get_bugs(self, **kwargs):
+        bugs = self._get_bugs(**kwargs)
+        bugs.filter(sprint__isnull=True)
+        return bugs
+
     def get_backlog(self, **kwargs):
         """Get a unique set of bugs from all bz urls"""
         refresh = kwargs.get('refresh', False)
@@ -222,7 +230,7 @@ class Project(DBBugsMixin, BugsListMixin, models.Model):
         if refresh:
             self._clear_bugs_data_cache()
         backlog = self._get_url_items('bugs', **kwargs)
-        return [bug for bug in backlog if not bug.sprint and not bug.project]
+        return [bug for bug in backlog if (not bug.sprint and not bug.project)]
 
     def get_components(self):
         """Get a unique set of bugs from all bz urls"""
@@ -315,6 +323,9 @@ class Sprint(DBBugsMixin, BugsListMixin, models.Model):
             return self.bugs.order_by('last_synced_time')[0].last_synced_time
         except IndexError:
             return datetime.now()
+
+    def get_bugs(self, **kwargs):
+        return self._get_bugs(**kwargs)
 
     def get_components(self):
         return self._get_bug_attr_values('component')
