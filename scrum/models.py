@@ -192,6 +192,12 @@ class DBBugsMixin(object):
             self.num_no_data_bugs = num_bugs - bugs.count()
         return bugs
 
+    def get_bz_search_url(self):
+        bugs_all = self.bugs.all()
+        if bugs_all:
+            return BugzillaURL(url=get_bz_url_for_buglist(bugs_all))
+        return EmptyBugzillaURL()
+
 
 class Project(DBBugsMixin, BugsListMixin, models.Model):
     name = models.CharField(max_length=200)
@@ -210,9 +216,6 @@ class Project(DBBugsMixin, BugsListMixin, models.Model):
             # warm cache
             self.get_bugs()
         return self._date_cached if self._date_cached else datetime.now()
-
-    def get_bz_search_url(self):
-        return BugzillaURL(url=get_bz_url_for_buglist(self.bugs.all()))
 
     def refresh_bugs_data(self):
         bzurl = self.get_bz_search_url()
@@ -347,12 +350,6 @@ class Sprint(DBBugsMixin, BugsListMixin, models.Model):
     def get_edit_url(self):
         return 'scrum_sprint_edit', (), {'slug': self.team.slug,
                                          'sslug': self.slug}
-
-    def get_bz_search_url(self):
-        bugs_all = self.bugs.all()
-        if bugs_all:
-            return BugzillaURL(url=get_bz_url_for_buglist(bugs_all))
-        return EmptyBugzillaURL()
 
     def refresh_bugs_data(self):
         self._clear_bugs_data_cache()
