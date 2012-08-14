@@ -1,4 +1,4 @@
-{% from "scrum/includes/macros.html" import bugs_table with context %}
+{% from "scrum/includes/macros.html" import bug_table with context %}
 
 <div class="row">
   <div class="span12">
@@ -13,7 +13,7 @@
         <a href="?all=1">Show them</a>?
       </div>
     {% endif %}
-    {{ bug_table('bugs_table', bugs) }}
+    {{ bug_table(bugs) }}
   </div>
 </div>
 

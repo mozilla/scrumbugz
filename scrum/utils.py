@@ -30,7 +30,7 @@ def parse_whiteboard(wb):
     }
     wb = wb.strip()
     if wb:
-        data = dict(i.split('=') for i in wb.split() if '=' in i)
+        data = dict(i.split('=', 1) for i in wb.split() if '=' in i)
         for k, v in data.iteritems():
             if v:
                 cast = int if k == 'p' else str

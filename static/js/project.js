@@ -1,7 +1,8 @@
 /*global $tooltip:true */
 $(function(){
     "use strict";
-    $tooltip = $('<div id="tooltip"></div>').appendTo("body");
-    $('#bugs-table').tablesorter({sortList: [[7,0]]});
+    window.$tooltip = $('<div id="tooltip"></div>').appendTo("body");
+    $('#bugs_table').stupidtable();
+    $('#backlog_table').stupidtable();
     $('td.ttip').tooltip();
 });

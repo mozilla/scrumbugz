@@ -58,7 +58,11 @@
         {% include "bootstrap/includes/messages.html" %}
       </div>
 
-      {% block content %}{% endblock %}
+      {% if bzerror %}
+        {% include "scrum/bzerror.html" %}
+      {% else %}
+        {% block content %}{% endblock %}
+      {% endif %}
 
       <hr>
 

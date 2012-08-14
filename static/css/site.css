@@ -42,7 +42,9 @@ dl.sprint-numbers dt {
     line-height: 1.5em;
 }
 
-table thead tr .header{
+table thead .type-int,
+table thead .type-float,
+table thead .type-string {
     background-image: url(../img/bg.gif);
     background-repeat: no-repeat;
     background-position: center left;

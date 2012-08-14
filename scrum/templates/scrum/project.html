@@ -1,4 +1,5 @@
 {% extends "scrum/base_project.html" %}
+{% from "scrum/includes/macros.html" import bug_table with context %}
 
 {% block content %}
   {% if bzerror %}
@@ -10,10 +11,11 @@
         <i class="icon-edit icon-white"></i> Edit
       </a>
     {% endif %}
-    <h1>{{ project.name }}</h1>
+    <h1>{{ project.name }} Project</h1>
+    <p>Part of the <a href="{{ project.team.get_absolute_url() }}">{{ project.team.name }}</a> team.</p>
     <hr>
-    <h2>Currently Coding</h2>
-    <p>PUT STUFF HERE</p>
+    <h2>Currently Sprinting</h2>
+    {{ bug_table(currently_sprinting, show_sprint=True) }}
     <hr>
     {% if perms.scrum.change_project %}
       <a class="btn btn-small btn-primary pull-right"
@@ -22,11 +24,11 @@
       </a>
     {% endif %}
     <h2>Ready Backlog</h2>
-    <p>PUT STUFF HERE</p>
+    {{ bug_table(project.get_bugs(), 'backlog_table') }}
   {% endif %}
 {% endblock %}
 
 {% block js %}
-  <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.tablesorter.min.js"></script>
+  <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.stupidtable.min.js"></script>
   <script type="text/javascript" src="{{ STATIC_URL }}js/project.js"></script>
 {% endblock %}

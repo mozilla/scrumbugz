@@ -65,7 +65,7 @@ class SprintForm(forms.ModelForm):
             'end_date': date5,
             'notes': forms.Textarea(attrs={
                 'class': 'span5',
-            })
+            }),
         }
         fields = (
             'name',
@@ -73,6 +73,7 @@ class SprintForm(forms.ModelForm):
             'start_date',
             'end_date',
             'notes',
+            'team',
         )
 
 

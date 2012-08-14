@@ -1,6 +1,8 @@
+from datetime import date
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
+from django.core.urlresolvers import reverse
 from django.http import (HttpResponse, HttpResponseForbidden,
                          HttpResponsePermanentRedirect)
 from django.shortcuts import get_object_or_404, redirect, render
@@ -12,7 +14,7 @@ from django.views.generic import (CreateView, DeleteView, DetailView,
 from scrum.forms import (CreateProjectForm, CreateTeamForm, BZURLForm,
                          ProjectBugsForm, ProjectForm, SprintBugsForm,
                          SprintForm, TeamForm)
-from scrum.models import BugzillaURL, BZError, Project, Sprint, Team
+from scrum.models import BugzillaURL, BZError, Project, Sprint, Team, Bug
 
 
 class ProtectedCreateView(CreateView):
@@ -89,6 +91,15 @@ home = HomeView.as_view()
 class ProjectView(BugsDataMixin, ProjectsMixin, DetailView):
     template_name = 'scrum/project.html'
 
+    def get_context_data(self, **kwargs):
+        context = super(ProjectView, self).get_context_data(**kwargs)
+        today = date.today()
+        bugs = Bug.objects.filter(sprint__start_date__lte=today,
+                                  sprint__end_date__gte=today,
+                                  project=self.object)
+        context['currently_sprinting'] = bugs
+        return context
+
 
 class TeamView(DetailView):
     model = Team
@@ -123,26 +134,35 @@ class EditProjectView(ProjectsMixin, ProtectedUpdateView):
     template_name = 'scrum/project_form.html'
 
 
-class CreateSprintView(ProjectsMixin, ProtectedCreateView):
+class CreateSprintView(ProtectedCreateView):
     model = Sprint
     form_class = SprintForm
     template_name = 'scrum/sprint_form.html'
 
     def get_context_data(self, **kwargs):
         context = super(CreateSprintView, self).get_context_data(**kwargs)
-        context['project'] = self.project
+        context['team'] = self.team
         return context
 
+    def get_success_url(self):
+        return reverse('scrum_sprint_bugs', args=[self.team.slug,
+                                                  self.object.slug])
+
+    def get_form_kwargs(self):
+        kwargs = super(CreateSprintView, self).get_form_kwargs()
+        if 'data' in kwargs:
+            print kwargs['data']
+            form_data = kwargs['data'].copy()
+            form_data['team'] = self.team.id
+            kwargs['data'] = form_data
+        return kwargs
+
     def get_initial(self):
-        self.project = get_object_or_404(Project, slug=self.kwargs['slug'])
+        self.team = get_object_or_404(Team, slug=self.kwargs['slug'])
         return super(CreateSprintView, self).get_initial()
 
     def form_valid(self, form):
-        sprint = form.save(commit=False)
-        sprint.project = self.project
-        sprint.save()
-        form.add_url(sprint)
-        return redirect(sprint)
+        return super(CreateSprintView, self).form_valid(form)
 
 
 class SprintMixin(object):
@@ -191,14 +211,13 @@ class ManageSprintBugsView(BugsDataMixin, SprintMixin, ProtectedUpdateView):
 
     def get_context_data(self, **kwargs):
         context = super(ManageSprintBugsView, self).get_context_data(**kwargs)
-        context['project'] = self.project
         if not context['bzerror']:
             context['bugs_data'].update(self.object.get_burndown_data())
             context['bugs_data_json'] = json.dumps(context['bugs_data'])
         return context
 
 
-class ManageProjectBugsView(ProtectedUpdateView):
+class ManageProjectBugsView(BugsDataMixin, ProtectedUpdateView):
     model = Project
     form_class = ProjectBugsForm
     template_name = 'scrum/project_bugs.html'
