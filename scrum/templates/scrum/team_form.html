@@ -2,10 +2,10 @@
 {% from "bootstrap/forms/macros.html" import field, non_field_errors %}
 
 {% block main_content %}
-  {% if sprint %}
-    <h1>Edit <a href="{{ url('scrum_project', team.slug) }}">{{ team.name }}</a> / <a href="{{ url('scrum_sprint', team.slug, sprint.slug) }}">{{ sprint.name }}</a></h1>
+  {% if team %}
+    <h1>Edit {{ team.name }} Team</h1>
   {% else %}
-    <h1>Create <a href="{{ url('scrum_project', team.slug) }}">{{ team.name }}</a> Sprint</h1>
+    <h1>Create a Team</h1>
   {% endif %}
   <hr>
   <form action="{{ request.get_full_path() }}"
@@ -13,12 +13,12 @@
         method="post">
     {{ csrf() }}
     {{ non_field_errors(form) }}
-    {% for f in ['name', 'slug', 'start_date', 'end_date', 'notes'] -%}
-      {{ field(form[f]) }}
+    {% for f in form -%}
+      {{ field(f) }}
     {%- endfor %}
     <div class="form-actions">
-      <button class="btn btn-primary" type="submit">{{ 'Update' if sprint else 'Create' }}</button>
-      <a href="{% if sprint %}{{ sprint.get_absolute_url() }}{% else %}{{ url('scrum_team', team.slug) }}{% endif %}" class="btn">Cancel</a>
+      <button class="btn btn-primary" type="submit">{{ 'Update' if team else 'Create' }}</button>
+      <a href="{% if team %}{{ team.get_absolute_url() }}{% else %}{{ url('scrum_teams_list') }}{% endif %}" class="btn">Cancel</a>
     </div>
   </form>
 {% endblock %}
