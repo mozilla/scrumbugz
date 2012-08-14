@@ -9,7 +9,7 @@
   </ul>
 {%- endmacro %}
 
-{% macro bug_table(bugs, id='bugs_table', actions=None, button_color=None, show_project=True, show_sprint=False) %}
+{% macro bug_table(bugs, id='bugs_table', actions=None, button_color=None, show_project=True, show_sprint=False, blocked_bugs=None) %}
   {%- set actions=[actions] if actions is string -%}
   {% if button_color -%}
     {%- set icon_color=' icon-white' -%}
@@ -46,7 +46,7 @@
             <td data-order-by="{{ bug.sprint.slug }}">{% if bug.sprint %}<a href="{{ bug.sprint.get_absolute_url() }}">{{ bug.sprint.name }}</a>{% endif %}</td>
           {%- endif %}
           <td>{{ bug.priority }}</td>
-          <td>{{ bug.summary }}</td>
+          <td>{% if blocked_bugs and bug.id in blocked_bugs %}<span class="label label-important">BLOCKED</span> {% endif %}{{ bug.summary }}</td>
           <td class="ttip" title="{{ bug.assigned_real_name }}">{{ bug.assigned_name }}</td>
           <td>{{ bug.story_user }}</td>
           <td>{{ bug.story_component }}</td>

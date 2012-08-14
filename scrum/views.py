@@ -63,7 +63,24 @@ class BugsDataMixin(object):
             pass
         context['scrum_only'] = bugs_kwargs.get('scrum_only', True)
         try:
-            context['bugs'] = self.object.get_bugs(**bugs_kwargs)
+            bugs = self.object.get_bugs(**bugs_kwargs)
+            id_to_bug = dict([(b.id, b) for b in bugs])
+            blocked_bugs = []
+
+            # Build a list of blocked_bugs where a blocked bug is any
+            # bug that depends on another bug in this sprint and that
+            # other bug is not resolved.
+            for bug in bugs:
+                if not bug.depends_on:
+                    continue
+                blockers = [blocker for blocker in bug.depends_on
+                            if (blocker in id_to_bug and
+                                not id_to_bug[blocker].is_closed())]
+                if blockers:
+                    blocked_bugs.append(bug.id)
+
+            context['blocked_bugs'] = blocked_bugs
+            context['bugs'] = bugs
             context['bugs_data'] = self.object.get_graph_bug_data()
             context['bugs_data_json'] = json.dumps(context['bugs_data'])
             context['bzerror'] = False
