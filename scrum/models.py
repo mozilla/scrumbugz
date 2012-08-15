@@ -58,7 +58,6 @@ except ImportError:
 
 BZ_FIELDS = (
     'id',
-    'url',
     'status',
     'resolution',
     'summary',
@@ -522,8 +521,6 @@ class Bug(models.Model):
     depends_on = JSONField(blank=True)
     comments = CompressedJSONField(blank=True)
     comments_count = models.PositiveSmallIntegerField(default=0)
-    # not a URLField b/c don't want URL validation
-    url = models.CharField(max_length=2048, blank=True)
     creation_time = models.DateTimeField()
     last_change_time = models.DateTimeField()
     story_user = models.CharField(max_length=50, blank=True)
