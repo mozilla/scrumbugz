@@ -20,12 +20,12 @@
     <thead>
       <tr>
         <th class="type-int">ID</th>
-        {%- if show_project %}
+        {% if show_project %}
           <th class="type-string">Project</th>
-        {%- endif %}
-        {%- if show_sprint %}
+        {% endif %}
+        {% if show_sprint %}
           <th class="type-string">Sprint</th>
-        {%- endif %}
+        {% endif %}
         <th class="type-string">Priority</th>
         <th>Summary</th>
         <th class="type-string">Assigned</th>
@@ -39,12 +39,12 @@
       {% for bug in bugs %}
         <tr data-bugid="{{ bug.id }}" data-points="{{ bug.story_points }}" id="bug{{ bug.id }}" class="bug-{{ bug.basic_status }}">
           <td data-order-by="{{ bug.id }}"><a href="{{ bug.get_absolute_url() }}">{{ bug.id }}</a></td>
-          {%- if show_project %}
+          {% if show_project %}
             <td data-order-by="{{ bug.project }}">{% if bug.project %}<a href="{{ bug.project.get_absolute_url() }}">{{ bug.project }}</a>{% endif %}</td>
-          {%- endif %}
-          {%- if show_sprint %}
+          {% endif %}
+          {% if show_sprint %}
             <td data-order-by="{{ bug.sprint.slug }}">{% if bug.sprint %}<a href="{{ bug.sprint.get_absolute_url() }}">{{ bug.sprint.name }}</a>{% endif %}</td>
-          {%- endif %}
+          {% endif %}
           <td>{{ bug.priority }}</td>
           <td>{% if blocked_bugs and bug.id in blocked_bugs %}<span class="label label-important">BLOCKED</span> {% endif %}{{ bug.summary }}</td>
           <td class="ttip" title="{{ bug.assigned_real_name }}">{{ bug.assigned_name }}</td>
@@ -63,8 +63,15 @@
           </td>
         </tr>
       {% else %}
+        {% set num_cols = 8 %}
+        {% if show_sprint %}
+          {% set num_cols = num_cols + 1 %}
+        {% endif %}
+        {% if show_project %}
+          {% set num_cols = num_cols + 1 %}
+        {% endif %}
         <tr class="empty_message">
-          <td colspan="{{ 9 if show_project else 8 }}">No bugs so far.</td>
+          <td colspan="{{ num_cols }}">No bugs so far.</td>
         </tr>
       {% endfor %}
     </tbody>

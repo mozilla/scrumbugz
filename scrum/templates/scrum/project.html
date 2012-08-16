@@ -15,7 +15,7 @@
     <p>Part of the <a href="{{ project.team.get_absolute_url() }}">{{ project.team.name }}</a> team.</p>
     <hr>
     <h2>Currently Sprinting</h2>
-    {{ bug_table(currently_sprinting, show_sprint=True) }}
+    {{ bug_table(currently_sprinting, show_sprint=True, show_project=False) }}
     <hr>
     {% if perms.scrum.change_project %}
       <a class="btn btn-small btn-primary pull-right"
@@ -24,7 +24,7 @@
       </a>
     {% endif %}
     <h2>Ready Backlog</h2>
-    {{ bug_table(project.get_bugs(), 'backlog_table') }}
+    {{ bug_table(project.get_bugs(), 'backlog_table', show_project=False) }}
   {% endif %}
 {% endblock %}
 
