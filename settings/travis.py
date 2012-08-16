@@ -13,6 +13,8 @@ DATABASES = {
          'NAME': PROJECT_DIR.child('scrumbugs.db'),
      }
 }
+# required for sqlite
+USE_TZ = True
 
 CACHES = {
      'default': {
