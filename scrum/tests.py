@@ -13,7 +13,7 @@ from django.utils import simplejson as json
 
 from scrum import models as scrum_models
 from scrum.forms import BZURLForm, CreateProjectForm, SprintBugsForm
-from scrum.models import BugSprintLog, BugzillaURL, Bug, Sprint
+from scrum.models import BugSprintLog, BugzillaURL, Bug, Project, Sprint
 
 
 scrum_models.BZAPI = Mock()
@@ -35,16 +35,18 @@ class TestBug(TestCase):
     def setUp(self):
         cache.clear()
         self.s = Sprint.objects.get(slug='2.2')
+        self.p = Project.objects.get(pk=1)
+        self.url = Project.objects.get(pk=1)
 
     @patch.object(Bug, 'points_history')
     def test_points_for_date_default(self, mock_bug):
         """ should default to points in whiteboard """
-        bugs = self.s.get_bugs()
+        bugs = self.p.get_backlog()
         b = bugs[0]
         eq_(b.story_points, b.points_for_date(date.today()))
 
-    def test_db_cached_bugs(self):
-        bugs = self.s.get_bugs()
+    def test_db_bugs(self):
+        bugs = self.p.get_backlog()
         compare_fields = [
             'summary',
             'status',
@@ -65,7 +67,8 @@ class TestProject(TestCase):
     def setUp(self):
         cache.clear()
         self.s = Sprint.objects.get(slug='2.2')
-        self.p = self.s.project
+        self.t = self.s.team
+        self.p = Project.objects.get(pk=1)
 
     def test_refreshing_bugs_not_remove_from_sprint(self):
         """
@@ -86,35 +89,32 @@ class TestSprint(TestCase):
     def setUp(self):
         cache.clear()
         self.s = Sprint.objects.get(slug='2.2')
+        self.p = Project.objects.get(pk=1)
 
     def test_sprint_creation(self):
         User.objects.create_superuser('admin', 'admin@admin.com', 'admin')
         self.client.login(username='admin', password='admin')
-        p = self.s.project
+        t = self.s.team
         fdata = {
             'name': '1.3.37',
             'slug': '1.3.37',
             'start_date': '2012-01-01',
             'end_date': '2012-01-15',
-            'url': GOOD_BZ_URL,
         }
-        url = reverse('scrum_sprint_new', args=[p.slug])
-        print 'SUCCESS \o/'
+        url = reverse('scrum_sprint_new', args=[t.slug])
         resp = self.client.post(url, fdata, follow=True)
-        self.assertRedirects(resp, reverse('scrum_sprint', kwargs={
-            'slug': p.slug,
+        self.assertRedirects(resp, reverse('scrum_sprint_bugs', kwargs={
+            'slug': t.slug,
             'sslug': '1.3.37',
         }))
-        s = Sprint.objects.get(slug='1.3.37')
-        self.assertEqual(s.urls.count(), 1)
 
     def test_get_products(self):
-        products = self.s.get_products()
+        products = self.p.get_products()
         eq_(2, len(products))
         ok_('mozilla.org' in products)
 
     def test_get_components(self):
-        components = self.s.get_components()
+        components = self.p.get_components()
         eq_(11, len(components))
         ok_('Website' in components)
 
@@ -127,22 +127,22 @@ class TestSprint(TestCase):
         cbug_ids = set(bug.id for bug in Bug.objects.all())
         self.assertSetEqual(bug_ids, cbug_ids)
         self.assertEqual(0, BugSprintLog.objects.count())
-        bugs = self.s.get_bugs(scrum_only=False)
+        bugs = self.p.get_backlog(scrum_only=False)
         self.s.update_bugs(bugs)
         self.assertEqual(len(bugs), BugSprintLog.objects.count())
         action = Bug.objects.all()[0].sprint_actions.all()[0].action
         self.assertEqual(action, BugSprintLog.ADDED)
 
     def test_sprint_bug_move_logging(self):
-        self.s.update_bugs(self.s.get_bugs())
+        self.s.update_bugs(self.p.get_backlog())
         newsprint = Sprint.objects.create(
             name='New Sprint',
             slug='newsprint',
             start_date=date.today(),
             end_date=date.today() + timedelta(days=10),
-            project=self.s.project
+            team=self.s.team
         )
-        bug = Bug.objects.get(id=665747)
+        bug = Bug.objects.get(id=671774)
         bug.sprint = None
         bug.save()
         self.assertEqual(BugSprintLog.REMOVED,
@@ -153,15 +153,15 @@ class TestSprint(TestCase):
                          bug.sprint_actions.all()[0].action)
 
     def test_sprint_bug_steal_logging(self):
-        self.s.update_bugs(self.s.get_bugs(scrum_only=False))
+        self.s.update_bugs(self.p.get_backlog(scrum_only=False))
         newsprint = Sprint.objects.create(
             name='New Sprint',
             slug='newsprint',
             start_date=date.today(),
             end_date=date.today() + timedelta(days=10),
-            project=self.s.project
+            team=self.s.team
         )
-        bug = Bug.objects.get(id=665747)
+        bug = Bug.objects.get(id=671774)
         self.assertEqual(bug.sprint, self.s)
         bug.sprint = newsprint
         bug.save()
@@ -172,62 +172,63 @@ class TestSprint(TestCase):
                          bug.sprint_actions.all()[0].action)
 
     def test_backlog_bug_sync(self):
-        self.s.update_bugs(self.s.get_bugs())
-        self.s.cached_bugs.remove(Bug.objects.get(id=665747))
-        self.assertEqual(self.s.cached_bugs.count(), 35)
-        new_bug_ids = [665747, 758377, 766608]
+        self.s.update_bugs(self.p.get_backlog())
+        self.s.bugs.remove(Bug.objects.get(id=671774))
+        self.assertEqual(self.s.bugs.count(), 15)
+        new_bug_ids = [671774, 770965, 775147]
         self.s.update_bugs(new_bug_ids)
-        self.assertEqual(self.s.cached_bugs.count(), 3)
-        all_bl_bug_ids = self.s.cached_bugs.values_list('id', flat=True)
+        self.assertEqual(self.s.bugs.count(), 3)
+        all_bl_bug_ids = self.s.bugs.values_list('id', flat=True)
         self.assertSetEqual(set(all_bl_bug_ids), set(new_bug_ids))
         # the process of syncing did not remove bugs unnecessarily
         self.assertEqual(self.s.bug_actions.filter(
-            bug_id__in=[758377, 766608],
+            bug_id__in=[770965, 775147],
             action=BugSprintLog.REMOVED,
         ).count(), 0)
         # the bug was added back, thus the 2 ADDED actions.
         self.assertEqual(self.s.bug_actions.filter(
-            bug_id=665747,
+            bug_id=671774,
             action=BugSprintLog.ADDED
         ).count(), 2)
 
     def test_sprint_bug_management(self):
-        self.s.update_bugs(self.s.get_bugs(scrum_only=False))
-        self.s.cached_bugs.remove(Bug.objects.get(id=665747))
-        self.assertEqual(self.s.cached_bugs.count(), 36)
-        new_bug_ids = [665747, 758377, 766608]
+        self.s.update_bugs(self.p.get_backlog(scrum_only=False))
+        self.s.bugs.remove(Bug.objects.get(id=671774))
+        self.assertEqual(self.s.bugs.count(), 19)
+        new_bug_ids = [671774, 770965, 775147]
         form = SprintBugsForm(instance=self.s, data={
-            'sprint_bugs': ','.join(str(bid) for bid in new_bug_ids),
+            'new_bugs': ','.join(str(bid) for bid in new_bug_ids),
         })
         self.assertTrue(form.is_valid())
         form.save()
-        self.assertEqual(self.s.cached_bugs.count(), 3)
-        all_bl_bug_ids = self.s.cached_bugs.values_list('id', flat=True)
+        self.assertEqual(self.s.bugs.count(), 3)
+        all_bl_bug_ids = self.s.bugs.values_list('id', flat=True)
         self.assertSetEqual(set(all_bl_bug_ids), set(new_bug_ids))
 
     def test_sprint_bugs_form_validation(self):
         # non digit
         form = SprintBugsForm(instance=self.s, data={
-            'sprint_bugs': '1234,234d,2345',
+            'new_bugs': '1234,234d,2345',
         })
         self.assertFalse(form.is_valid())
         # no commas
         form = SprintBugsForm(instance=self.s, data={
-            'sprint_bugs': '12342342345',
+            'new_bugs': '12342342345',
         })
         self.assertTrue(form.is_valid())
         # blank
         form = SprintBugsForm(instance=self.s, data={
-            'sprint_bugs': '',
+            'new_bugs': '',
         })
         self.assertFalse(form.is_valid())
         form = SprintBugsForm(instance=self.s, data={
-            'sprint_bugs': '1234,23465,2345',
+            'new_bugs': '1234,23465,2345',
         })
         self.assertTrue(form.is_valid())
 
 
 class TestForms(TestCase):
+    fixtures = ['test_data.json']
 
     def test_bugzilla_url(self):
         form_data = {"url": "http://localhost/?bugs"}
@@ -248,11 +249,12 @@ class TestForms(TestCase):
         form_data = {
             'name': 'Best Project Ever',
             'slug': 'srsly',
+            'team': 1,
             'url': 'not a url',
         }
         form = CreateProjectForm(form_data)
         eq_(False, form.is_valid())
-        ok_('url' in form.errors.keys())
+        ok_('url' in form.errors)
         form_data['url'] = GOOD_BZ_URL
         form = CreateProjectForm(form_data)
         eq_(True, form.is_valid())
@@ -263,5 +265,6 @@ class TestForms(TestCase):
         form = CreateProjectForm({
             'name': 'FO REAL Best Ever',
             'slug': 'srsly-fo-real',
+            'team': 1,
         })
         eq_(True, form.is_valid())

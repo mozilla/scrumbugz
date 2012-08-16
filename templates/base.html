@@ -44,6 +44,7 @@
               <li{% if request.path.startswith('/p') %} class="active"{% endif %}><a href="{{ url('scrum_projects_list') }}">Projects</a></li>
             </ul>
             <ul class="nav pull-right">
+              <li{% if request.path == url('help') %} class="active"{% endif %}><a href="{{ url('help') }}">Help</a></li>
               <li><a href="{{ url('admin:index') }}">Admin</a></li>
             </ul>
           </div><!--/.nav-collapse -->

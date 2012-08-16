@@ -4976,7 +4976,6 @@
       "component":"Website",
       "product":"Mozilla Developer Network",
       "blocks":["771763"],
-      "url":"https://developer-new.mozilla.org/ru/docs/Project:%D0%9A%D0%B0%D0%BA_%D0%BF%D0%BE%D0%BC%D0%BE%D1%87%D1%8C$history",
       "summary":"DoesNotExist: User matching query does not exist.",
       "priority":"P1",
       "resolution":"FIXED"
@@ -5430,7 +5429,6 @@
       "status":"RESOLVED",
       "component":"Docs Platform",
       "product":"Mozilla Developer Network",
-      "url":"https://developer-new.mozilla.org/en-US/docs/CSS/Getting_Started/JavaScript",
       "summary":"Another document with this slug already exists",
       "priority":"P2",
       "resolution":"FIXED"

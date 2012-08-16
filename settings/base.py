@@ -30,6 +30,15 @@ CONTEXT_SETTINGS = (
     'PROD_MODE',
 )
 
+# http://packages.python.org/Markdown/extensions/index.html
+MARKDOWN_EXTENSIONS = [
+    'nl2br',
+    'fenced_code',
+    'tables',
+    'smart_strong',
+    'sane_lists',
+]
+
 CACHES = {
     'default': {
         'BACKEND': 'django_pylibmc.memcached.PyLibMCCache',

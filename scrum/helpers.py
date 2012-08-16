@@ -1,8 +1,22 @@
 from datetime import datetime
 
+from django.conf import settings
+from django.utils.encoding import force_unicode
+
 from jingo import helpers
 from jingo import register
 from jinja2.runtime import Undefined
+from markdown import markdown as parse_markdown
+
+
+@register.filter
+def markdown(value):
+    return parse_markdown(
+        force_unicode(value),
+        extensions=settings.MARKDOWN_EXTENSIONS,
+        output_format='html5',
+        safe_mode=True,
+    )
 
 
 @register.function

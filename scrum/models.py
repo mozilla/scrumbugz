@@ -6,7 +6,6 @@ import zlib
 from base64 import b64decode, b64encode
 from collections import defaultdict
 from datetime import date, datetime
-from markdown import markdown
 from operator import itemgetter
 
 from django.conf import settings
@@ -21,10 +20,10 @@ from django.utils.encoding import force_unicode
 import dateutil.parser
 import slumber
 from jsonfield import JSONField
-from scrum.utils import get_bz_url_for_buglist
+from markdown import markdown
 
-from .utils import (date_to_js, is_closed, date_range, parse_bz_url,
-                    parse_whiteboard)
+from .utils import (date_to_js, date_range, get_bz_url_for_buglist, is_closed,
+                    parse_bz_url, parse_whiteboard)
 
 
 class CompressedJSONField(JSONField):
@@ -756,13 +755,7 @@ def process_notes(sender, instance, **kwargs):
         instance.notes_html = markdown(
             force_unicode(instance.notes),
             # http://packages.python.org/Markdown/extensions/index.html
-            extensions=[
-                'nl2br',
-                'fenced_code',
-                'tables',
-                'smart_strong',
-                'sane_lists',
-            ],
+            extensions=settings.MARKDOWN_EXTENSIONS,
             output_format='html5',
             safe_mode=True,
         )
