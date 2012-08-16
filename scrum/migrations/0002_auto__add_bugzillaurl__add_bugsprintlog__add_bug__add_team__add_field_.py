@@ -43,7 +43,6 @@ class Migration(SchemaMigration):
             ('depends_on', self.gf('jsonfield.fields.JSONField')(blank=True)),
             ('comments', self.gf('scrum.models.CompressedJSONField')(blank=True)),
             ('comments_count', self.gf('django.db.models.fields.PositiveSmallIntegerField')(default=0)),
-            ('url', self.gf('django.db.models.fields.CharField')(max_length=2048, blank=True)),
             ('creation_time', self.gf('django.db.models.fields.DateTimeField')()),
             ('last_change_time', self.gf('django.db.models.fields.DateTimeField')()),
             ('story_user', self.gf('django.db.models.fields.CharField')(max_length=50, blank=True)),
@@ -161,7 +160,6 @@ class Migration(SchemaMigration):
             'story_points': ('django.db.models.fields.PositiveSmallIntegerField', [], {'default': '0'}),
             'story_user': ('django.db.models.fields.CharField', [], {'max_length': '50', 'blank': 'True'}),
             'summary': ('django.db.models.fields.CharField', [], {'max_length': '500'}),
-            'url': ('django.db.models.fields.CharField', [], {'max_length': '2048', 'blank': 'True'}),
             'whiteboard': ('django.db.models.fields.CharField', [], {'max_length': '200', 'blank': 'True'})
         },
         'scrum.bugsprintlog': {

@@ -61,7 +61,6 @@ class Migration(SchemaMigration):
             'story_points': ('django.db.models.fields.PositiveSmallIntegerField', [], {'default': '0'}),
             'story_user': ('django.db.models.fields.CharField', [], {'max_length': '50', 'blank': 'True'}),
             'summary': ('django.db.models.fields.CharField', [], {'max_length': '500'}),
-            'url': ('django.db.models.fields.CharField', [], {'max_length': '2048', 'blank': 'True'}),
             'whiteboard': ('django.db.models.fields.CharField', [], {'max_length': '200', 'blank': 'True'})
         },
         'scrum.bugsprintlog': {
