@@ -2,6 +2,7 @@
 import datetime
 from south.db import db
 from south.v2 import DataMigration
+from django.conf import settings
 from django.db import connection, models, transaction
 
 
@@ -22,9 +23,10 @@ class Migration(DataMigration):
         for sprint in orm.Sprint.objects.all():
             sprint.team_id = sprint.project_id
             sprint.save()
-        # reset the postgres autoincrement next value for team table.
-        cursor.execute("SELECT setval('scrum_team_id_seq', (SELECT MAX(id) FROM scrum_team)+1)")
-        transaction.commit_unless_managed()
+        if 'postgresql' in settings.DATABASES['default']['ENGINE']:
+            # reset the postgres autoincrement next value for team table.
+            cursor.execute("SELECT setval('scrum_team_id_seq', (SELECT MAX(id) FROM scrum_team)+1)")
+            transaction.commit_unless_managed()
 
     def backwards(self, orm):
         pass

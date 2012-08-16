@@ -2,8 +2,8 @@ from __future__ import absolute_import
 from .base import *
 
 
-DEBUG=True
-TEMPLATE_DEBUG=DEBUG
+DEBUG = True
+TEMPLATE_DEBUG = DEBUG
 
 SECRET_KEY = "shhhhhh"
 
@@ -19,3 +19,5 @@ CACHES = {
          'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
      },
 }
+
+SOUTH_TESTS_MIGRATE = False
