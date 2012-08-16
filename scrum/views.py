@@ -105,7 +105,7 @@ class HomeView(TemplateView):
 home = HomeView.as_view()
 
 
-class ProjectView(BugsDataMixin, ProjectsMixin, DetailView):
+class ProjectView(ProjectsMixin, DetailView):
     template_name = 'scrum/project.html'
 
     def get_context_data(self, **kwargs):

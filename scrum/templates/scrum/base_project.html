@@ -1,5 +1,5 @@
 {% extends "scrum/base.html" %}
-{% from "scrum/macros.html" import left_nav %}
+{% from "scrum/includes/macros.html" import left_nav %}
 
 {% block title %}{{ project.name + " /" if project }} Projects / {{ super() }}{% endblock %}
 
