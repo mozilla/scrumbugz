@@ -12,6 +12,11 @@ PROD_MODE = os.environ.get('PROD_MODE')
 if PROD_MODE:
     ENFORCE_HOSTNAME = 'scrumbu.gs'
     ENABLE_GA = True
+else:
+    ADMINS = (
+        ('Paul', 'pmac@mozilla.com'),
+    )
+    MANAGERS = ADMINS
 
 DATABASES = {'default': dj_database_url.config()}
 
