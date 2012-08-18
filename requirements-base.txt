@@ -16,3 +16,4 @@ Markdown==2.2.0
 nose
 django-nose
 pytz==2012d
+django-cronjobs==0.2.3
