@@ -52,8 +52,7 @@ class BugsDataMixin(object):
         context = super(BugsDataMixin, self).get_context_data(**kwargs)
         bugs_kwargs = {}
         # clear cache if requested
-        if (self.request.META.get('HTTP_CACHE_CONTROL') == 'no-cache' or
-            self.object.needs_refresh()):
+        if self.request.META.get('HTTP_CACHE_CONTROL') == 'no-cache':
             bugs_kwargs['refresh'] = True
         if 'all' in self.request.GET:
             bugs_kwargs['scrum_only'] = False
