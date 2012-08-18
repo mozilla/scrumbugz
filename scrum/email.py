@@ -6,27 +6,26 @@ from email.parser import Parser
 
 from django.conf import settings
 
-from scrum.models import Bug
-
 
 BUG_ID_RE = re.compile(r'\[Bug (\d+)\]')
 
 
-def get_messages():
+def get_messages(delete=True):
     """
     Return a list of `email.message.Message` objects from the POP3 server.
     :return: list
     """
     messages = []
-    p = Parser()
-    c = poplib.POP3(settings.BUGMAIL_HOST)
-    c.user(settings.BUGMAIL_USER)
-    c.pass_(settings.BUGMAIL_PASS)
-    num_messages = len(c.list()[1])
+    conn = poplib.POP3(settings.BUGMAIL_HOST)
+    conn.user(settings.BUGMAIL_USER)
+    conn.pass_(settings.BUGMAIL_PASS)
+    num_messages = len(conn.list()[1])
     for msgid in range(1, num_messages + 1):
-        messages.append(p.parsestr('\n'.join(c.retr(msgid)[1])))
-        c.dele(msgid)
-    c.quit()
+        msg_str = '\n'.join(conn.retr(msgid)[1])
+        messages.append(Parser().parsestr(msg_str))
+        if delete:
+            conn.dele(msgid)
+    conn.quit()
     return messages
 
 
@@ -51,7 +50,6 @@ def get_bug_id(msg):
     return None
 
 
-def get_bugmail_ids():
-    ids = [get_bug_id(m) for m in get_messages() if is_bugmail(m)]
-    ids = [bid for bid in ids if bid]
-    return Bug.objects.filter(id__in=ids).values_list('id', flat=True)
+def get_bugmail_ids(delete=True):
+    ids = [get_bug_id(m) for m in get_messages(delete=delete) if is_bugmail(m)]
+    return [bid for bid in ids if bid]

@@ -1,0 +1,61 @@
+Return-Path: <bugzilla-daemon@mozilla.org>
+Delivered-To: bugz@scrumbu.gs
+Received: from spool.mail.gandi.net (mspool2-d.mgt.gandi.net [10.0.21.133])
+	by nmboxes24-d.mgt.gandi.net (Postfix) with ESMTP id 83894B5C8B
+	for <bugz@scrumbu.gs>; Sat, 18 Aug 2012 06:29:48 +0200 (CEST)
+Received: from mfilter9-d.gandi.net (mfilter9-d.gandi.net [217.70.178.138])
+	by spool.mail.gandi.net (Postfix) with ESMTP id 801BA178021
+	for <bugz@scrumbu.gs>; Sat, 18 Aug 2012 06:29:48 +0200 (CEST)
+X-Virus-Scanned: Debian amavisd-new at mfilter9-d.gandi.net
+Received: from spool.mail.gandi.net ([10.0.21.133])
+	by mfilter9-d.gandi.net (mfilter9-d.gandi.net [10.0.15.180]) (amavisd-new, port 10024)
+	with ESMTP id fpTInB8J9fz0 for <bugz@scrumbu.gs>;
+	Sat, 18 Aug 2012 06:29:47 +0200 (CEST)
+Received: from bugzilla01.phx.mozilla.com (bugzilla01.phx.mozilla.com [63.245.216.221])
+	by spool.mail.gandi.net (Postfix) with ESMTP id 116D8178028
+	for <bugz@scrumbu.gs>; Sat, 18 Aug 2012 06:29:47 +0200 (CEST)
+Received: from mxout-bugs.mozilla.org (pp-app-bugs01.phx.mozilla.com [10.8.82.11])
+	by bugzilla01.phx.mozilla.com (Postfix) with ESMTP id 707EE90918
+	for <bugz@scrumbu.gs>; Fri, 17 Aug 2012 21:29:46 -0700 (PDT)
+Received: from pp-app-bugs01.phx.mozilla.com (unused-10-8-11-250.phx.mozilla.org [127.0.0.1])
+	by mxout-bugs.mozilla.org (8.13.8/8.13.8) with ESMTP id q7I4Tkbn027921
+	for <bugz@scrumbu.gs>; Fri, 17 Aug 2012 21:29:46 -0700
+Received: (from root@localhost)
+	by pp-app-bugs01.phx.mozilla.com (8.13.8/8.13.8/Submit) id q7I4Tk2e027919;
+	Fri, 17 Aug 2012 21:29:46 -0700
+From: bugzilla-daemon@mozilla.org
+To: bugz@scrumbu.gs
+Subject: [Bug 760693] Support Multiple Backlogs
+Date: Sat, 18 Aug 2012 04:29:45 +0000
+X-Bugzilla-Reason: None
+X-Bugzilla-Type: changed
+X-Bugzilla-Watch-Reason: Component-Watcher
+X-Bugzilla-Classification: Other
+X-Bugzilla-Product: Websites
+X-Bugzilla-Component: Scrumbugs
+X-Bugzilla-Keywords:
+X-Bugzilla-Severity: normal
+X-Bugzilla-Who: pmac@mclanahan.net
+X-Bugzilla-Status: NEW
+X-Bugzilla-Priority: --
+X-Bugzilla-Assigned-To: pmac@mclanahan.net
+X-Bugzilla-Target-Milestone: Future
+X-Bugzilla-Changed-Fields:
+Message-ID: <bug-760693-449245-MORTmbFeyi@https.bugzilla.mozilla.org/>
+In-Reply-To: <bug-760693-449245@https.bugzilla.mozilla.org/>
+References: <bug-760693-449245@https.bugzilla.mozilla.org/>
+X-Bugzilla-URL: https://bugzilla.mozilla.org/
+Auto-Submitted: auto-generated
+Content-Type: text/plain; charset="UTF-8"
+MIME-Version: 1.0
+
+Do not reply to this email. You can add comments to this bug at
+https://bugzilla.mozilla.org/show_bug.cgi?id=760693
+
+--- Comment #2 from Paul McLanahan [:pmac] <pmac@mclanahan.net> 2012-08-17 21:29:45 PDT ---
+Testing again
+
+--
+Configure bugmail: https://bugzilla.mozilla.org/userprefs.cgi?tab=email
+------- You are receiving this mail because: -------
+You are watching the component for the bug.

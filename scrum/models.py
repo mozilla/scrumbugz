@@ -12,6 +12,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.core.validators import RegexValidator
 from django.db import models, transaction
+from django.db.models.query import QuerySet
 from django.db.models.query_utils import Q
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
@@ -21,6 +22,7 @@ import dateutil.parser
 import slumber
 from jsonfield import JSONField
 from markdown import markdown
+from model_utils.managers import PassThroughManager
 
 from .utils import (date_to_js, date_range, get_bz_url_for_buglist, is_closed,
                     parse_bz_url, parse_whiteboard)
@@ -488,7 +490,21 @@ class BugzillaURL(models.Model):
         return self._get_bz_args().get('status_whiteboard')
 
 
-class BugManager(models.Manager):
+class BugQuerySet(QuerySet):
+    def sync_bugs(self):
+        """
+        Refresh the data for all matched bugs from Bugzilla.
+        """
+        bids = self.only('id')
+        if bids:
+            url = BugzillaURL(url=get_bz_url_for_buglist(bids))
+            url.get_bugs(refresh=True)
+
+
+class BugManager(PassThroughManager):
+    def get_query_set(self):
+        return BugQuerySet(self.model, using=self._db)
+
     def update_or_create(self, data):
         """
         Create or update a cached bug from the data returned from Bugzilla.
@@ -541,7 +557,7 @@ class Bug(models.Model):
 
     def fill_from_data(self, data):
         self.__dict__.update(data)
-        self.last_synced_time = datetime.now()
+        self.last_synced_time = datetime.utcnow()
 
     def refresh_from_bugzilla(self):
         data = BZAPI.bug.get(

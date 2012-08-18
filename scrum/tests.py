@@ -1,5 +1,8 @@
+from __future__ import absolute_import
+
 from copy import deepcopy
 from datetime import date, timedelta
+from email.parser import Parser
 
 from mock import Mock, patch
 from nose.tools import eq_, ok_
@@ -11,15 +14,17 @@ from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.utils import simplejson as json
 
+from scrum import email as scrum_email
 from scrum import models as scrum_models
 from scrum.forms import BZURLForm, CreateProjectForm, SprintBugsForm
 from scrum.models import BugSprintLog, BugzillaURL, Bug, Project, Sprint
 
 
 scrum_models.BZAPI = Mock()
-BUG_DATA_FILE = settings.PROJECT_DIR.child('scrum')\
-                                    .child('test_data')\
-                                    .child('bugzilla_data.json')
+TEST_DATA = settings.PROJECT_DIR.child('scrum').child('test_data')
+BUG_DATA_FILE = TEST_DATA.child('bugzilla_data.json')
+BUGMAIL_FILE = TEST_DATA.child('bugmail.txt')
+
 with open(BUG_DATA_FILE) as bdf:
     BUG_DATA = json.load(bdf)
 
@@ -27,6 +32,26 @@ GOOD_BZ_URL = BUG_DATA['bz_url']
 
 # have to deepcopy to avoid cross-test-pollution
 scrum_models.BZAPI.bug.get.side_effect = lambda *x, **y: deepcopy(BUG_DATA)
+
+
+def get_messages_mock(delete=True):
+    with open(BUGMAIL_FILE) as bmf:
+        return [Parser().parse(bmf)]
+
+
+scrum_email.get_messages = Mock()
+scrum_email.get_messages.side_effect = get_messages_mock
+
+
+class TestEmail(TestCase):
+    def test_is_bugmail(self):
+        m = scrum_email.get_messages()[0]
+        ok_(scrum_email.is_bugmail(m))
+        del m['x-bugzilla-type']
+        ok_(not scrum_email.is_bugmail(m))
+
+    def test_get_bugmail_ids(self):
+        eq_([760693], scrum_email.get_bugmail_ids())
 
 
 class TestBug(TestCase):
