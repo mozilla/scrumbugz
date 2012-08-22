@@ -16,7 +16,7 @@ class Migration(DataMigration):
         for sprint in Sprint.objects.all():
             if sprint.bz_url:
                 bzurl = BugzillaURL(url=sprint.bz_url)
-                bugs = bzurl.get_bugs(scrum_only=False)
+                bugs = bzurl.get_bugs()
                 for bug in bugs:
                     # at this point project and sprint ids are equal
                     bug.project_id = sprint.team_id
@@ -33,6 +33,7 @@ class Migration(DataMigration):
         'scrum.bug': {
             'Meta': {'ordering': "('id',)", 'object_name': 'Bug'},
             'assigned_to': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
+            'backlog': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'backlog_bugs'", 'null': 'True', 'on_delete': 'models.SET_NULL', 'to': "orm['scrum.Project']"}),
             'blocks': ('jsonfield.fields.JSONField', [], {'blank': 'True'}),
             'comments': ('scrum.models.CompressedJSONField', [], {'blank': 'True'}),
             'comments_count': ('django.db.models.fields.PositiveSmallIntegerField', [], {'default': '0'}),

@@ -23,6 +23,7 @@ class Migration(SchemaMigration):
         'scrum.bug': {
             'Meta': {'ordering': "('id',)", 'object_name': 'Bug'},
             'assigned_to': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
+            'backlog': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'backlog_bugs'", 'null': 'True', 'on_delete': 'models.SET_NULL', 'to': "orm['scrum.Project']"}),
             'blocks': ('jsonfield.fields.JSONField', [], {'blank': 'True'}),
             'comments': ('scrum.models.CompressedJSONField', [], {'blank': 'True'}),
             'comments_count': ('django.db.models.fields.PositiveSmallIntegerField', [], {'default': '0'}),

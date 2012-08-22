@@ -23,7 +23,10 @@ from scrum.models import BugSprintLog, BugzillaURL, Bug, Project, Sprint
 scrum_models.BZAPI = Mock()
 TEST_DATA = settings.PROJECT_DIR.child('scrum').child('test_data')
 BUG_DATA_FILE = TEST_DATA.child('bugzilla_data.json')
-BUGMAIL_FILE = TEST_DATA.child('bugmail.txt')
+BUGMAIL_FILES = (
+    TEST_DATA.child('bugmail.txt'),
+    TEST_DATA.child('bugmail-slug.txt'),
+)
 
 with open(BUG_DATA_FILE) as bdf:
     BUG_DATA = json.load(bdf)
@@ -35,8 +38,11 @@ scrum_models.BZAPI.bug.get.side_effect = lambda *x, **y: deepcopy(BUG_DATA)
 
 
 def get_messages_mock(delete=True):
-    with open(BUGMAIL_FILE) as bmf:
-        return [Parser().parse(bmf)]
+    msgs = []
+    for fn in BUGMAIL_FILES:
+        with open(fn) as bmf:
+            msgs.append(Parser().parse(bmf))
+    return msgs
 
 
 scrum_email.get_messages = Mock()
@@ -50,8 +56,18 @@ class TestEmail(TestCase):
         del m['x-bugzilla-type']
         ok_(not scrum_email.is_bugmail(m))
 
-    def test_get_bugmail_ids(self):
-        eq_([760693], scrum_email.get_bugmail_ids())
+    def test_get_bugmails(self):
+        good_data = {
+            None: [760693],
+            'mdn': [760694],
+        }
+        eq_(good_data, scrum_email.get_bugmails())
+
+    def test_get_project_slug(self):
+        test_to = 'some+dude@mozilla.com'
+        eq_(scrum_email.get_project_slug(test_to), 'dude')
+        test_to = 'bugs+my-project.2@mozilla.com'
+        eq_(scrum_email.get_project_slug(test_to), 'my-project.2')
 
 
 class TestBug(TestCase):
@@ -107,6 +123,16 @@ class TestProject(TestCase):
         self.assertEqual(Bug.objects.filter(sprint=self.s).count(),
                          len(bugs))
 
+    def test_adding_bzurl_adds_backlog_bugs(self):
+        """Adding a url to a project should populate the backlog."""
+        # should have created and loaded bugs when fixture loaded
+        eq_(self.p.backlog_bugs.count(), 20)
+        self.p.backlog_bugs.clear()
+        eq_(self.p.backlog_bugs.count(), 0)
+        # now this should update the existing bugs w/ the backlog
+        BugzillaURL.objects.create(url=GOOD_BZ_URL, project=self.p)
+        eq_(self.p.backlog_bugs.count(), 20)
+
 
 class TestSprint(TestCase):
     fixtures = ['test_data.json']
@@ -147,7 +173,7 @@ class TestSprint(TestCase):
         bzurl = BugzillaURL.objects.create(
             url='http://example.com/?stuff=whatnot'
         )
-        bugs = bzurl.get_bugs(scrum_only=False)
+        bugs = bzurl.get_bugs()
         bug_ids = set(int(bug.id) for bug in bugs)
         cbug_ids = set(bug.id for bug in Bug.objects.all())
         self.assertSetEqual(bug_ids, cbug_ids)
@@ -167,7 +193,7 @@ class TestSprint(TestCase):
             end_date=date.today() + timedelta(days=10),
             team=self.s.team
         )
-        bug = Bug.objects.get(id=671774)
+        bug = Bug.objects.get(id=665747)
         bug.sprint = None
         bug.save()
         self.assertEqual(BugSprintLog.REMOVED,
@@ -186,7 +212,10 @@ class TestSprint(TestCase):
             end_date=date.today() + timedelta(days=10),
             team=self.s.team
         )
+        # closed bug should not be associated
         bug = Bug.objects.get(id=671774)
+        self.assertEqual(bug.sprint, None)
+        bug = Bug.objects.get(id=665747)
         self.assertEqual(bug.sprint, self.s)
         bug.sprint = newsprint
         bug.save()
@@ -198,9 +227,9 @@ class TestSprint(TestCase):
 
     def test_backlog_bug_sync(self):
         self.s.update_bugs(self.p.get_backlog())
-        self.s.bugs.remove(Bug.objects.get(id=671774))
-        self.assertEqual(self.s.bugs.count(), 15)
-        new_bug_ids = [671774, 770965, 775147]
+        self.s.bugs.remove(Bug.objects.get(id=665747))
+        self.assertEqual(self.s.bugs.count(), 3)
+        new_bug_ids = [665747, 770965, 775147]
         self.s.update_bugs(new_bug_ids)
         self.assertEqual(self.s.bugs.count(), 3)
         all_bl_bug_ids = self.s.bugs.values_list('id', flat=True)
@@ -212,15 +241,15 @@ class TestSprint(TestCase):
         ).count(), 0)
         # the bug was added back, thus the 2 ADDED actions.
         self.assertEqual(self.s.bug_actions.filter(
-            bug_id=671774,
+            bug_id=665747,
             action=BugSprintLog.ADDED
         ).count(), 2)
 
     def test_sprint_bug_management(self):
-        self.s.update_bugs(self.p.get_backlog(scrum_only=False))
-        self.s.bugs.remove(Bug.objects.get(id=671774))
-        self.assertEqual(self.s.bugs.count(), 19)
-        new_bug_ids = [671774, 770965, 775147]
+        self.s.update_bugs(self.p.get_backlog())
+        self.s.bugs.remove(Bug.objects.get(id=665747))
+        self.assertEqual(self.s.bugs.count(), 3)
+        new_bug_ids = [665747, 770965, 775147]
         form = SprintBugsForm(instance=self.s, data={
             'new_bugs': ','.join(str(bid) for bid in new_bug_ids),
         })
