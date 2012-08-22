@@ -55,6 +55,8 @@ class BugsDataMixin(object):
         # clear cache if requested
         if self.request.META.get('HTTP_CACHE_CONTROL') == 'no-cache':
             self.bugs_kwargs['refresh'] = True
+            messages.info(self.request, "The bugs will be refreshed from "
+                          "Bugzilla in 10 minutes or so.")
         if 'all' in self.request.GET:
             self.bugs_kwargs['scrum_only'] = False
         try:
@@ -91,7 +93,7 @@ class HomeView(TemplateView):
 home = HomeView.as_view()
 
 
-class ProjectView(ProjectsMixin, DetailView):
+class ProjectView(BugsDataMixin, ProjectsMixin, DetailView):
     template_name = 'scrum/project.html'
 
     def get_context_data(self, **kwargs):
@@ -100,7 +102,8 @@ class ProjectView(ProjectsMixin, DetailView):
         bugs = Bug.objects.filter(sprint__start_date__lte=today,
                                   sprint__end_date__gte=today,
                                   project=self.object)
-        context['currently_sprinting'] = bugs
+        context['sprinting'] = bugs
+        context['sprinting_blocked'] = get_blocked_bugs(bugs)
         return context
 
 

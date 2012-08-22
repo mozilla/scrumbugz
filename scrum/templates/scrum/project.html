@@ -2,30 +2,33 @@
 {% from "scrum/includes/macros.html" import bug_table with context %}
 
 {% block content %}
-  {% if bzerror %}
-    {% include "scrum/bzerror.html" %}
-  {% else %}
-    {% if perms.scrum.change_project %}
-      <a class="btn btn-primary pull-right"
-         href="{{ url('scrum_project_edit', project.slug) }}">
-        <i class="icon-edit icon-white"></i> Edit
-      </a>
-    {% endif %}
-    <h1>{{ project.name }} Project</h1>
-    <p>Part of the <a href="{{ project.team.get_absolute_url() }}">{{ project.team.name }}</a> team.</p>
-    <hr>
-    <h2>Currently Sprinting</h2>
-    {{ bug_table(currently_sprinting, show_sprint=True, show_project=False) }}
-    <hr>
-    {% if perms.scrum.change_project %}
-      <a class="btn btn-small btn-primary pull-right"
-         href="{{ url('scrum_project_bugs', project.slug) }}">
-        <i class="icon-list icon-white"></i> Manage Ready Stories
-      </a>
-    {% endif %}
-    <h2>Ready Backlog</h2>
-    {{ bug_table(project.get_bugs(), 'backlog_table', show_project=False) }}
-  {% endif %}
+  <div class="row">
+    <div class="span12">
+      {% if perms.scrum.change_project %}
+        <a class="btn btn-primary pull-right"
+           href="{{ url('scrum_project_edit', project.slug) }}">
+          <i class="icon-edit icon-white"></i> Edit
+        </a>
+      {% endif %}
+      <h1>{{ project.name }} Project</h1>
+      <p>Part of the <a href="{{ project.team.get_absolute_url() }}">{{ project.team.name }}</a> team.</p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="span12">
+      <h2>Currently Sprinting</h2>
+      {{ bug_table(sprinting, show_sprint=True, show_project=False, blocked_bugs=sprinting_blocked) }}
+      <hr>
+      {% if perms.scrum.change_project %}
+        <a class="btn btn-small btn-primary pull-right"
+           href="{{ url('scrum_project_bugs', project.slug) }}">
+          <i class="icon-list icon-white"></i> Manage Ready Stories
+        </a>
+      {% endif %}
+      <h2>Sprint Ready</h2>
+      {{ bug_table(bugs, 'backlog_table', show_project=False, blocked_bugs=blocked_bugs) }}
+    </div>
+  </div>
 {% endblock %}
 
 {% block js %}

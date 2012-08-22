@@ -14,7 +14,7 @@ from django.core.validators import RegexValidator
 from django.db import models, transaction
 from django.db.models.query import QuerySet
 from django.db.models.query_utils import Q
-from django.db.models.signals import pre_save, post_save
+from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.utils.encoding import force_unicode
 
@@ -180,7 +180,8 @@ class DBBugsMixin(object):
 
     def refresh_bugs_data(self, bugs=None):
         bzurl = self.get_bz_search_url(bugs)
-        bzurl.get_bugs()
+        bzurl.one_time = True
+        bzurl.save()
 
     def get_bugs(self, **kwargs):
         kwargs['bug_filters'] = {'sprint__isnull': True}
@@ -233,8 +234,9 @@ class Project(DBBugsMixin, BugsListMixin, models.Model):
 
     def refresh_backlog(self):
         self._clear_bugs_data_cache()
-        bugs = self._get_url_items('bugs')
-        self.update_backlog_bugs(bugs)
+        for url in self.urls.all():
+            url.date_synced = '2000-01-01'
+            url.save()
 
     def get_backlog(self, **kwargs):
         """Get a unique set of bugs from all bz urls"""
@@ -371,7 +373,8 @@ class Sprint(DBBugsMixin, BugsListMixin, models.Model):
     def refresh_bugs_data(self, bugs=None):
         self._clear_bugs_data_cache()
         bzurl = self.get_bz_search_url(bugs)
-        bzurl.get_bugs()
+        bzurl.one_time = True
+        bzurl.save()
 
     def update_bugs(self, bugs):
         """
@@ -419,14 +422,22 @@ class Sprint(DBBugsMixin, BugsListMixin, models.Model):
 
 
 class EmptyBugzillaURL(object):
+    one_time = False
+
     def get_bugs(self):
         return set()
+
+    def save(self):
+        pass
 
 
 class BugzillaURL(models.Model):
     url = models.URLField(verbose_name='Bugzilla URL', max_length=2048)
     project = models.ForeignKey(Project, null=True, blank=True,
                                 related_name='urls')
+    # default in the past
+    date_synced = models.DateTimeField(default='2000-01-01')
+    one_time = models.BooleanField(default=False)
 
     date_cached = None
     num_no_data_bugs = 0
@@ -465,9 +476,12 @@ class BugzillaURL(models.Model):
             args = dict((k.encode('utf-8'), v) for k, v in
                         args.iterlists())
             data = BZAPI.bug.get(**args)
-            data['date_received'] = datetime.now()
+            data['date_received'] = datetime.utcnow()
         except Exception:
             raise BZError("Couldn't retrieve bugs from Bugzilla")
+        if not self.one_time:
+            self.date_synced = datetime.utcnow()
+            self.save()
         return set(store_bugs(data['bugs'], self.project))
 
     def get_products(self):
@@ -490,7 +504,8 @@ class BugQuerySet(QuerySet):
         bids = self.only('id')
         if bids:
             url = BugzillaURL(url=get_bz_url_for_buglist(bids))
-            url.get_bugs()
+            url.one_time = True
+            url.save()
 
     def scrum_only(self):
         return self.filter(~Q(story_component='') |
@@ -782,12 +797,3 @@ def process_notes(sender, instance, **kwargs):
             output_format='html5',
             safe_mode=True,
         )
-
-
-@receiver(post_save, sender=BugzillaURL)
-def get_bugzilla_bugs_data(sender, instance, **kwargs):
-    """
-    After a `BugzillaURL` is saved, get the bugs data and associate it with
-    the url's project's backlog if available.
-    """
-    instance.get_bugs()

@@ -19,7 +19,7 @@ BZ_URL_EXCLUDE = (
 #    'list_id',
     'columnlist',
 )
-CLOSED_STATUSES = ['RESOLVED', 'VERIFIED']
+CLOSED_STATUSES = ['RESOLVED', 'VERIFIED', 'CLOSED']
 
 
 def parse_whiteboard(wb):

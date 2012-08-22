@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
 from copy import deepcopy
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from email.parser import Parser
 
 from mock import Mock, patch
@@ -14,6 +14,7 @@ from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.utils import simplejson as json
 
+from scrum import cron as scrum_cron
 from scrum import email as scrum_email
 from scrum import models as scrum_models
 from scrum.forms import BZURLForm, CreateProjectForm, SprintBugsForm
@@ -49,6 +50,32 @@ scrum_email.get_messages = Mock()
 scrum_email.get_messages.side_effect = get_messages_mock
 
 
+class TestCron(TestCase):
+    fixtures = ['test_data.json']
+
+    def setUp(self):
+        self.p = Project.objects.get(pk=1)
+
+    def test_default_sync_date_urls_synced(self):
+        """Test that BugzillaURL objects with NULL sync dates are synced."""
+        BugzillaURL.objects.create(url=GOOD_BZ_URL, project=self.p)
+        scrum_cron.sync_backlogs()
+        eq_(self.p.backlog_bugs.count(), 20)
+
+    def test_recently_synced_urls_not_synced(self):
+        hour_ago = datetime.utcnow() - timedelta(hours=1)
+        url = BugzillaURL.objects.create(url=GOOD_BZ_URL, date_synced=hour_ago)
+        scrum_cron.sync_backlogs()
+        url = BugzillaURL.objects.get(id=url.id)
+        eq_(url.date_synced, hour_ago)
+
+    def test_one_time_urls_deleted(self):
+        url = BugzillaURL.objects.create(url=GOOD_BZ_URL, one_time=True)
+        scrum_cron.sync_backlogs()
+        with self.assertRaises(BugzillaURL.DoesNotExist):
+            BugzillaURL.objects.get(id=url.id)
+
+
 class TestEmail(TestCase):
     def test_is_bugmail(self):
         m = scrum_email.get_messages()[0]
@@ -78,6 +105,7 @@ class TestBug(TestCase):
         self.s = Sprint.objects.get(slug='2.2')
         self.p = Project.objects.get(pk=1)
         self.url = Project.objects.get(pk=1)
+        scrum_cron.sync_backlogs()
 
     @patch.object(Bug, 'points_history')
     def test_points_for_date_default(self, mock_bug):
@@ -126,11 +154,11 @@ class TestProject(TestCase):
     def test_adding_bzurl_adds_backlog_bugs(self):
         """Adding a url to a project should populate the backlog."""
         # should have created and loaded bugs when fixture loaded
-        eq_(self.p.backlog_bugs.count(), 20)
         self.p.backlog_bugs.clear()
         eq_(self.p.backlog_bugs.count(), 0)
         # now this should update the existing bugs w/ the backlog
         BugzillaURL.objects.create(url=GOOD_BZ_URL, project=self.p)
+        scrum_cron.sync_backlogs()
         eq_(self.p.backlog_bugs.count(), 20)
 
 
@@ -141,6 +169,7 @@ class TestSprint(TestCase):
         cache.clear()
         self.s = Sprint.objects.get(slug='2.2')
         self.p = Project.objects.get(pk=1)
+        scrum_cron.sync_backlogs()
 
     def test_sprint_creation(self):
         User.objects.create_superuser('admin', 'admin@admin.com', 'admin')
