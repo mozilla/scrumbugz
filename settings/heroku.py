@@ -36,3 +36,7 @@ if SENTRY_DSN:
     INSTALLED_APPS += ('raven.contrib.django',)
 
 INSTALLED_APPS += ('storages',)
+
+BUGMAIL_HOST = os.environ['BUGMAIL_HOST']
+BUGMAIL_USER = os.environ['BUGMAIL_USER']
+BUGMAIL_PASS = os.environ['BUGMAIL_PASS']
