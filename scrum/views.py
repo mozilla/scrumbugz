@@ -15,6 +15,7 @@ from scrum.forms import (CreateProjectForm, CreateTeamForm, BZURLForm,
                          ProjectBugsForm, ProjectForm, SprintBugsForm,
                          SprintForm, TeamForm)
 from scrum.models import BugzillaURL, BZError, Project, Sprint, Team, Bug
+from scrum.utils import get_blocked_bugs
 
 
 class ProtectedCreateView(CreateView):
@@ -50,35 +51,21 @@ class ProtectedDeleteView(DeleteView):
 class BugsDataMixin(object):
     def get_context_data(self, **kwargs):
         context = super(BugsDataMixin, self).get_context_data(**kwargs)
-        bugs_kwargs = {}
+        self.bugs_kwargs = {}
         # clear cache if requested
         if self.request.META.get('HTTP_CACHE_CONTROL') == 'no-cache':
-            bugs_kwargs['refresh'] = True
+            self.bugs_kwargs['refresh'] = True
         if 'all' in self.request.GET:
-            bugs_kwargs['scrum_only'] = False
+            self.bugs_kwargs['scrum_only'] = False
         try:
             context['bz_search_url'] = self.object.get_bz_search_url().url
         except AttributeError:
             pass
-        context['scrum_only'] = bugs_kwargs.get('scrum_only', True)
+        context['scrum_only'] = self.bugs_kwargs.get('scrum_only', True)
+        context['refresh'] = self.bugs_kwargs.get('refresh', False)
         try:
-            bugs = self.object.get_bugs(**bugs_kwargs)
-            id_to_bug = dict([(b.id, b) for b in bugs])
-            blocked_bugs = []
-
-            # Build a list of blocked_bugs where a blocked bug is any
-            # bug that depends on another bug in this sprint and that
-            # other bug is not resolved.
-            for bug in bugs:
-                if not bug.depends_on:
-                    continue
-                blockers = [blocker for blocker in bug.depends_on
-                            if (blocker in id_to_bug and
-                                not id_to_bug[blocker].is_closed())]
-                if blockers:
-                    blocked_bugs.append(bug.id)
-
-            context['blocked_bugs'] = blocked_bugs
+            bugs = self.object.get_bugs(**self.bugs_kwargs)
+            context['blocked_bugs'] = get_blocked_bugs(bugs)
             context['bugs'] = bugs
             context['bugs_data'] = self.object.get_graph_bug_data()
             context['bugs_data_json'] = json.dumps(context['bugs_data'])
@@ -228,15 +215,33 @@ class ManageSprintBugsView(BugsDataMixin, SprintMixin, ProtectedUpdateView):
     def get_context_data(self, **kwargs):
         context = super(ManageSprintBugsView, self).get_context_data(**kwargs)
         if not context['bzerror']:
-            context['bugs_data'].update(self.object.get_burndown_data())
-            context['bugs_data_json'] = json.dumps(context['bugs_data'])
+            try:
+                bugs = self.team.get_bugs(**self.bugs_kwargs)
+                context['backlog_bugs'] = bugs
+                context['blocked_backlog_bugs'] = get_blocked_bugs(bugs)
+                context['bugs_data'].update(self.object.get_burndown_data())
+                context['bugs_data_json'] = json.dumps(context['bugs_data'])
+            except BZError:
+                context['bzerror'] = True
         return context
 
 
 class ManageProjectBugsView(BugsDataMixin, ProtectedUpdateView):
     model = Project
     form_class = ProjectBugsForm
+    context_object_name = 'project'
     template_name = 'scrum/project_bugs.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(ManageProjectBugsView, self).get_context_data(**kwargs)
+        if not context['bzerror']:
+            try:
+                bugs = self.object.get_backlog(**self.bugs_kwargs)
+                context['backlog_bugs'] = bugs
+                context['blocked_backlog_bugs'] = get_blocked_bugs(bugs)
+            except BZError:
+                context['bzerror'] = True
+        return context
 
 
 class CreateBZUrlView(ProtectedCreateView):
@@ -295,6 +300,7 @@ def server_error(request):
     context = {
         'STATIC_URL': getattr(settings, 'STATIC_URL', '/static/'),
         'ENABLE_GA': getattr(settings, 'ENABLE_GA', False),
+        'request': {'path': '/'},
     }
     return render(request, '500.html', context_instance=Context(context),
                   status=500)

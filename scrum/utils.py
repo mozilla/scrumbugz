@@ -53,7 +53,13 @@ def parse_bz_url(url):
 
 
 def get_bz_url_for_buglist(bugs):
-    bug_ids = ','.join(str(bug.id) for bug in bugs)
+    """Return a bugzilla search url that will display the list of bugs."""
+    return get_bz_url_for_bug_ids(bug.id for bug in bugs)
+
+
+def get_bz_url_for_bug_ids(bids):
+    """Return a bugzilla search url that will display the list of bug ids."""
+    bug_ids = ','.join(str(bid) for bid in bids)
     return '%sbug_id=%s&bug_id_type=anyexact' % (
         settings.BZ_SEARCH_URL,
         bug_ids
@@ -86,3 +92,21 @@ def make_sha1_key(key, key_prefix, version):
     """A cache key generating function that uses a sha1 hash."""
     prekey = ':'.join([key_prefix, str(version), smart_str(key)])
     return hashlib.sha1(prekey).hexdigest()
+
+
+def get_blocked_bugs(bugs):
+    id_to_bug = dict([(b.id, b) for b in bugs])
+    blocked_bugs = []
+
+    # Build a list of blocked_bugs where a blocked bug is any
+    # bug that depends on another bug in this sprint and that
+    # other bug is not resolved.
+    for bug in bugs:
+        if not bug.depends_on:
+            continue
+        blockers = [blocker for blocker in bug.depends_on
+                    if (blocker in id_to_bug and
+                        not id_to_bug[blocker].is_closed())]
+        if blockers:
+            blocked_bugs.append(bug.id)
+    return blocked_bugs

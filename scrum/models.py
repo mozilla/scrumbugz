@@ -12,8 +12,9 @@ from django.conf import settings
 from django.core.cache import cache
 from django.core.validators import RegexValidator
 from django.db import models, transaction
+from django.db.models.query import QuerySet
 from django.db.models.query_utils import Q
-from django.db.models.signals import pre_save
+from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 from django.utils.encoding import force_unicode
 
@@ -21,9 +22,11 @@ import dateutil.parser
 import slumber
 from jsonfield import JSONField
 from markdown import markdown
+from model_utils.managers import PassThroughManager
 
-from .utils import (date_to_js, date_range, get_bz_url_for_buglist, is_closed,
-                    parse_bz_url, parse_whiteboard)
+from .utils import (CLOSED_STATUSES, date_to_js, date_range,
+                    get_bz_url_for_buglist, is_closed, parse_bz_url,
+                    parse_whiteboard)
 
 
 class CompressedJSONField(JSONField):
@@ -150,20 +153,56 @@ class BugsListMixin(object):
         return data
 
 
-class Team(BugsListMixin, models.Model):
+class DBBugsMixin(object):
+
+    def _get_bugs(self, **kwargs):
+        """Get the db associated bugs (sprint/ready backlog)"""
+        self.scrum_only = kwargs.get('scrum_only', True)
+        if kwargs.get('bugs') is None:
+            bugs = self.bugs.all()
+        else:
+            bugs = kwargs['bugs']
+        if 'bug_filters' in kwargs:
+            bugs = bugs.filter(**kwargs['bug_filters'])
+        if self.scrum_only:
+            num_bugs = bugs.count()
+            bugs = bugs.scrum_only()
+            self.num_no_data_bugs = num_bugs - bugs.count()
+        if kwargs.get('refresh', False):
+            self.refresh_bugs_data(bugs)
+        return bugs
+
+    def get_bz_search_url(self, bugs=None):
+        bugs_all = bugs if bugs is not None else self.bugs.all()
+        if bugs_all:
+            return BugzillaURL(url=get_bz_url_for_buglist(bugs_all))
+        return EmptyBugzillaURL()
+
+    def refresh_bugs_data(self, bugs=None):
+        bzurl = self.get_bz_search_url(bugs)
+        bzurl.get_bugs()
+
+    def get_bugs(self, **kwargs):
+        kwargs['bug_filters'] = {'sprint__isnull': True}
+        return self._get_bugs(**kwargs)
+
+
+class Team(DBBugsMixin, BugsListMixin, models.Model):
     name = models.CharField(max_length=200)
     slug = models.CharField(max_length=50, validators=[validate_slug],
                             db_index=True, unique=True)
 
-    def __unicode__(self):
-        return self.name
-
-    def get_bugs(self):
+    def get_bugs(self, **kwargs):
         """
         Get all bugs from the ready backlogs of the projects.
-        :return: list of bugs
+        :return: bugs queryset
         """
-        return Bug.objects.filter(project__team=self, sprint__isnull=True)
+        kwargs['bugs'] = Bug.objects.filter(project__team=self,
+                                            sprint__isnull=True)
+        return self._get_bugs(**kwargs)
+
+    def __unicode__(self):
+        return self.name
 
     @models.permalink
     def get_absolute_url(self):
@@ -172,29 +211,6 @@ class Team(BugsListMixin, models.Model):
     @models.permalink
     def get_edit_url(self):
         return 'scrum_team_edit', [self.slug]
-
-
-class DBBugsMixin(object):
-
-    def _get_bugs(self, **kwargs):
-        """Get the db associated bugs (sprint/ready backlog)"""
-        self.scrum_only = kwargs.get('scrum_only', True)
-        if kwargs.get('refresh', False):
-            self.refresh_bugs_data()
-        bugs = self.bugs.all()
-        if self.scrum_only:
-            num_bugs = bugs.count()
-            bugs = bugs.filter(~Q(story_component='') |
-                               ~Q(story_user__isnull='') |
-                               Q(story_points__gt=0))
-            self.num_no_data_bugs = num_bugs - bugs.count()
-        return bugs
-
-    def get_bz_search_url(self):
-        bugs_all = self.bugs.all()
-        if bugs_all:
-            return BugzillaURL(url=get_bz_url_for_buglist(bugs_all))
-        return EmptyBugzillaURL()
 
 
 class Project(DBBugsMixin, BugsListMixin, models.Model):
@@ -215,22 +231,23 @@ class Project(DBBugsMixin, BugsListMixin, models.Model):
             self.get_bugs()
         return self._date_cached if self._date_cached else datetime.now()
 
-    def refresh_bugs_data(self):
-        bzurl = self.get_bz_search_url()
-        bzurl.get_bugs(refresh=True)
-
-    def get_bugs(self, **kwargs):
-        bugs = self._get_bugs(**kwargs)
-        return bugs.filter(sprint__isnull=True)
+    def refresh_backlog(self):
+        self._clear_bugs_data_cache()
+        bugs = self._get_url_items('bugs')
+        self.update_backlog_bugs(bugs)
 
     def get_backlog(self, **kwargs):
         """Get a unique set of bugs from all bz urls"""
+
         refresh = kwargs.get('refresh', False)
         self.scrum_only = kwargs.get('scrum_only', True)
         if refresh:
-            self._clear_bugs_data_cache()
-        backlog = self._get_url_items('bugs', **kwargs)
-        return [bug for bug in backlog if (not bug.sprint and not bug.project)]
+            self.refresh_backlog()
+        bugs = self.backlog_bugs.open().filter(sprint__isnull=True,
+                                               project__isnull=True)
+        if self.scrum_only:
+            bugs = bugs.scrum_only()
+        return bugs
 
     def get_components(self):
         """Get a unique set of bugs from all bz urls"""
@@ -242,22 +259,17 @@ class Project(DBBugsMixin, BugsListMixin, models.Model):
 
     def _get_url_items(self, item_name, **kwargs):
         """Get a unique set of items from all bz urls"""
-        attr_name = "_url_items_%s" % item_name
-        if kwargs.get('refresh', False) and hasattr(self, attr_name):
-            delattr(self, attr_name)
-        if not hasattr(self, attr_name):
-            items = set()
-            for url in self.get_urls():
-                items |= getattr(url, 'get_' + item_name)(**kwargs)
+        items = set()
+        for url in self.get_urls():
+            items |= getattr(url, 'get_' + item_name)(**kwargs)
 
-                if (self._date_cached is None or
-                    (url.date_cached and url.date_cached < self._date_cached)):
-                    self._date_cached = url.date_cached
-                if item_name == 'bugs' and url.num_no_data_bugs:
-                    self.num_no_data_bugs += url.num_no_data_bugs
+            if (self._date_cached is None or
+                (url.date_cached and url.date_cached < self._date_cached)):
+                self._date_cached = url.date_cached
+            if item_name == 'bugs' and url.num_no_data_bugs:
+                self.num_no_data_bugs += url.num_no_data_bugs
 
-            setattr(self, attr_name, list(items))
-        return getattr(self, attr_name)
+        return list(items)
 
     @models.permalink
     def get_absolute_url(self):
@@ -270,20 +282,27 @@ class Project(DBBugsMixin, BugsListMixin, models.Model):
     def get_urls(self):
         return self.urls.all()
 
+    def _update_bugs(self, bugs, attr_name):
+        bugs_manager = getattr(self, attr_name)
+        to_add, to_remove = get_sync_bugs(bugs_manager.all(), bugs)
+        bugs_manager.add(*to_add)
+        bugs_manager.remove(*to_remove)
+
+    def update_backlog_bugs(self, bugs):
+        """
+        Add and remove bugs to sync the list with what we receive.
+        :param bug_ids: list of bugs or bug ids
+        :return: None
+        """
+        self._update_bugs(bugs, 'backlog_bugs')
+
     def update_bugs(self, bugs):
         """
         Add and remove bugs to sync the list with what we receive.
         :param bug_ids: list of bugs or bug ids
         :return: None
         """
-        to_add, to_remove = get_sync_bugs(self.bugs.all(), bugs)
-        # saving individually to fire signals
-        for bug in to_add:
-            bug.project = self
-            bug.save()
-        for bug in to_remove:
-            bug.project = None
-            bug.save()
+        self._update_bugs(bugs, 'bugs')
 
 
 class Sprint(DBBugsMixin, BugsListMixin, models.Model):
@@ -349,10 +368,10 @@ class Sprint(DBBugsMixin, BugsListMixin, models.Model):
         return 'scrum_sprint_edit', (), {'slug': self.team.slug,
                                          'sslug': self.slug}
 
-    def refresh_bugs_data(self):
+    def refresh_bugs_data(self, bugs=None):
         self._clear_bugs_data_cache()
-        bzurl = self.get_bz_search_url()
-        bzurl.get_bugs(refresh=True)
+        bzurl = self.get_bz_search_url(bugs)
+        bzurl.get_bugs()
 
     def update_bugs(self, bugs):
         """
@@ -361,13 +380,8 @@ class Sprint(DBBugsMixin, BugsListMixin, models.Model):
         :return: None
         """
         to_add, to_remove = get_sync_bugs(self.bugs.all(), bugs)
-        # saving individually to fire signals
-        for bug in to_add:
-            bug.sprint = self
-            bug.save()
-        for bug in to_remove:
-            bug.sprint = None
-            bug.save()
+        self.bugs.add(*to_add)
+        self.bugs.remove(*to_remove)
 
     def get_burndown(self):
         """Return a list of total point values per day of sprint"""
@@ -405,8 +419,8 @@ class Sprint(DBBugsMixin, BugsListMixin, models.Model):
 
 
 class EmptyBugzillaURL(object):
-    def get_bugs(self, **kwargs):
-        return []
+    def get_bugs(self):
+        return set()
 
 
 class BugzillaURL(models.Model):
@@ -435,10 +449,17 @@ class BugzillaURL(models.Model):
 
     @property
     def _bugs_cache_key(self):
+        """
+        sha1 digest of the url for use as the cache key.
+        :return: str
+        """
         return hashlib.sha1(self.url).hexdigest()
 
-    def _get_bugs_from_api(self):
-        """Do the actual work of getting bugs from the BZ API"""
+    def get_bugs(self):
+        """
+        Do the actual work of getting bugs from the BZ API
+        :return: set
+        """
         try:
             args = self._get_bz_args()
             args = dict((k.encode('utf-8'), v) for k, v in
@@ -447,34 +468,7 @@ class BugzillaURL(models.Model):
             data['date_received'] = datetime.now()
         except Exception:
             raise BZError("Couldn't retrieve bugs from Bugzilla")
-        return data
-
-    def get_bugs(self, refresh=False, scrum_only=True):
-        if refresh:
-            self._clear_cache()
-        if not hasattr(self, '_bugs'):
-            cached_data = cache.get(self._bugs_cache_key)
-            if not cached_data:
-                data = self._get_bugs_from_api()
-                cache.set(self._bugs_cache_key, {
-                    'date_received': data['date_received'],
-                    'bug_ids': [int(bug['id']) for bug in data['bugs']],
-                }, CACHE_BUGS_FOR)
-                self._bugs = set(store_bugs(data['bugs']))
-                self.date_cached = data['date_received']
-            else:
-                self._bugs = set(Bug.objects.filter(
-                    id__in=cached_data['bug_ids'])
-                )
-                self.date_cached = cached_data['date_received']
-            if scrum_only:
-                # only show bugs that have at least user and component set
-                num_all_bugs = len(self._bugs)
-                self._bugs = set(b for b in self._bugs
-                                 if b.has_scrum_data)
-                self.num_no_data_bugs = num_all_bugs - len(self._bugs)
-            self.scrum_only = scrum_only
-        return self._bugs
+        return set(store_bugs(data['bugs'], self.project))
 
     def get_products(self):
         """Return a set of the products in the search url"""
@@ -488,7 +482,31 @@ class BugzillaURL(models.Model):
         return self._get_bz_args().get('status_whiteboard')
 
 
-class BugManager(models.Manager):
+class BugQuerySet(QuerySet):
+    def sync_bugs(self):
+        """
+        Refresh the data for all matched bugs from Bugzilla.
+        """
+        bids = self.only('id')
+        if bids:
+            url = BugzillaURL(url=get_bz_url_for_buglist(bids))
+            url.get_bugs()
+
+    def scrum_only(self):
+        return self.filter(~Q(story_component='') |
+                           ~Q(story_user='') |
+                           Q(story_points__gt=0))
+
+    def open(self):
+        return self.exclude(status__in=CLOSED_STATUSES)
+
+
+class BugManager(PassThroughManager):
+    use_for_related_fields = True
+
+    def get_query_set(self):
+        return BugQuerySet(self.model, using=self._db)
+
     def update_or_create(self, data):
         """
         Create or update a cached bug from the data returned from Bugzilla.
@@ -530,6 +548,8 @@ class Bug(models.Model):
                                on_delete=models.SET_NULL)
     project = models.ForeignKey(Project, related_name='bugs', null=True,
                                 on_delete=models.SET_NULL)
+    backlog = models.ForeignKey(Project, related_name='backlog_bugs',
+                                null=True, on_delete=models.SET_NULL)
 
     objects = BugManager()
 
@@ -540,8 +560,9 @@ class Bug(models.Model):
         return unicode(self.id)
 
     def fill_from_data(self, data):
-        self.__dict__.update(data)
-        self.last_synced_time = datetime.now()
+        for attr_name, value in data.items():
+            setattr(self, attr_name, value)
+        self.last_synced_time = datetime.utcnow()
 
     def refresh_from_bugzilla(self):
         data = BZAPI.bug.get(
@@ -704,9 +725,11 @@ def clean_bug_data(data):
 
 
 @transaction.commit_on_success
-def store_bugs(bugs):
+def store_bugs(bugs, project=None):
     bug_objs = []
     for bug in bugs:
+        if project:
+            bug['backlog'] = project
         bug_objs.append(Bug.objects.update_or_create(bug)[0])
     return bug_objs
 
@@ -759,3 +782,12 @@ def process_notes(sender, instance, **kwargs):
             output_format='html5',
             safe_mode=True,
         )
+
+
+@receiver(post_save, sender=BugzillaURL)
+def get_bugzilla_bugs_data(sender, instance, **kwargs):
+    """
+    After a `BugzillaURL` is saved, get the bugs data and associate it with
+    the url's project's backlog if available.
+    """
+    instance.get_bugs()

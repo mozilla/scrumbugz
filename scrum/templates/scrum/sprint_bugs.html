@@ -77,7 +77,7 @@
       </form>
 
       <h2>Stories: [Points = <span id="current-points">0</span>]</h2>
-      {{ bug_table(sprint.get_bugs(), actions='toggle-sprint', button_color='danger') }}
+      {{ bug_table(bugs, actions='toggle-sprint', button_color='danger', blocked_bugs=blocked_bugs) }}
 
       <h2>Ready Backlog</h2>
       {{ bug_table(team.get_bugs(), 'backlog_table', actions='toggle-sprint', button_color='success') }}
