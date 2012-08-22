@@ -252,11 +252,6 @@ class CreateBZUrlView(ProtectedCreateView):
     form_class = BZURLForm
     template_name = 'scrum/bzurl_list.html'
 
-    def get(self, request, *args, **kwargs):
-        if not request.is_ajax():
-            return HttpResponseForbidden()
-        return super(CreateBZUrlView, self).get(request, *args, **kwargs)
-
     def get_context_data(self, **kwargs):
         obj = get_object_or_404(Project, slug=self.kwargs['slug'])
         kwargs['target_obj'] = obj
