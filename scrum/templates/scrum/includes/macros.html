@@ -1,6 +1,13 @@
 {% macro left_nav(name, items, active=None) -%}
   <ul class="nav nav-list">
-    <li class="nav-header">{{ name }}</li>
+    <li class="nav-header">
+      {% if name.lower() == 'projects' %}
+        <i class="icon-briefcase"></i>
+      {% elif name.lower() == 'teams' %}
+        <i class="icon-user"></i>
+      {% endif %}
+      {{ name }}
+    </li>
     {% for i in items %}
       <li{% if i == active %} class="active"{% endif %}>
         <a href="{{ i.get_absolute_url() }}">{{ i.name }}</a>

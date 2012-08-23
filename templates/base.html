@@ -40,8 +40,8 @@
           <div class="nav-collapse">
             <ul class="nav">
               <li{% if request.path == '/' %} class="active"{% endif %}><a href="{{ url('scrum_home') }}">Home</a></li>
-              <li{% if request.path.startswith('/t') %} class="active"{% endif %}><a href="{{ url('scrum_teams_list') }}">Teams</a></li>
-              <li{% if request.path.startswith('/p') %} class="active"{% endif %}><a href="{{ url('scrum_projects_list') }}">Projects</a></li>
+              <li{% if request.path.startswith('/t') %} class="active"{% endif %}><a href="{{ url('scrum_teams_list') }}"><i class="icon-user icon-white"></i> Teams</a></li>
+              <li{% if request.path.startswith('/p') %} class="active"{% endif %}><a href="{{ url('scrum_projects_list') }}"><i class="icon-briefcase icon-white"></i> Projects</a></li>
             </ul>
             <ul class="nav pull-right">
               <li{% if request.path == url('help') %} class="active"{% endif %}><a href="{{ url('help') }}">Help</a></li>
