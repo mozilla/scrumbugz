@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import logging
 import sys
 from datetime import datetime, timedelta
 
@@ -8,11 +9,12 @@ from django.conf import settings
 from cronjobs import register
 
 from scrum.email import get_bugmails
-from scrum.models import BugzillaURL, Project
+from scrum.models import BugzillaURL, BZError, Project
 from scrum.utils import get_bz_url_for_bug_ids
 
 
 CACHE_BUGS_FOR = timedelta(hours=getattr(settings, 'CACHE_BUGS_FOR', 4))
+logger = logging.getLogger('scrum.cron')
 
 
 @register
@@ -58,7 +60,11 @@ def sync_backlogs():
                 url.delete()
             continue
         synced_urls.append(url.url)
-        url.get_bugs()
+        try:
+            url.get_bugs()
+        except BZError:
+            logger.error('Problem fetching bugs from %s', url.url)
+            continue
         if url.one_time:
             url.delete()
         sys.stdout.write('.')
