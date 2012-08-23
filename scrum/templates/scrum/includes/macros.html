@@ -45,7 +45,7 @@
           {% if show_sprint %}
             <td data-order-by="{{ bug.sprint.slug }}">{% if bug.sprint %}<a href="{{ bug.sprint.get_absolute_url() }}">{{ bug.sprint.name }}</a>{% endif %}</td>
           {% endif %}
-          <td>{{ bug.priority }}</td>
+          <td data-order-by="{{ bug.priority if bug.priority != '--' else 'z' }}">{{ bug.priority if bug.priority != '--' }}</td>
           <td>{% if blocked_bugs and bug.id in blocked_bugs %}<span class="label label-important">BLOCKED</span> {% endif %}{{ bug.summary }}</td>
           <td class="ttip" title="{{ bug.assigned_real_name }}">{{ bug.assigned_name }}</td>
           <td>{{ bug.story_user }}</td>
