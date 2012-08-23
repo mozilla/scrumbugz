@@ -7,24 +7,6 @@
         self.$element.data('flot', self);
         self.ticks = bugs_data.burndown_axis;
         self.tip_cache = {};
-        self.base_options = {
-            xaxis: {
-                mode: 'time',
-                ticks: self.ticks,
-                min: self.ticks[0],
-                max: self.ticks[self.ticks.length-1]
-            },
-            yaxis: {
-                min: 0,
-                tickSize: 2,
-                tickFormatter: parseInt
-            },
-            grid: {
-                hoverable: true,
-                clickable: true,
-                markings: self.weekend_areas
-            }
-        };
         self.actual_plot = {
             data: bugs_data.burndown,
             color: '#049cdb',
@@ -92,7 +74,9 @@
             d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 1) % 7));
             d.setUTCSeconds(0);
             d.setUTCMinutes(0);
-            d.setUTCHours(0);
+            // This make the markings line up with the grid.
+            // Could this be time zone related?
+            d.setUTCHours(-1);
             var i = d.getTime();
             do {
                 // when we don't set yaxis, the rectangle automatically
@@ -102,6 +86,25 @@
             } while (i < axes.xaxis.max);
 
             return markings;
+        };
+
+        self.base_options = {
+            xaxis: {
+                mode: 'time',
+                ticks: self.ticks,
+                min: self.ticks[0],
+                max: self.ticks[self.ticks.length-1]
+            },
+            yaxis: {
+                min: 0,
+                tickSize: 2,
+                tickFormatter: parseInt
+            },
+            grid: {
+                hoverable: true,
+                clickable: true,
+                markings: self.weekend_areas
+            }
         };
 
         self.resize();
