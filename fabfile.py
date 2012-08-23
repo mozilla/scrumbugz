@@ -22,5 +22,4 @@ def deploy():
     local('git push ' + remote)
     heroku_django('collectstatic --noinput')
     heroku_django('syncdb')
-    if env.git_remote == 'dev':
-        heroku_django('migrate')
+    heroku_django('migrate')

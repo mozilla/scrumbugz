@@ -13,6 +13,8 @@ class Migration(SchemaMigration):
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('url', self.gf('django.db.models.fields.URLField')(max_length=2048)),
             ('project', self.gf('django.db.models.fields.related.ForeignKey')(blank=True, related_name='urls', null=True, to=orm['scrum.Project'])),
+            ('date_synced', self.gf('django.db.models.fields.DateTimeField')(default='2000-01-01')),
+            ('one_time', self.gf('django.db.models.fields.BooleanField')(default=False)),
         ))
         db.send_create_signal('scrum', ['BugzillaURL'])
 
@@ -174,7 +176,9 @@ class Migration(SchemaMigration):
         },
         'scrum.bugzillaurl': {
             'Meta': {'ordering': "('id',)", 'object_name': 'BugzillaURL'},
+            'date_synced': ('django.db.models.fields.DateTimeField', [], {'default': "'2000-01-01'"}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'one_time': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'project': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "'urls'", 'null': 'True', 'to': "orm['scrum.Project']"}),
             'url': ('django.db.models.fields.URLField', [], {'max_length': '2048'})
         },
