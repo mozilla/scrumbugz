@@ -22,7 +22,7 @@ from scrum.models import BugSprintLog, BugzillaURL, Bug, Project, Sprint
 
 
 scrum_models.BZAPI = Mock()
-TEST_DATA = settings.PROJECT_DIR.child('scrum').child('test_data')
+TEST_DATA = settings.PROJECT_DIR.child('scrum', 'test_data')
 BUG_DATA_FILE = TEST_DATA.child('bugzilla_data.json')
 BUGMAIL_FILES = (
     TEST_DATA.child('bugmail.txt'),

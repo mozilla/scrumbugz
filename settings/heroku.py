@@ -12,11 +12,11 @@ PROD_MODE = os.environ.get('PROD_MODE')
 if PROD_MODE:
     ENFORCE_HOSTNAME = 'scrumbu.gs'
     ENABLE_GA = True
-else:
-    ADMINS = (
-        ('Paul', 'pmac@mozilla.com'),
-    )
-    MANAGERS = ADMINS
+
+ADMINS = (
+    ('Paul', 'pmac@mozilla.com'),
+)
+MANAGERS = ADMINS
 
 DATABASES = {'default': dj_database_url.config()}
 
@@ -30,12 +30,14 @@ AWS_SECRET_ACCESS_KEY = os.environ['AWS_SECRET_ACCESS_KEY']
 AWS_STORAGE_BUCKET_NAME = os.environ['AWS_STORAGE_BUCKET_NAME']
 STATIC_URL = '//s3.amazonaws.com/%s/' % AWS_STORAGE_BUCKET_NAME
 
+MORE_APPS = ['storages']
+
 # SENTRY
 SENTRY_DSN = os.environ.get('SENTRY_DSN')
 if SENTRY_DSN:
-    INSTALLED_APPS += ('raven.contrib.django',)
+    MORE_APPS.append('raven.contrib.django',)
 
-INSTALLED_APPS += ('storages',)
+INSTALLED_APPS += tuple(MORE_APPS)
 
 BUGMAIL_HOST = os.environ['BUGMAIL_HOST']
 BUGMAIL_USER = os.environ['BUGMAIL_USER']
