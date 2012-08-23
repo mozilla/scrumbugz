@@ -23,7 +23,7 @@ def get_messages(delete=True):
     :return: list
     """
     messages = []
-    conn = poplib.POP3(settings.BUGMAIL_HOST)
+    conn = poplib.POP3_SSL(settings.BUGMAIL_HOST)
     conn.user(settings.BUGMAIL_USER)
     conn.pass_(settings.BUGMAIL_PASS)
     num_messages = len(conn.list()[1])
