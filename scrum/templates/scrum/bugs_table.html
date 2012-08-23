@@ -40,14 +40,12 @@
     </table>
   </div>
   <div class="span6">
+    {% for product in object.get_products() %}
+      <a class="btn" target="_blank" href="{{ BZ_FILE_URL }}product={{ product }}"><i class="icon-plus-sign"></i> {{ product }} bug</a>
+    {% endfor %}
     {% if bz_search_url %}
-      <a href="{{ bz_search_url }}" target="_blank" class="btn pull-right">See in Bugzilla</a>
+      <a href="{{ bz_search_url }}" target="_blank" class="btn">See in Bugzilla</a>
     {% endif %}
-    <div class="btn-group">
-      {% for product in object.get_products() %}
-        <a class="btn" href="{{ BZ_FILE_URL }}product={{ product }}"><i class="icon-plus-sign"></i> {{ product }} bug</a>
-      {% endfor %}
-    </div>
   </div>
 </div>
 
