@@ -3,26 +3,33 @@
 {% block content %}
 {% filter markdown %}
 # Scrumbugs Help
-
-On Monday, August 20th we launched a major update to scrumbugs. The major features added in this update were:
+***
+On or around August 22th we launched a major update to scrumbugs. The major features added in this update were:
 
 1. Teams & Projects
 2. Backlogs & Readylists
+3. Changes to bugs are pushed from bugzilla to scrumbugs via email
 
-## New features explained
+***
+
+## New Features Explained
+
 
 ### Teams & Projects
-Every project in scrumbugs now must belong to a team. This realtionship allows us to now manage multiple projects in a single sprint.
+
+Every project in scrumbugs now must belong to a team. This realtionship allows us to manage multiple projects in a single sprint.
 
 ### Backlogs & Readylists
+
 We have added the concepts of "backlogs" & "readylists" to every project.
 
 Backlogs: A curated bugzilla list that could be worked on
 Readylist: A subest of the backlog of bugs that should be worked on
 
+
 The above will require some changes to your existing workflow.
 
-### Example Workflow
+#### Example Workflow
 
 1. A hypothetical new team is added "Mozilla Scrum", the team has 2 projects
   A. Scrumbugs
@@ -33,12 +40,25 @@ The above will require some changes to your existing workflow.
 5. The sprint now contains bugs from 2 projects
 6. Stakeholders for each project can look at the individual project pages and see what is currently being worked on and what will be worked on next. Developers and PMs can look at the team page and see all the tasks across projects that are currently assigned.
 
+### Bug Updates Via Email
+
+Bug updates are now pushed to scrumbugs via email. This greatly simplyfies how we cache and update bug data. 
+
+#### When Do Bugs Update
+
+Bug data outside of backlogs is refreshed via cron every 10 minutes.
+Backlog data is refreshed every 4 hours, however a shift refresh when viewing the backlog will schedule an update at the next 10 minute cron run.
+
+***
+
 ## What will happen when we launch.
 
 A migration script will run and create a project for each existing team. All bugs will be migrated over.
 
+***
 
 ## What do you need to do after we launch.
+
 
 ### Single Project Teams
 
@@ -49,8 +69,16 @@ If you only have a single project in scrumbugs, all you need to add to your proj
 
 If you have multiple projects you will need to create each of them in scrumbugs with a backlog. Make sure to assign them to your team. If the project already exists in scrumbugs as a team (Mozilla.org for example), it should be created as a project, then request PMAC or BSTERNTH delete the team. Note you will lose historical sprint data when a team is deleted.
 
+### IMPORTANT Things To Note
+
+1. When you add a backlog no bugs will appear, shift refresh and these should appear in 10 minutes 
+2. If you add a new project, please email PMAC and BSTERNTH so we can add the projects bugs to our scrumbugs watch list, this is a temporary pain and this step will be removed in a future release.
+
+***
+
 ## Feedback Loop 
 
 This is a version of scrumbugs that we would like to iterate quickly on. It has the backlog/ready list features we need but the interface and how you move through screens has not been optimized. If you encounter bugs, please file them in bugzilla under the scrumbugs component, or reach out directly to myself or pmac.
+
 {% endfilter %}
 {% endblock %}
