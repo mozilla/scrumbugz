@@ -449,10 +449,23 @@ class BugzillaURL(models.Model):
     class Meta:
         ordering = ('id',)
 
-    def _get_bz_args(self):
+    def _get_bz_args(self, scrum_only=True, open_only=True):
         """Return a dict of the arguments from the bz_url"""
         args = parse_bz_url(self.url)
         args['include_fields'] = ','.join(BZ_FIELDS)
+        # restrict to bugs with scrum data.
+        if scrum_only and 'status_whiteboard' not in args:
+            args.update({
+                'status_whiteboard': 'u= c= p=',
+                'status_whiteboard_type': 'anywordssubstr',
+            })
+        if open_only and 'bug_status' not in args:
+            args.setlist('bug_status', [
+                'UNCONFIRMED',
+                'ASSIGNED',
+                'REOPENED',
+                'NEW',
+            ])
         return args
 
     def _clear_cache(self):
@@ -470,13 +483,13 @@ class BugzillaURL(models.Model):
         """
         return hashlib.sha1(self.url).hexdigest()
 
-    def get_bugs(self):
+    def get_bugs(self, **kwargs):
         """
         Do the actual work of getting bugs from the BZ API
         :return: set
         """
         try:
-            args = self._get_bz_args()
+            args = self._get_bz_args(**kwargs)
             args = dict((k.encode('utf-8'), v) for k, v in
                         args.iterlists())
             data = BZAPI.bug.get(**args)

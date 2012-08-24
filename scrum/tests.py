@@ -130,6 +130,21 @@ class TestBug(TestCase):
                                  getattr(cbug, fieldname))
 
 
+class TestBugzillaURL(TestCase):
+    def test_bz_args(self):
+        """
+        args should be added for bug status and whiteboard
+        :return:
+        """
+        bzurl = ('https://bugzilla.mozilla.org/buglist.cgi?'
+                 'product=Mozilla%20Developer%20Network')
+        statuses = set(['UNCONFIRMED', 'ASSIGNED', 'REOPENED', 'NEW'])
+        url = BugzillaURL(url=bzurl)
+        args = url._get_bz_args()
+        self.assertSetEqual(set(args.getlist('bug_status')), statuses)
+        eq_(args['status_whiteboard'], 'u= c= p=')
+
+
 class TestProject(TestCase):
     fixtures = ['test_data.json']
 
