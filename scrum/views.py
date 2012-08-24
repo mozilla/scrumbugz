@@ -1,4 +1,6 @@
+import logging
 from datetime import date
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
@@ -16,6 +18,9 @@ from scrum.forms import (CreateProjectForm, CreateTeamForm, BZURLForm,
                          SprintForm, TeamForm)
 from scrum.models import BugzillaURL, BZError, Project, Sprint, Team, Bug
 from scrum.utils import get_blocked_bugs
+
+
+log = logging.getLogger(__name__)
 
 
 class ProtectedCreateView(CreateView):

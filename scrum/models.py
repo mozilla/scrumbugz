@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 import hashlib
+import logging
 import re
 import zlib
 from base64 import b64decode, b64encode
@@ -27,6 +28,9 @@ from model_utils.managers import PassThroughManager
 from .utils import (CLOSED_STATUSES, date_to_js, date_range,
                     get_bz_url_for_buglist, is_closed, parse_bz_url,
                     parse_whiteboard)
+
+
+log = logging.getLogger(__name__)
 
 
 class CompressedJSONField(JSONField):
@@ -478,6 +482,7 @@ class BugzillaURL(models.Model):
             data = BZAPI.bug.get(**args)
             data['date_received'] = datetime.utcnow()
         except Exception:
+            log.error('Problem fetching bugs from %s', self.url, exc_info=True)
             raise BZError("Couldn't retrieve bugs from Bugzilla")
         if not self.one_time:
             self.date_synced = datetime.utcnow()

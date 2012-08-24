@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import logging
 import poplib
 import re
 from collections import defaultdict
@@ -15,6 +16,7 @@ BUGZILLA_TYPES = (
     'new',
     'changed',
 )
+log = logging.getLogger(__name__)
 
 
 def get_messages(delete=True):

@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 
 import logging
-import sys
 from datetime import datetime, timedelta
 
 from django.conf import settings
@@ -14,7 +13,7 @@ from scrum.utils import get_bz_url_for_bug_ids
 
 
 CACHE_BUGS_FOR = timedelta(hours=getattr(settings, 'CACHE_BUGS_FOR', 4))
-logger = logging.getLogger('scrum.cron')
+log = logging.getLogger(__name__)
 
 
 @register
@@ -25,6 +24,7 @@ def sync_bugmail():
     counter = 0
     bugids = get_bugmails()
     for slug, ids in bugids.items():
+        log.debug('Got %d bugs for project %s', len(ids), slug)
         counter += len(ids)
         url = BugzillaURL(url=get_bz_url_for_bug_ids(ids))
         proj = None
@@ -35,11 +35,12 @@ def sync_bugmail():
                 pass
         if proj:
             url.project = proj
-        url.get_bugs()
-        sys.stdout.write('.')
-        sys.stdout.flush()
+        try:
+            url.get_bugs()
+        except BZError:
+            continue
     if counter:
-        print "\nSynced {0} bugs".format(counter)
+        log.info('Synced %d bug(s) from email', counter)
 
 
 @register
@@ -56,6 +57,7 @@ def sync_backlogs():
         # need to do this here instead of setting the DB column unique b/c
         # it is possible for 2 projects to use the same search url.
         if url.url in synced_urls:
+            log.debug('Found dupe url: %s', url.url)
             if url.one_time:
                 url.delete()
             continue
@@ -63,12 +65,11 @@ def sync_backlogs():
         try:
             url.get_bugs()
         except BZError:
-            logger.error('Problem fetching bugs from %s', url.url)
             continue
         if url.one_time:
+            log.debug('Deleted url: %s', url.url)
             url.delete()
-        sys.stdout.write('.')
-        sys.stdout.flush()
+        log.debug('Synced url: %s', url.url)
         counter += 1
     if counter:
-        print "\nSynced {0} urls".format(counter)
+        log.info('Synced %d url(s)', counter)

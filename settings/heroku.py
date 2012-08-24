@@ -36,6 +36,7 @@ MORE_APPS = ['storages']
 SENTRY_DSN = os.environ.get('SENTRY_DSN')
 if SENTRY_DSN:
     MORE_APPS.append('raven.contrib.django',)
+    SENTRY_AUTO_LOG_STACKS = True
 
 INSTALLED_APPS += tuple(MORE_APPS)
 
