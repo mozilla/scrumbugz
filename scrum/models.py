@@ -6,7 +6,7 @@ import re
 import zlib
 from base64 import b64decode, b64encode
 from collections import defaultdict
-from datetime import date, datetime
+from datetime import date, timedelta
 from operator import itemgetter
 
 from django.conf import settings
@@ -18,6 +18,7 @@ from django.db.models.query_utils import Q
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.utils.encoding import force_unicode
+from django.utils.timezone import now
 
 import dateutil.parser
 import slumber
@@ -95,7 +96,7 @@ class BugsListMixin(object):
     num_no_data_bugs = 0
 
     def needs_refresh(self):
-        return (datetime.now() - self.date_cached).seconds > CACHE_BUGS_FOR
+        return (now() - self.date_cached).seconds > CACHE_BUGS_FOR
 
     def get_bugs(self, **kwargs):
         raise NotImplementedError
@@ -234,7 +235,7 @@ class Project(DBBugsMixin, BugsListMixin, models.Model):
         if self._date_cached is None:
             # warm cache
             self.get_bugs()
-        return self._date_cached if self._date_cached else datetime.now()
+        return self._date_cached if self._date_cached else now()
 
     def refresh_backlog(self):
         self._clear_bugs_data_cache()
@@ -322,7 +323,7 @@ class Sprint(DBBugsMixin, BugsListMixin, models.Model):
         '<a href="http://daringfireball.net/projects/markdown/syntax"'
         'target="_blank">Markdown syntax</a> for conversion to HTML.')
     notes_html = models.TextField(blank=True, editable=False)
-    created_date = models.DateTimeField(editable=False, default=datetime.now)
+    created_date = models.DateTimeField(editable=False, default=now)
     bz_url = models.URLField(verbose_name='Bugzilla URL', max_length=2048,
                              null=True, blank=True)
     bugs_data_cache = JSONField(editable=False, null=True)
@@ -347,7 +348,7 @@ class Sprint(DBBugsMixin, BugsListMixin, models.Model):
         try:
             return self.bugs.order_by('last_synced_time')[0].last_synced_time
         except IndexError:
-            return datetime.now()
+            return now()
 
     def get_bugs(self, **kwargs):
         return self._get_bugs(**kwargs)
@@ -392,10 +393,10 @@ class Sprint(DBBugsMixin, BugsListMixin, models.Model):
 
     def get_burndown(self):
         """Return a list of total point values per day of sprint"""
-        now = datetime.utcnow().date()
+        today = now().date()
         sdate = self.start_date
-        edate = self.end_date if self.end_date < now else now
-        if sdate > now:
+        edate = self.end_date if self.end_date < today else today
+        if sdate > today:
             return []
         tseries = []
         for cdate in date_range(sdate, edate):
@@ -440,7 +441,7 @@ class BugzillaURL(models.Model):
     project = models.ForeignKey(Project, null=True, blank=True,
                                 related_name='urls')
     # default in the past
-    date_synced = models.DateTimeField(default='2000-01-01')
+    date_synced = models.DateTimeField(default=now() - timedelta(days=30))
     one_time = models.BooleanField(default=False)
 
     date_cached = None
@@ -493,12 +494,12 @@ class BugzillaURL(models.Model):
             args = dict((k.encode('utf-8'), v) for k, v in
                         args.iterlists())
             data = BZAPI.bug.get(**args)
-            data['date_received'] = datetime.utcnow()
+            data['date_received'] = now()
         except Exception:
             log.error('Problem fetching bugs from %s', self.url, exc_info=True)
             raise BZError("Couldn't retrieve bugs from Bugzilla")
         if not self.one_time:
-            self.date_synced = datetime.utcnow()
+            self.date_synced = now()
             self.save()
         return set(store_bugs(data['bugs'], self.project))
 
@@ -558,7 +559,7 @@ class BugManager(PassThroughManager):
 class Bug(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     history = CompressedJSONField()
-    last_synced_time = models.DateTimeField(default=datetime.utcnow)
+    last_synced_time = models.DateTimeField(default=now)
     product = models.CharField(max_length=200)
     component = models.CharField(max_length=200)
     assigned_to = models.CharField(max_length=200)
@@ -595,7 +596,7 @@ class Bug(models.Model):
     def fill_from_data(self, data):
         for attr_name, value in data.items():
             setattr(self, attr_name, value)
-        self.last_synced_time = datetime.utcnow()
+        self.last_synced_time = now()
 
     def refresh_from_bugzilla(self):
         data = BZAPI.bug.get(
@@ -709,7 +710,7 @@ class BugSprintLog(models.Model):
     bug = models.ForeignKey(Bug, related_name='sprint_actions')
     sprint = models.ForeignKey(Sprint, related_name='bug_actions')
     action = models.PositiveSmallIntegerField(choices=ACTION_CHOICES)
-    timestamp = models.DateTimeField(default=datetime.now)
+    timestamp = models.DateTimeField(default=now)
 
     objects = BugSprintLogManager()
 

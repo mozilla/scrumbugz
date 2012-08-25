@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
 from copy import deepcopy
-from datetime import date, timedelta, datetime
+from datetime import date, timedelta
 from email.parser import Parser
 
 from mock import Mock, patch
@@ -13,6 +13,7 @@ from django.core.cache import cache
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.utils import simplejson as json
+from django.utils.timezone import now
 
 from scrum import cron as scrum_cron
 from scrum import email as scrum_email
@@ -63,7 +64,7 @@ class TestCron(TestCase):
         eq_(self.p.backlog_bugs.count(), 20)
 
     def test_recently_synced_urls_not_synced(self):
-        hour_ago = datetime.utcnow() - timedelta(hours=1)
+        hour_ago = now() - timedelta(hours=1)
         url = BugzillaURL.objects.create(url=GOOD_BZ_URL, date_synced=hour_ago)
         scrum_cron.sync_backlogs()
         url = BugzillaURL.objects.get(id=url.id)

@@ -57,6 +57,7 @@ LANGUAGE_CODE = 'en-us'
 SITE_ID = 1
 USE_I18N = False
 USE_L10N = False
+USE_TZ = True
 
 MEDIA_ROOT = PROJECT_DIR.child('media')
 MEDIA_URL = '/media/'
