@@ -131,18 +131,39 @@ class TestBug(TestCase):
 
 
 class TestBugzillaURL(TestCase):
+    def setUp(self):
+        self.bzurl = ('https://bugzilla.mozilla.org/buglist.cgi?'
+                      'product=Mozilla%20Developer%20Network')
+
     def test_bz_args(self):
         """
         args should be added for bug status and whiteboard
         :return:
         """
-        bzurl = ('https://bugzilla.mozilla.org/buglist.cgi?'
-                 'product=Mozilla%20Developer%20Network')
         statuses = set(['UNCONFIRMED', 'ASSIGNED', 'REOPENED', 'NEW'])
-        url = BugzillaURL(url=bzurl)
+        url = BugzillaURL(url=self.bzurl)
         args = url._get_bz_args()
         self.assertSetEqual(set(args.getlist('bug_status')), statuses)
         eq_(args['status_whiteboard'], 'u= c= p=')
+
+    def test_url_args_override_defaults(self):
+        """
+        You should still be able to specify your own statuses and whiteboard.
+        """
+        url = BugzillaURL(url=self.bzurl + ';bug_status=CLOSED'
+                                           ';status_whiteboard=u%3Dthedude')
+        args = url._get_bz_args()
+        eq_(args['bug_status'], 'CLOSED')
+        eq_(args['status_whiteboard'], 'u=thedude')
+
+    def test_url_args_not_modified(self):
+        """
+        Setting the proper arguments turns off automatic args addition.
+        """
+        url = BugzillaURL(url=self.bzurl)
+        args = url._get_bz_args(open_only=False, scrum_only=False)
+        ok_('bug_status' not in args)
+        ok_('status_whiteboard' not in args)
 
 
 class TestProject(TestCase):

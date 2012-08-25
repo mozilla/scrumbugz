@@ -10,4 +10,5 @@ settings/local.py
 *.sublime*
 .coverage
 _coverage/*
+.noseids
 

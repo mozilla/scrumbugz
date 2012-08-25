@@ -25,3 +25,10 @@ CACHES = {
 }
 
 SOUTH_TESTS_MIGRATE = False
+
+# add more nosetest arguments if you want. defaults are in base.py
+#NOSE_ARGS += [
+#    '--stop',
+#    '--failed',
+#    '--with-progressive',
+#]

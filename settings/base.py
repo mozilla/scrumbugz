@@ -141,3 +141,6 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 )
 
 TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
+NOSE_ARGS = [
+    '--logging-clear-handlers',
+]

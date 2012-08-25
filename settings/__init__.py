@@ -16,7 +16,7 @@ else:
 DEFAULT_LOG_LEVEL = 'DEBUG' if DEBUG else 'INFO'
 LOGGING = {
     'version': 1,
-    'disable_existing_loggers': False,
+    'disable_existing_loggers': True,
     'filters': {
         'require_debug_false': {
             '()': 'django.utils.log.RequireDebugFalse',
@@ -24,11 +24,11 @@ LOGGING = {
     },
     'formatters': {
         'verbose': {
-            'format': ('%(levelname)s %(asctime)s %(module)s %(process)d '
+            'format': ('%(levelname)s %(asctime)s %(name)s %(process)d '
                        '%(thread)d %(message)s'),
         },
         'simple': {
-            'format': '%(levelname)s %(asctime)s %(module)s %(message)s',
+            'format': '%(levelname)s %(asctime)s %(name)s %(message)s',
         },
     },
     'handlers': {
@@ -57,6 +57,11 @@ LOGGING = {
         'django.request': {
             'handlers': ['mail_admins'],
             'level': 'ERROR',
+            'propagate': False,
+        },
+        'nose': {
+            'handlers': ['null'],
+            'level': 'DEBUG',
             'propagate': False,
         },
         '': {
