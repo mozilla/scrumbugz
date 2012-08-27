@@ -252,7 +252,7 @@ class Project(DBBugsMixin, BugsListMixin, models.Model):
         if self.scrum_only:
             bugs = bugs.scrum_only()
         if refresh:
-            bugs.sync_bugs()
+            self.refresh_backlog()
         return bugs
 
     def get_components(self):
@@ -495,7 +495,7 @@ class BugzillaURL(models.Model):
             data = BZAPI.bug.get(**args)
             data['date_received'] = datetime.utcnow()
         except Exception:
-            log.error('Problem fetching bugs from %s', self.url, exc_info=True)
+            log.exception('Problem fetching bugs from %s', self.url)
             raise BZError("Couldn't retrieve bugs from Bugzilla")
         if not self.one_time:
             self.date_synced = datetime.utcnow()

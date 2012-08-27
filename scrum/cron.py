@@ -38,6 +38,7 @@ def sync_bugmail():
         try:
             url.get_bugs(open_only=False)
         except BZError:
+            # error logged in `get_bugs`
             continue
     if counter:
         log.info('Synced %d bug(s) from email', counter)
@@ -63,9 +64,13 @@ def sync_backlogs():
             continue
         synced_urls.append(url.url)
         try:
-            url.get_bugs(open_only=(not url.one_time))
+            url.get_bugs(open_only=False)
         except BZError:
-            continue
+            # error logged in `get_bugs`
+            try:
+                url.get_bugs(open_only=True)
+            except BZError:
+                continue
         if url.one_time:
             log.debug('Deleted url: %s', url.url)
             url.delete()
