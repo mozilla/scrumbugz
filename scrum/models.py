@@ -240,7 +240,7 @@ class Project(DBBugsMixin, BugsListMixin, models.Model):
     def refresh_backlog(self):
         self._clear_bugs_data_cache()
         for url in self.urls.all():
-            url.date_synced = '2000-01-01'
+            url.date_synced = now() - timedelta(days=30)
             url.save()
 
     def get_backlog(self, **kwargs):
