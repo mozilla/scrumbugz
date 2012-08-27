@@ -36,7 +36,7 @@ def sync_bugmail():
         if proj:
             url.project = proj
         try:
-            url.get_bugs()
+            url.get_bugs(open_only=False)
         except BZError:
             continue
     if counter:
@@ -63,7 +63,7 @@ def sync_backlogs():
             continue
         synced_urls.append(url.url)
         try:
-            url.get_bugs()
+            url.get_bugs(open_only=(not url.one_time))
         except BZError:
             continue
         if url.one_time:

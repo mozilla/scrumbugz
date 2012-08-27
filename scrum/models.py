@@ -247,12 +247,12 @@ class Project(DBBugsMixin, BugsListMixin, models.Model):
 
         refresh = kwargs.get('refresh', False)
         self.scrum_only = kwargs.get('scrum_only', True)
-        if refresh:
-            self.refresh_backlog()
         bugs = self.backlog_bugs.open().filter(sprint__isnull=True,
                                                project__isnull=True)
         if self.scrum_only:
             bugs = bugs.scrum_only()
+        if refresh:
+            bugs.sync_bugs()
         return bugs
 
     def get_components(self):
