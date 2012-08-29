@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 import logging
+import sys
 from datetime import datetime, timedelta
 
 from django.conf import settings
@@ -8,7 +9,7 @@ from django.conf import settings
 from cronjobs import register
 
 from scrum.email import get_bugmails
-from scrum.models import BugzillaURL, BZError, Project
+from scrum.models import BugzillaURL, BZError, Project, Sprint
 from scrum.utils import get_bz_url_for_bug_ids
 
 
@@ -78,3 +79,22 @@ def sync_backlogs():
         counter += 1
     if counter:
         log.info('Synced %d url(s)', counter)
+
+
+@register
+def sync_old_sprints():
+    """
+    Get the bugs from sprints with bugzilla urls and associate them properly.
+    """
+    for sprint in Sprint.objects.all():
+        if sprint.bz_url:
+            bzurl = BugzillaURL(url=sprint.bz_url)
+            bugs = bzurl.get_bugs(scrum_only=False, open_only=False)
+            for bug in bugs:
+                # at this point project and sprint ids are equal
+                bug.project_id = bug.backlog_id = sprint.team_id
+                bug.sprint = sprint
+                bug.save()
+        sys.stdout.write('.')
+        sys.stdout.flush()
+    print '\nDone.'

@@ -11,23 +11,12 @@ from scrum.models import BugzillaURL, Sprint
 class Migration(DataMigration):
 
     def forwards(self, orm):
-        print '   - Importing sprint data from Bugzilla.'
-        print '   - ',
-        for sprint in Sprint.objects.all():
-            if sprint.bz_url:
-                bzurl = BugzillaURL(url=sprint.bz_url)
-                bugs = bzurl.get_bugs(scrum_only=False, open_only=False)
-                for bug in bugs:
-                    # at this point project and sprint ids are equal
-                    bug.project_id = bug.backlog_id = sprint.team_id
-                    bug.sprint = sprint
-                    bug.save()
-            sys.stdout.write('.')
-            sys.stdout.flush()
-        print '\n   - Done.'
+        """
+        Moved to a cron command as this breaks things for future.
+        """
 
     def backwards(self, orm):
-            pass
+        pass
 
     models = {
         'scrum.bug': {
