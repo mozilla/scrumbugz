@@ -9,8 +9,16 @@ from django.conf import settings
 from cronjobs import register
 
 from scrum.email import get_bugmails
-from scrum.models import BugzillaURL, BZError, Project, Sprint
+from scrum.models import BugzillaURL, BZError, Sprint
 from scrum.utils import get_bz_url_for_bug_ids
+
+
+NEW_RELIC = False
+try:
+    import newrelic.agent
+    NEW_RELIC = True
+except ImportError:
+    pass
 
 
 CACHE_BUGS_FOR = timedelta(hours=getattr(settings, 'CACHE_BUGS_FOR', 4))
@@ -22,27 +30,19 @@ def sync_bugmail():
     """
     Check bugmail for updated bugs, and get their data from Bugzilla.
     """
-    counter = 0
     bugids = get_bugmails()
-    for slug, ids in bugids.items():
-        log.debug('Got %d bugs for project %s', len(ids), slug)
-        counter += len(ids)
-        url = BugzillaURL(url=get_bz_url_for_bug_ids(ids))
-        proj = None
-        if slug:
-            try:
-                proj = Project.objects.get(slug=slug)
-            except Project.DoesNotExist:
-                pass
-        if proj:
-            url.project = proj
+    if bugids:
+        numbugs = len(bugids)
+        url = BugzillaURL(url=get_bz_url_for_bug_ids(bugids))
         try:
             url.get_bugs(open_only=False)
         except BZError:
             # error logged in `get_bugs`
-            continue
-    if counter:
-        log.info('Synced %d bug(s) from email', counter)
+            log.error('Failed to update bugs from email: %s', bugids)
+            return
+        if NEW_RELIC:
+            newrelic.agent.record_custom_metric('Custom/Bugmails', numbugs)
+        log.info('Synced %d bug(s) from email', numbugs)
 
 
 @register

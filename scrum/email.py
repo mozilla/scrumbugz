@@ -3,14 +3,12 @@ from __future__ import absolute_import
 import logging
 import poplib
 import re
-from collections import defaultdict
 from email.parser import Parser
 
 from django.conf import settings
 
 
 BUG_ID_RE = re.compile(r'\[Bug (\d+)\]')
-BUG_PROJECT_RE = re.compile(r'[^+]+\+([^@]+)@')
 # 'admin' also comes through but is for account creation.
 BUGZILLA_TYPES = (
     'new',
@@ -61,18 +59,10 @@ def get_bug_id(subject):
     return None
 
 
-def get_project_slug(mail_to):
-    m = BUG_PROJECT_RE.match(mail_to)
-    if m:
-        return m.group(1)
-    return None
-
-
 def get_bugmails(delete=True):
-    project_mails = defaultdict(list)
+    bugmails = []
     for msg in get_messages(delete=delete):
         bid = get_bug_id(msg['subject'])
-        slug = get_project_slug(msg['to'])
         if bid:
-            project_mails[slug].append(bid)
-    return project_mails
+            bugmails.append(bid)
+    return bugmails
