@@ -24,7 +24,7 @@ Received: (from root@localhost)
 	by pp-app-bugs01.phx.mozilla.com (8.13.8/8.13.8/Submit) id q7I4Tk2e027919;
 	Fri, 17 Aug 2012 21:29:46 -0700
 From: bugzilla-daemon@mozilla.org
-To: bugz+mdn@scrumbu.gs
+To: bugz@scrumbu.gs
 Subject: [Bug 760694] Support Multiple Backlogs
 Date: Sat, 18 Aug 2012 04:29:45 +0000
 X-Bugzilla-Reason: None

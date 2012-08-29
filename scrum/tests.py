@@ -26,7 +26,7 @@ TEST_DATA = settings.PROJECT_DIR.child('scrum', 'test_data')
 BUG_DATA_FILE = TEST_DATA.child('bugzilla_data.json')
 BUGMAIL_FILES = (
     TEST_DATA.child('bugmail.txt'),
-    TEST_DATA.child('bugmail-slug.txt'),
+    TEST_DATA.child('bugmail2.txt'),
 )
 
 with open(BUG_DATA_FILE) as bdf:
@@ -84,17 +84,8 @@ class TestEmail(TestCase):
         ok_(not scrum_email.is_bugmail(m))
 
     def test_get_bugmails(self):
-        good_data = {
-            None: [760693],
-            'mdn': [760694],
-        }
+        good_data = [760693, 760694]
         eq_(good_data, scrum_email.get_bugmails())
-
-    def test_get_project_slug(self):
-        test_to = 'some+dude@mozilla.com'
-        eq_(scrum_email.get_project_slug(test_to), 'dude')
-        test_to = 'bugs+my-project.2@mozilla.com'
-        eq_(scrum_email.get_project_slug(test_to), 'my-project.2')
 
 
 class TestBug(TestCase):
