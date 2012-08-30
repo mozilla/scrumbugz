@@ -8,17 +8,15 @@ from django.conf import settings
 
 from cronjobs import register
 
-from scrum.email import get_bugmails
+from scrum.bugmail import get_bugmails
 from scrum.models import BugzillaURL, BZError, Sprint
 from scrum.utils import get_bz_url_for_bug_ids
 
-
-NEW_RELIC = False
 try:
     import newrelic.agent
     NEW_RELIC = True
 except ImportError:
-    pass
+    NEW_RELIC = False
 
 
 CACHE_BUGS_FOR = timedelta(hours=getattr(settings, 'CACHE_BUGS_FOR', 4))
@@ -30,7 +28,7 @@ def sync_bugmail():
     """
     Check bugmail for updated bugs, and get their data from Bugzilla.
     """
-    bugids = get_bugmails()
+    bugids = get_bugmails().keys()
     if bugids:
         numbugs = len(bugids)
         url = BugzillaURL(url=get_bz_url_for_bug_ids(bugids))

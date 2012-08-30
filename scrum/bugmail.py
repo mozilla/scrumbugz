@@ -17,6 +17,11 @@ BUGZILLA_TYPES = (
 log = logging.getLogger(__name__)
 
 
+BUG_INFO_HEADERS = (
+    'x-bugzilla-'
+)
+
+
 def get_messages(delete=True):
     """
     Return a list of `email.message.Message` objects from the POP3 server.
@@ -60,9 +65,16 @@ def get_bug_id(subject):
 
 
 def get_bugmails(delete=True):
-    bugmails = []
+    bugmails = {}
     for msg in get_messages(delete=delete):
         bid = get_bug_id(msg['subject'])
         if bid:
-            bugmails.append(bid)
+            bugmails[bid] = msg
     return bugmails
+
+
+def store_bug_info(bid, msg):
+    """
+    If we have the bug, update some key info from the bugmail headers.
+    """
+

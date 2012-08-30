@@ -15,7 +15,7 @@ from django.test import TestCase
 from django.utils import simplejson as json
 
 from scrum import cron as scrum_cron
-from scrum import email as scrum_email
+from scrum import bugmail as scrum_email
 from scrum import models as scrum_models
 from scrum.forms import BZURLForm, CreateProjectForm, SprintBugsForm
 from scrum.models import BugSprintLog, BugzillaURL, Bug, Project, Sprint
@@ -85,7 +85,7 @@ class TestEmail(TestCase):
 
     def test_get_bugmails(self):
         good_data = [760693, 760694]
-        eq_(good_data, scrum_email.get_bugmails())
+        eq_(good_data, sorted(scrum_email.get_bugmails().keys()))
 
 
 class TestBug(TestCase):

@@ -2,7 +2,6 @@ Django>=1.4.1
 Unipath
 django-floppyforms
 python-dateutil==2.1
-slumber
 simplejson==2.6.0
 django-jsonfield==0.8.10
 django-storages==1.1.4

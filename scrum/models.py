@@ -18,13 +18,14 @@ from django.db.models.query_utils import Q
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.utils.encoding import force_unicode
+from django.utils.timezone import make_aware, utc
 
 import dateutil.parser
-import slumber
 from jsonfield import JSONField
 from markdown import markdown
 from model_utils.managers import PassThroughManager
 
+from .bugzilla import bugzilla
 from .utils import (CLOSED_STATUSES, date_to_js, date_range,
                     get_bz_url_for_buglist, is_closed, parse_bz_url,
                     parse_whiteboard)
@@ -62,24 +63,24 @@ except ImportError:
     pass
 
 
-BZ_FIELDS = (
+BZ_FIELDS = [
     'id',
     'status',
+    'is_open',
     'resolution',
     'summary',
-    'history',
     'whiteboard',
     'assigned_to',
     'priority',
+    'severity',
     'product',
     'component',
     'blocks',
     'depends_on',
-    'comments',
     'creation_time',
     'last_change_time',
-)
-BZAPI = slumber.API(settings.BZ_API_URL)
+    'target_milestone',
+]
 slug_re = re.compile(r'^[-.\w]+$')
 validate_slug = RegexValidator(slug_re, "Enter a valid 'slug' consisting of "
                                "letters, numbers, underscores, periods or "
@@ -488,19 +489,29 @@ class BugzillaURL(models.Model):
         Do the actual work of getting bugs from the BZ API
         :return: set
         """
+        bugs = None
         try:
             args = self._get_bz_args(**kwargs)
             args = dict((k.encode('utf-8'), v) for k, v in
                         args.iterlists())
-            data = BZAPI.bug.get(**args)
-            data['date_received'] = datetime.utcnow()
+            bzkwargs = {}
+            if 'bug_id' in args:
+                bzkwargs['ids'] = [int(bid) for bid in
+                                   args['bug_id'].split(',')]
+            else:
+                for item in ['product', 'component']:
+                    items = args.getlist(item)
+                    if items:
+                        bzkwargs[item] = items
+            if bzkwargs:
+                bugs = get_bugs_from_api(**bzkwargs)
         except Exception:
             log.exception('Problem fetching bugs from %s', self.url)
             raise BZError("Couldn't retrieve bugs from Bugzilla")
         if not self.one_time:
             self.date_synced = datetime.utcnow()
             self.save()
-        return set(store_bugs(data['bugs'], self.project))
+        return set(store_bugs(bugs, self.project)) if bugs else set()
 
     def get_products(self):
         """Return a set of the products in the search url"""
@@ -573,6 +584,8 @@ class Bug(models.Model):
     comments_count = models.PositiveSmallIntegerField(default=0)
     creation_time = models.DateTimeField()
     last_change_time = models.DateTimeField()
+    severity = models.CharField(max_length=20)
+    target_milestone = models.CharField(max_length=20)
     story_user = models.CharField(max_length=50, blank=True)
     story_component = models.CharField(max_length=50, blank=True)
     story_points = models.PositiveSmallIntegerField(default=0)
@@ -598,15 +611,12 @@ class Bug(models.Model):
         self.last_synced_time = datetime.utcnow()
 
     def refresh_from_bugzilla(self):
-        data = BZAPI.bug.get(
-            id=self.id,
-            id_mode='include',
-            include_fields=','.join(BZ_FIELDS),
-        )
-        self.fill_from_data(data['bugs'][0])
+        data = get_bugs_from_api(ids=[self.id], scrum_only=False,
+                                 open_only=False)
+        self.fill_from_data(data[0])
 
     def get_absolute_url(self):
-        return '%sid=%s' % (settings.BZ_SHOW_URL, self.id)
+        return '%sid=%s' % (settings.BUGZILLA_SHOW_URL, self.id)
 
     def is_closed(self):
         return is_closed(self.status)
@@ -676,7 +686,7 @@ class Bug(models.Model):
                                 'points': pts,
                                 })
                             closed = now_closed
-                    elif fn == 'whiteboard':
+                    elif fn == 'status_whiteboard':
                         pts = parse_whiteboard(change['added'])['points']
                         if pts != cpoints:
                             cpoints = pts
@@ -722,39 +732,65 @@ class BugSprintLog(models.Model):
         return u'Bug %d %s Sprint %d' % (self.bug_id, action, self.sprint_id)
 
 
-_bug_data_cleaners = {
-    'id': int,
-    'last_change_time': dateutil.parser.parse,
-    'creation_time': dateutil.parser.parse,
-    'assigned_to': lambda x: '||'.join([x['name'],
-                                        x.get('real_name', x['name'])]),
-    # The bzapi docs are wrong and say that 'depends_on' is a list of integers
-    # when in fact it could be a single string, or a list of strings.
-    # 'blocks' is the same type but is always a list of strings.
-    'depends_on': list,
-}
-
-
-def clean_bug_data(data):
+def clean_bug_data(bug):
     """
     Clean and prepare the data we get from Bugzilla for the db.
 
     :param data: dict of raw Bugzilla API data for a single bug.
     :return: dict of cleaned data for a single bug ready for the db.
     """
-    kwargs = data.copy()
-    for key in _bug_data_cleaners:
-        if key in kwargs:
-            kwargs[key] = _bug_data_cleaners[key](kwargs[key])
+    # add UTC timezone info to dates.
+    for k, v in bug.items():
+        if isinstance(v, datetime):
+            bug[k] = make_aware(v, utc)
+    if 'whiteboard' in bug:
+        scrum_data = parse_whiteboard(bug['whiteboard'])
+        bug.update(dict(('story_' + k, v) for k, v in scrum_data.items() if v))
+    if 'comments' in bug:
+        bug['comments_count'] = len(bug['comments'])
 
-    if 'whiteboard' in kwargs:
-        scrum_data = parse_whiteboard(kwargs['whiteboard'])
-        kwargs.update(dict(('story_' + k, v) for k, v in scrum_data.items()
-                           if v))
-    if 'comments' in kwargs:
-        kwargs['comments_count'] = len(kwargs['comments'])
 
-    return kwargs
+BUG_OPEN_STATUSES = [
+    'UNCONFIRMED',
+    'ASSIGNED',
+    'REOPENED',
+    'NEW',
+]
+
+
+def get_bugs_from_api(**kwargs):
+    kwargs.update({
+        'include_fields': BZ_FIELDS,
+    })
+    if 'ids' in kwargs:
+        kwargs['permissive'] = True
+        log.debug('Getting bugs with kwargs: %s', kwargs)
+        bugs = bugzilla.Bug.get(kwargs).get('bugs')
+    else:
+        open_only = kwargs.pop('open_only', False)
+        scrum_only = kwargs.pop('scrum_only', True)
+        if open_only and 'status' not in kwargs:
+            kwargs['status'] = BUG_OPEN_STATUSES
+        if scrum_only and 'whiteboard' not in kwargs:
+            kwargs['whiteboard'] = ['u=', 'c=', 'p=']
+        log.debug('Searching bugs with kwargs: %s', kwargs)
+        bugs = bugzilla.Bug.search(kwargs).get('bugs')
+    bug_ids = [bug['id'] for bug in bugs]
+
+    # mix in history and comments
+    log.debug('Getting history for bugs: %s', bug_ids)
+    history = bugzilla.Bug.history({'ids': bug_ids}).get('bugs')
+    history = dict((h['id'], h['history']) for h in history)
+    log.debug('Getting comments for bugs: %s', bug_ids)
+    comments = bugzilla.Bug.comments({'ids': bug_ids,
+                                      'include_fields': ['id']}).get('bugs')
+    comments = dict((int(bid), cids) for bid, cids in comments.iteritems())
+    log.debug(comments)
+    for bug in bugs:
+        bug['history'] = history.get(bug['id'], [])
+        bug['comments'] = comments.get(bug['id'], {}).get('comments', [])
+        clean_bug_data(bug)
+    return bugs
 
 
 @transaction.commit_on_success

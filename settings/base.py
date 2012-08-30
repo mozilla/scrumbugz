@@ -12,10 +12,10 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
-BZ_API_URL = 'https://api-dev.bugzilla.mozilla.org/latest/'
-BZ_SHOW_URL = 'https://bugzilla.mozilla.org/show_bug.cgi?'
-BZ_FILE_URL = 'https://bugzilla.mozilla.org/enter_bug.cgi?'
-BZ_SEARCH_URL = 'https://bugzilla.mozilla.org/buglist.cgi?'
+BUGZILLA_API_URL = 'https://bugzilla.mozilla.org/xmlrpc.cgi'
+BUGZILLA_SHOW_URL = 'https://bugzilla.mozilla.org/show_bug.cgi?'
+BUGZILLA_FILE_URL = 'https://bugzilla.mozilla.org/enter_bug.cgi?'
+BUGZILLA_SEARCH_URL = 'https://bugzilla.mozilla.org/buglist.cgi?'
 CACHE_BUGS_FOR = 4  # hours
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
@@ -25,8 +25,8 @@ CONTEXT_SETTINGS = (
     'CACHE_BUGS_FOR',
     'DEBUG',
     'ENABLE_GA',
-    'BZ_SHOW_URL',
-    'BZ_FILE_URL',
+    'BUGZILLA_SHOW_URL',
+    'BUGZILLA_FILE_URL',
     'PROD_MODE',
 )
 
@@ -41,7 +41,7 @@ MARKDOWN_EXTENSIONS = [
 
 CACHES = {
     'default': {
-        'BACKEND': 'django_pylibmc.memcached.PyLibMCCache',
+        'BACKEND': 'scrum.cache_backend.PyLibMCCacheFix',
         'TIMEOUT': 500,
         'BINARY': True,
         'OPTIONS': {
