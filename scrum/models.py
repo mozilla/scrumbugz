@@ -722,6 +722,12 @@ class BugSprintLog(models.Model):
         return u'Bug %d %s Sprint %d' % (self.bug_id, action, self.sprint_id)
 
 
+def clean_bug_list_fields(vals):
+    """ Ensure `vals` is a list of ints."""
+    vals = [vals] if not isinstance(vals, list) else vals
+    return [int(v) for v in vals]
+
+
 _bug_data_cleaners = {
     'id': int,
     'last_change_time': dateutil.parser.parse,
@@ -731,7 +737,8 @@ _bug_data_cleaners = {
     # The bzapi docs are wrong and say that 'depends_on' is a list of integers
     # when in fact it could be a single string, or a list of strings.
     # 'blocks' is the same type but is always a list of strings.
-    'depends_on': list,
+    'depends_on': clean_bug_list_fields,
+    'blocks': clean_bug_list_fields,
 }
 
 
