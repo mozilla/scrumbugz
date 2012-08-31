@@ -120,6 +120,16 @@ class TestBug(TestCase):
                 self.assertEqual(getattr(bug, fieldname),
                                  getattr(cbug, fieldname))
 
+    def test_depends_on(self):
+        """
+        Tests a bug found where the BZ REST API returns a single string if
+        there is one value, but a list if more than one.
+        """
+        b = Bug.objects.get(id=775147)
+        eq_(b.depends_on, [776759])
+        b = Bug.objects.get(id=665747)
+        eq_(b.depends_on, [766748, 766749, 766750])
+
 
 class TestBugzillaURL(TestCase):
     def setUp(self):
