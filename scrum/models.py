@@ -180,12 +180,13 @@ class DBBugsMixin(object):
         bugs_all = bugs if bugs is not None else self.bugs.all()
         if bugs_all:
             return BugzillaURL(url=get_bz_url_for_buglist(bugs_all))
-        return EmptyBugzillaURL()
+        return None
 
     def refresh_bugs_data(self, bugs=None):
         bzurl = self.get_bz_search_url(bugs)
-        bzurl.one_time = True
-        bzurl.save()
+        if bzurl:
+            bzurl.one_time = True
+            bzurl.save()
 
     def get_bugs(self, **kwargs):
         kwargs['bug_filters'] = {'sprint__isnull': True}
@@ -377,8 +378,9 @@ class Sprint(DBBugsMixin, BugsListMixin, models.Model):
     def refresh_bugs_data(self, bugs=None):
         self._clear_bugs_data_cache()
         bzurl = self.get_bz_search_url(bugs)
-        bzurl.one_time = True
-        bzurl.save()
+        if bzurl:
+            bzurl.one_time = True
+            bzurl.save()
 
     def update_bugs(self, bugs):
         """
@@ -423,16 +425,6 @@ class Sprint(DBBugsMixin, BugsListMixin, models.Model):
         if bugs_data is None:
             bugs_data = self.get_bugs_data()
         return bugs_data
-
-
-class EmptyBugzillaURL(object):
-    one_time = False
-
-    def get_bugs(self):
-        return set()
-
-    def save(self):
-        pass
 
 
 class BugzillaURL(models.Model):
@@ -497,7 +489,7 @@ class BugzillaURL(models.Model):
         except Exception:
             log.exception('Problem fetching bugs from %s', self.url)
             raise BZError("Couldn't retrieve bugs from Bugzilla")
-        if not self.one_time:
+        if self.id and not self.one_time:
             self.date_synced = datetime.utcnow()
             self.save()
         return set(store_bugs(data['bugs'], self.project))
@@ -521,9 +513,8 @@ class BugQuerySet(QuerySet):
         """
         bids = self.only('id')
         if bids:
-            url = BugzillaURL(url=get_bz_url_for_buglist(bids))
-            url.one_time = True
-            url.save()
+            BugzillaURL.objects.create(url=get_bz_url_for_buglist(bids),
+                                       one_time=True)
 
     def scrum_only(self):
         return self.filter(~Q(story_component='') |
