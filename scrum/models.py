@@ -66,7 +66,6 @@ except ImportError:
 BZ_FIELDS = [
     'id',
     'status',
-    'is_open',
     'resolution',
     'summary',
     'whiteboard',
@@ -347,7 +346,8 @@ class Sprint(DBBugsMixin, BugsListMixin, models.Model):
         :return: datetime
         """
         try:
-            return self.bugs.order_by('last_synced_time')[0].last_synced_time
+            return (self.bugs.order_by('last_synced_time')
+                    .only('last_synced_time')[0].last_synced_time)
         except IndexError:
             return datetime.now()
 
@@ -362,7 +362,7 @@ class Sprint(DBBugsMixin, BugsListMixin, models.Model):
 
     def _get_bug_attr_values(self, attr):
         attr_values = {}
-        for bug in self.get_bugs(scrum_only=False):
+        for bug in self.get_bugs(scrum_only=False).only(attr):
             attr_values[getattr(bug, attr)] = 0
         return attr_values.keys()
 
@@ -575,8 +575,8 @@ class Bug(models.Model):
     comments_count = models.PositiveSmallIntegerField(default=0)
     creation_time = models.DateTimeField()
     last_change_time = models.DateTimeField()
-    severity = models.CharField(max_length=20)
-    target_milestone = models.CharField(max_length=20)
+    severity = models.CharField(max_length=20, blank=True)
+    target_milestone = models.CharField(max_length=20, blank=True)
     story_user = models.CharField(max_length=50, blank=True)
     story_component = models.CharField(max_length=50, blank=True)
     story_points = models.PositiveSmallIntegerField(default=0)

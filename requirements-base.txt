@@ -18,3 +18,4 @@ nose-progressive
 pytz==2012d
 django-cronjobs==0.2.3
 django-model-utils==1.1.0
+johnny-cache==1.4
