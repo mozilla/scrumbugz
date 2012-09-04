@@ -21,7 +21,7 @@ from scrum.forms import BZURLForm, CreateProjectForm, SprintBugsForm
 from scrum.models import BugSprintLog, BugzillaURL, Bug, Project, Sprint
 
 
-scrum_models.BZAPI = Mock()
+scrum_models.bugzilla = Mock()
 TEST_DATA = settings.PROJECT_DIR.child('scrum', 'test_data')
 BUG_DATA_FILE = TEST_DATA.child('bugzilla_data.json')
 BUGMAIL_FILES = (
@@ -35,7 +35,7 @@ with open(BUG_DATA_FILE) as bdf:
 GOOD_BZ_URL = BUG_DATA['bz_url']
 
 # have to deepcopy to avoid cross-test-pollution
-scrum_models.BZAPI.bug.get.side_effect = lambda *x, **y: deepcopy(BUG_DATA)
+scrum_models.bugzilla.get_bugs.side_effect = lambda *x, **y: deepcopy(BUG_DATA)
 
 
 def get_messages_mock(delete=True):
@@ -60,7 +60,7 @@ class TestCron(TestCase):
         """Test that BugzillaURL objects with NULL sync dates are synced."""
         BugzillaURL.objects.create(url=GOOD_BZ_URL, project=self.p)
         scrum_cron.sync_backlogs()
-        eq_(self.p.backlog_bugs.count(), 20)
+        eq_(self.p.backlog_bugs.count(), 11)
 
     def test_recently_synced_urls_not_synced(self):
         hour_ago = datetime.utcnow() - timedelta(hours=1)
@@ -125,46 +125,10 @@ class TestBug(TestCase):
         Tests a bug found where the BZ REST API returns a single string if
         there is one value, but a list if more than one.
         """
-        b = Bug.objects.get(id=775147)
-        eq_(b.depends_on, [776759])
-        b = Bug.objects.get(id=665747)
-        eq_(b.depends_on, [766748, 766749, 766750])
-
-
-class TestBugzillaURL(TestCase):
-    def setUp(self):
-        self.bzurl = ('https://bugzilla.mozilla.org/buglist.cgi?'
-                      'product=Mozilla%20Developer%20Network')
-
-    def test_bz_args(self):
-        """
-        args should be added for bug status and whiteboard
-        :return:
-        """
-        statuses = set(['UNCONFIRMED', 'ASSIGNED', 'REOPENED', 'NEW'])
-        url = BugzillaURL(url=self.bzurl)
-        args = url._get_bz_args()
-        self.assertSetEqual(set(args.getlist('bug_status')), statuses)
-        eq_(args['status_whiteboard'], 'u= c= p=')
-
-    def test_url_args_override_defaults(self):
-        """
-        You should still be able to specify your own statuses and whiteboard.
-        """
-        url = BugzillaURL(url=self.bzurl + ';bug_status=CLOSED'
-                                           ';status_whiteboard=u%3Dthedude')
-        args = url._get_bz_args()
-        eq_(args['bug_status'], 'CLOSED')
-        eq_(args['status_whiteboard'], 'u=thedude')
-
-    def test_url_args_not_modified(self):
-        """
-        Setting the proper arguments turns off automatic args addition.
-        """
-        url = BugzillaURL(url=self.bzurl)
-        args = url._get_bz_args(open_only=False, scrum_only=False)
-        ok_('bug_status' not in args)
-        ok_('status_whiteboard' not in args)
+        b = Bug.objects.get(id=778466)
+        eq_(b.depends_on, [778465])
+        b = Bug.objects.get(id=781714)
+        eq_(b.depends_on, [781709, 781721])
 
 
 class TestProject(TestCase):
@@ -196,7 +160,7 @@ class TestProject(TestCase):
         # now this should update the existing bugs w/ the backlog
         BugzillaURL.objects.create(url=GOOD_BZ_URL, project=self.p)
         scrum_cron.sync_backlogs()
-        eq_(self.p.backlog_bugs.count(), 20)
+        eq_(self.p.backlog_bugs.count(), 11)
 
 
 class TestSprint(TestCase):
@@ -237,12 +201,10 @@ class TestSprint(TestCase):
 
     def test_sprint_bug_logging(self):
         bzurl = BugzillaURL.objects.create(
-            url='http://example.com/?stuff=whatnot'
+            url='http://example.com/?bug_id=123454'
         )
         bugs = bzurl.get_bugs()
-        bug_ids = set(int(bug.id) for bug in bugs)
-        cbug_ids = set(bug.id for bug in Bug.objects.all())
-        self.assertSetEqual(bug_ids, cbug_ids)
+        self.assertSetEqual(bugs, set(Bug.objects.all()))
         self.assertEqual(0, BugSprintLog.objects.count())
         bugs = self.p.get_backlog(scrum_only=False)
         self.s.update_bugs(bugs)
@@ -259,7 +221,7 @@ class TestSprint(TestCase):
             end_date=date.today() + timedelta(days=10),
             team=self.s.team
         )
-        bug = Bug.objects.get(id=665747)
+        bug = Bug.objects.get(id=778465)
         bug.sprint = None
         bug.save()
         self.assertEqual(BugSprintLog.REMOVED,
@@ -279,9 +241,9 @@ class TestSprint(TestCase):
             team=self.s.team
         )
         # closed bug should not be associated
-        bug = Bug.objects.get(id=671774)
+        bug = Bug.objects.get(id=781714)
         self.assertEqual(bug.sprint, None)
-        bug = Bug.objects.get(id=665747)
+        bug = Bug.objects.get(id=778465)
         self.assertEqual(bug.sprint, self.s)
         bug.sprint = newsprint
         bug.save()
@@ -293,29 +255,29 @@ class TestSprint(TestCase):
 
     def test_backlog_bug_sync(self):
         self.s.update_bugs(self.p.get_backlog())
-        self.s.bugs.remove(Bug.objects.get(id=665747))
-        self.assertEqual(self.s.bugs.count(), 3)
-        new_bug_ids = [665747, 770965, 775147]
+        self.s.bugs.remove(Bug.objects.get(id=778465))
+        self.assertEqual(self.s.bugs.count(), 8)
+        new_bug_ids = [778465, 778466, 781717]
         self.s.update_bugs(new_bug_ids)
         self.assertEqual(self.s.bugs.count(), 3)
         all_bl_bug_ids = self.s.bugs.values_list('id', flat=True)
         self.assertSetEqual(set(all_bl_bug_ids), set(new_bug_ids))
         # the process of syncing did not remove bugs unnecessarily
         self.assertEqual(self.s.bug_actions.filter(
-            bug_id__in=[770965, 775147],
+            bug_id__in=[778466, 781717],
             action=BugSprintLog.REMOVED,
         ).count(), 0)
         # the bug was added back, thus the 2 ADDED actions.
         self.assertEqual(self.s.bug_actions.filter(
-            bug_id=665747,
+            bug_id=778465,
             action=BugSprintLog.ADDED
         ).count(), 2)
 
     def test_sprint_bug_management(self):
         self.s.update_bugs(self.p.get_backlog())
-        self.s.bugs.remove(Bug.objects.get(id=665747))
-        self.assertEqual(self.s.bugs.count(), 3)
-        new_bug_ids = [665747, 770965, 775147]
+        self.s.bugs.remove(Bug.objects.get(id=778465))
+        self.assertEqual(self.s.bugs.count(), 8)
+        new_bug_ids = [778465, 778466, 781717]
         form = SprintBugsForm(instance=self.s, data={
             'new_bugs': ','.join(str(bid) for bid in new_bug_ids),
         })

@@ -50,7 +50,7 @@ LOGGING = {
     },
     'loggers': {
         'django': {
-            'handlers': ['console'],
+            'handlers': ['null'],
             'propagate': False,
             'level': 'DEBUG',
         },

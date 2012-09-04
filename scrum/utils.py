@@ -19,7 +19,6 @@ BZ_URL_EXCLUDE = (
 #    'list_id',
     'columnlist',
 )
-CLOSED_STATUSES = ['RESOLVED', 'VERIFIED', 'CLOSED']
 
 
 def parse_whiteboard(wb):
@@ -64,10 +63,6 @@ def get_bz_url_for_bug_ids(bids):
         settings.BUGZILLA_SEARCH_URL,
         bug_ids
     )
-
-
-def is_closed(status):
-    return status in CLOSED_STATUSES
 
 
 def date_range(sdate, edate, step=1):

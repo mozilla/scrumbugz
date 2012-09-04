@@ -17,11 +17,6 @@ BUGZILLA_TYPES = (
 log = logging.getLogger(__name__)
 
 
-BUG_INFO_HEADERS = (
-    'x-bugzilla-'
-)
-
-
 def get_messages(delete=True):
     """
     Return a list of `email.message.Message` objects from the POP3 server.
@@ -52,13 +47,15 @@ def is_bugmail(msg):
     return msg.get('x-bugzilla-type', None) in BUGZILLA_TYPES
 
 
-def get_bug_id(subject):
+def get_bug_id(msg):
     """
     Return the id of the bug the message is about.
     :param msg: email.message.Message object
-    :return: str
+    :return: int
     """
-    m = BUG_ID_RE.search(subject)
+    if 'x-bugzilla-id' in msg:
+        return int(msg['x-bugzilla-id'])
+    m = BUG_ID_RE.search(msg['subject'])
     if m:
         return int(m.group(1))
     return None
@@ -67,14 +64,7 @@ def get_bug_id(subject):
 def get_bugmails(delete=True):
     bugmails = {}
     for msg in get_messages(delete=delete):
-        bid = get_bug_id(msg['subject'])
+        bid = get_bug_id(msg)
         if bid:
             bugmails[bid] = msg
     return bugmails
-
-
-def store_bug_info(bid, msg):
-    """
-    If we have the bug, update some key info from the bugmail headers.
-    """
-

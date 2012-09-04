@@ -129,6 +129,7 @@ INSTALLED_APPS = (
     'bootstrap',
     'floppyforms',
     'scrum',
+    'bugzilla',
     'south',
     'django_nose',
 )

@@ -1,0 +1,190 @@
+import logging
+import os
+import xmlrpclib
+from datetime import datetime
+
+from django.conf import settings
+from django.core.cache import cache
+from django.utils.timezone import make_aware, utc
+
+from scrum.utils import parse_whiteboard
+
+
+log = logging.getLogger(__name__)
+BZ_URL = getattr(settings, 'BUGZILLA_API_URL',
+                 os.environ.get('BUGZILLA_API_URL',
+                                'https://bugzilla.mozilla.org/xmlrpc.cgi'))
+BZ_USER = getattr(settings, 'BUGZILLA_USER',
+                  os.environ.get('BUGZILLA_USER'))
+BZ_PASS = getattr(settings, 'BUGZILLA_PASS',
+                  os.environ.get('BUGZILLA_PASS'))
+SESSION_COOKIES_CACHE_KEY = 'bugzilla-session-cookies'
+BUG_OPEN_STATUSES = [
+    'UNCONFIRMED',
+    'ASSIGNED',
+    'REOPENED',
+    'NEW',
+]
+BUG_CLOSED_STATUSES = [
+    'RESOLVED',
+    'VERIFIED',
+    'CLOSED',
+]
+BZ_FIELDS = [
+    'id',
+    'status',
+    'resolution',
+    'summary',
+    'whiteboard',
+    'assigned_to',
+    'priority',
+    'severity',
+    'product',
+    'component',
+    'blocks',
+    'depends_on',
+    'creation_time',
+    'last_change_time',
+    'target_milestone',
+]
+
+
+def clean_bug_data(bug):
+    """
+    Clean and prepare the data we get from Bugzilla for the db.
+
+    :param data: dict of raw Bugzilla API data for a single bug.
+    :return: dict of cleaned data for a single bug ready for the db.
+    """
+    # add UTC timezone info to dates.
+    for k, v in bug.items():
+        if isinstance(v, datetime):
+            bug[k] = make_aware(v, utc)
+    if 'history' in bug:
+        for h in bug['history']:
+            h['when'] = make_aware(h['when'], utc)
+    if 'whiteboard' in bug:
+        scrum_data = parse_whiteboard(bug['whiteboard'])
+        bug.update(dict(('story_' + k, v) for k, v in scrum_data.items() if v))
+    if 'comments' in bug:
+        bug['comments_count'] = len(bug['comments'])
+
+
+def is_closed(status):
+    return status in BUG_CLOSED_STATUSES
+
+
+def is_open(status):
+    return status in BUG_OPEN_STATUSES
+
+
+class SessionTransport(xmlrpclib.SafeTransport):
+    """
+    XML-RPC HTTPS transport that stores auth cookies in the cache.
+    """
+    _session_cookies = None
+
+    @property
+    def session_cookies(self):
+        if self._session_cookies is None:
+            cookie = cache.get(SESSION_COOKIES_CACHE_KEY)
+            if cookie:
+                self._session_cookies = cookie
+        return self._session_cookies
+
+    def parse_response(self, response):
+        cookies = self.get_cookies(response)
+        if cookies:
+            self._session_cookies = cookies
+            cache.set(SESSION_COOKIES_CACHE_KEY,
+                      self._session_cookies, 0)
+            log.debug('Got cookie: %s', self._session_cookies)
+        return xmlrpclib.Transport.parse_response(self, response)
+
+    def send_host(self, connection, host):
+        cookies = self.session_cookies
+        if cookies:
+            for cookie in cookies:
+                connection.putheader('Cookie', cookie)
+                log.debug('Sent cookie: %s', cookie)
+        return xmlrpclib.Transport.send_host(self, connection, host)
+
+    def get_cookies(self, response):
+        cookie_headers = None
+        if hasattr(response, 'msg'):
+            cookies = response.msg.getheaders('set-cookie')
+            if cookies:
+                log.debug('Full cookies: %s', cookies)
+                cookie_headers = [c.split(';', 1)[0] for c in cookies]
+        return cookie_headers
+
+
+class BugzillaAPI(xmlrpclib.ServerProxy):
+    _products_cache_key = 'bugzilla-products-components'
+
+    def login(self, username=None, password=None):
+        return self.User.login({
+            'login': BZ_USER or username,
+            'password': BZ_PASS or password,
+            'remember': True,
+        })
+
+    def get_products(self):
+        products = cache.get(self._products_cache_key)
+        if products is None:
+            prod_ids = self.Product.get_enterable_products()
+            prod_ids['include_fields'] = ['id', 'name', 'components']
+            products = self.Product.get(prod_ids)
+            cache.set(self._products_cache_key, products, 60 * 60 * 24)
+        return products
+
+    def get_bugs(self, **kwargs):
+        open_only = kwargs.pop('open_only', False)
+        scrum_only = kwargs.pop('scrum_only', True)
+        get_history = kwargs.pop('history', True)
+        get_comments = kwargs.pop('comments', True)
+        kwargs.update({
+            'include_fields': BZ_FIELDS,
+        })
+        if 'ids' in kwargs:
+            kwargs['permissive'] = True
+            log.debug('Getting bugs with kwargs: %s', kwargs)
+            bugs = self.Bug.get(kwargs)
+        else:
+            if open_only and 'status' not in kwargs:
+                kwargs['status'] = BUG_OPEN_STATUSES
+            if scrum_only and 'whiteboard' not in kwargs:
+                kwargs['whiteboard'] = ['u=', 'c=', 'p=']
+            log.debug('Searching bugs with kwargs: %s', kwargs)
+            bugs = self.Bug.search(kwargs)
+
+        bug_ids = [bug['id'] for bug in bugs.get('bugs', [])]
+
+        if not bug_ids:
+            return {'bugs': []}
+
+        # mix in history and comments
+        history = comments = {}
+        if get_history:
+            log.debug('Getting history for bugs: %s', bug_ids)
+            history = self.Bug.history({'ids': bug_ids}).get('bugs')
+            history = dict((h['id'], h['history']) for h in history)
+        if get_comments:
+            log.debug('Getting comments for bugs: %s', bug_ids)
+            comments = self.Bug.comments({
+                'ids': bug_ids,
+                'include_fields': ['id'],
+            }).get('bugs')
+            comments = dict((int(bid), cids) for bid, cids
+                            in comments.iteritems())
+        for bug in bugs['bugs']:
+            bug['history'] = history.get(bug['id'], [])
+            bug['comments'] = comments.get(bug['id'], {}).get('comments', [])
+            clean_bug_data(bug)
+        return bugs
+
+
+bugzilla = BugzillaAPI(BZ_URL, transport=SessionTransport(use_datetime=True),
+                       allow_none=True)
+if BZ_USER and not cache.get(SESSION_COOKIES_CACHE_KEY):
+    bugzilla.login()
