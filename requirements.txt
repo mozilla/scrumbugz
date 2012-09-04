@@ -4,7 +4,7 @@
 gunicorn==0.13.4
 gevent==0.13.7
 greenlet==0.3.4
-django-pylibmc-sasl==0.2.4
+django-pylibmc
 pylibmc==1.2.3
 psycopg2==2.4.5
 dj-database-url==0.2.1

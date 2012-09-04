@@ -1,7 +1,7 @@
 Django>=1.4.1
 Unipath
 django-floppyforms
-python-dateutil==2.1
+python-dateutil==1.5
 simplejson==2.6.0
 django-jsonfield==0.8.10
 django-storages==1.1.4
@@ -19,3 +19,5 @@ pytz==2012d
 django-cronjobs==0.2.3
 django-model-utils==1.1.0
 johnny-cache==1.4
+celery==3.0.9
+django-celery==3.0.9
