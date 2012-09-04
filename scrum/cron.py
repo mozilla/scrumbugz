@@ -2,9 +2,10 @@ from __future__ import absolute_import
 
 import logging
 import sys
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from django.conf import settings
+from django.utils.timezone import now
 
 from cronjobs import register
 
@@ -51,7 +52,7 @@ def sync_backlogs():
     """
     counter = 0
     synced_urls = []
-    sync_time = datetime.utcnow() - CACHE_BUGS_FOR
+    sync_time = now() - CACHE_BUGS_FOR
     for url in BugzillaURL.objects.filter(date_synced__lt=sync_time):
         # avoid dupes
         # need to do this here instead of setting the DB column unique b/c

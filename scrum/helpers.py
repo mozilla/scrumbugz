@@ -1,7 +1,6 @@
-from datetime import datetime
-
 from django.conf import settings
 from django.utils.encoding import force_unicode
+from django.utils.timezone import now as django_now
 
 from jingo import helpers
 from jingo import register
@@ -21,7 +20,7 @@ def markdown(value):
 
 @register.function
 def now(fmt=None):
-    return helpers.datetime(datetime.now(), fmt)
+    return helpers.datetime(django_now(), fmt)
 
 
 # from https://github.com/coffin/coffin/blob/master/coffin/template/defaultfilters.py#L72
