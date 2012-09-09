@@ -5,19 +5,11 @@ import sys
 from datetime import timedelta
 
 from django.conf import settings
-from django.utils.timezone import now
 
 from cronjobs import register
 
-from scrum.bugmail import get_bugmails
-from scrum.models import BugzillaURL, BZError, Sprint
-from scrum.utils import get_bz_url_for_bug_ids
-
-try:
-    import newrelic.agent
-    NEW_RELIC = True
-except ImportError:
-    NEW_RELIC = False
+from bugzilla.api import bugzilla
+from scrum.models import BugzillaURL, BZProduct, Project, Sprint, store_bugs
 
 
 CACHE_BUGS_FOR = timedelta(hours=getattr(settings, 'CACHE_BUGS_FOR', 4))
@@ -25,59 +17,49 @@ log = logging.getLogger(__name__)
 
 
 @register
-def sync_bugmail():
+def move_project_urls_to_products():
     """
-    Check bugmail for updated bugs, and get their data from Bugzilla.
+    Get products and components from legacy project urls and set them on
+    the project.
     """
-    bugids = get_bugmails().keys()
-    if bugids:
-        numbugs = len(bugids)
-        url = BugzillaURL(url=get_bz_url_for_bug_ids(bugids))
-        try:
-            url.get_bugs(open_only=False)
-        except BZError:
-            # error logged in `get_bugs`
-            log.error('Failed to update bugs from email: %s', bugids)
-            return
-        if NEW_RELIC:
-            newrelic.agent.record_custom_metric('Custom/Bugmails', numbugs)
-        log.info('Synced %d bug(s) from email', numbugs)
+    bz_products = bugzilla.get_products_simplified()
+    for url in BugzillaURL.objects.filter(project__isnull=False):
+        products = url.get_products()
+        components = url.get_components()
+        for p in products:
+            if p not in bz_products:
+                continue
+            c_in_prod = 0
+            if components:
+                for c in components:
+                    if c not in bz_products[p]:
+                        continue
+                    BZProduct.objects.get_or_create(name=p,
+                                                    component=c,
+                                                    project_id=url.project_id)
+                    c_in_prod += 1
+            if not c_in_prod:
+                BZProduct.objects.get_or_create(name=p,
+                                                project_id=url.project_id)
 
 
 @register
-def sync_backlogs():
+def sync_full_backlogs():
     """
-    Get the bugs data for all urls in the system updated more than
-    CACHE_BUGS_FOR hours ago.
+    Get all bugs associated with all projects.
+
+    USE EXTREMELY SPARINGLY
     """
-    counter = 0
-    synced_urls = []
-    sync_time = now() - CACHE_BUGS_FOR
-    for url in BugzillaURL.objects.filter(date_synced__lt=sync_time):
-        # avoid dupes
-        # need to do this here instead of setting the DB column unique b/c
-        # it is possible for 2 projects to use the same search url.
-        if url.url in synced_urls:
-            log.debug('Found dupe url: %s', url.url)
-            if url.one_time:
-                url.delete()
-            continue
-        synced_urls.append(url.url)
-        try:
-            url.get_bugs(open_only=False)
-        except BZError:
-            # error logged in `get_bugs`
-            try:
-                url.get_bugs(open_only=True)
-            except BZError:
-                continue
-        if url.one_time:
-            log.debug('Deleted url: %s', url.url)
-            url.delete()
-        log.debug('Synced url: %s', url.url)
-        counter += 1
-    if counter:
-        log.info('Synced %d url(s)', counter)
+    for proj in Project.objects.all():
+        prods = proj.get_products()
+        for prod, comps in prods.items():
+            kwargs = {'product': prod, 'scrum_only': False}
+            if comps:
+                kwargs['component'] = comps[0] if len(comps) == 1 else comps
+            store_bugs(bugzilla.get_bugs(**kwargs), proj)
+            sys.stdout.write('.')
+            sys.stdout.flush()
+    print '\nDone.'
 
 
 @register

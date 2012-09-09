@@ -1,4 +1,5 @@
 import hashlib
+import os
 import time
 from django.conf import settings
 
@@ -19,6 +20,13 @@ BZ_URL_EXCLUDE = (
 #    'list_id',
     'columnlist',
 )
+
+
+def get_setting_or_env(name, default=None):
+    """
+    Return the setting or environment var name, or default.
+    """
+    return getattr(settings, name, os.environ.get(name, default))
 
 
 def parse_whiteboard(wb):

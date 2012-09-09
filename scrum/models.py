@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 import hashlib
 import logging
+from django.utils.functional import cached_property
 import re
 import zlib
 from base64 import b64decode, b64encode
@@ -219,46 +220,18 @@ class Project(DBBugsMixin, BugsListMixin, models.Model):
             self.get_bugs()
         return self._date_cached if self._date_cached else now()
 
-    def refresh_backlog(self):
-        self._clear_bugs_data_cache()
-        for url in self.urls.all():
-            url.date_synced = now() - timedelta(days=30)
-            url.save()
-
     def get_backlog(self, **kwargs):
         """Get a unique set of bugs from all bz urls"""
 
-        refresh = kwargs.get('refresh', False)
         self.scrum_only = kwargs.get('scrum_only', True)
         bugs = self.backlog_bugs.open().filter(sprint__isnull=True,
                                                project__isnull=True)
         if self.scrum_only:
             bugs = bugs.scrum_only()
-        if refresh:
-            self.refresh_backlog()
         return bugs
 
-    def get_components(self):
-        """Get a unique set of bugs from all bz urls"""
-        return self._get_url_items('components')
-
     def get_products(self):
-        """Get a unique set of bugs from all bz urls"""
-        return self._get_url_items('products')
-
-    def _get_url_items(self, item_name, **kwargs):
-        """Get a unique set of items from all bz urls"""
-        items = set()
-        for url in self.get_urls():
-            items |= getattr(url, 'get_' + item_name)(**kwargs)
-
-            if (self._date_cached is None or
-                (url.date_cached and url.date_cached < self._date_cached)):
-                self._date_cached = url.date_cached
-            if item_name == 'bugs' and url.num_no_data_bugs:
-                self.num_no_data_bugs += url.num_no_data_bugs
-
-        return list(items)
+        return get_bzproducts_dict(self.products.all())
 
     @models.permalink
     def get_absolute_url(self):
@@ -267,9 +240,6 @@ class Project(DBBugsMixin, BugsListMixin, models.Model):
     @models.permalink
     def get_edit_url(self):
         return 'scrum_project_edit', [self.slug]
-
-    def get_urls(self):
-        return self.urls.all()
 
     def _update_bugs(self, bugs, attr_name):
         bugs_manager = getattr(self, attr_name)
@@ -292,6 +262,25 @@ class Project(DBBugsMixin, BugsListMixin, models.Model):
         :return: None
         """
         self._update_bugs(bugs, 'bugs')
+
+
+class BZProductManager(models.Manager):
+    @cached_property
+    def full_list(self):
+        """
+        Despite the method name, returns a dict of all products (keys) and
+        components (values list) that all projects have specified.
+        :return: dict
+        """
+        return get_bzproducts_dict(self.all())
+
+
+class BZProduct(models.Model):
+    name = models.CharField(max_length=200)
+    component = models.CharField(max_length=200, blank=True)
+    project = models.ForeignKey(Project, related_name='products')
+
+    objects = BZProductManager()
 
 
 class Sprint(DBBugsMixin, BugsListMixin, models.Model):
@@ -528,7 +517,7 @@ class BugManager(PassThroughManager):
 
 class Bug(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
-    history = CompressedJSONField()
+    history = CompressedJSONField(blank=True)
     last_synced_time = models.DateTimeField(default=now)
     product = models.CharField(max_length=200)
     component = models.CharField(max_length=200)
@@ -540,10 +529,9 @@ class Bug(models.Model):
     whiteboard = models.CharField(max_length=200, blank=True)
     blocks = JSONField(blank=True)
     depends_on = JSONField(blank=True)
-    comments = CompressedJSONField(blank=True)
     comments_count = models.PositiveSmallIntegerField(default=0)
-    creation_time = models.DateTimeField()
-    last_change_time = models.DateTimeField()
+    creation_time = models.DateTimeField(default=now)
+    last_change_time = models.DateTimeField(default=now)
     severity = models.CharField(max_length=20, blank=True)
     target_milestone = models.CharField(max_length=20, blank=True)
     story_user = models.CharField(max_length=50, blank=True)
@@ -719,6 +707,16 @@ def get_sync_bugs(current_bugs, new_bugs):
     to_add = new_bugs - current_bugs
     to_remove = current_bugs - new_bugs
     return to_add, to_remove
+
+
+def get_bzproducts_dict(qs):
+    prods = {}
+    for prod in qs:
+        if prod.name not in prods:
+            prods[prod.name] = []
+        if prod.component and prod.component not in prods[prod.name]:
+            prods[prod.name].append(prod.component)
+    return prods
 
 
 class DummyBug:

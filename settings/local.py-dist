@@ -25,6 +25,7 @@ CACHES = {
 }
 
 SOUTH_TESTS_MIGRATE = False
+CELERY_ALWAYS_EAGER = True
 
 # add more nosetest arguments if you want. defaults are in base.py
 #NOSE_ARGS += [

@@ -10,15 +10,20 @@ from django.utils.timezone import make_aware, utc
 from scrum.utils import parse_whiteboard
 
 
+def get_setting_or_env(name, default=None):
+    """
+    Return the setting or environment var name, or default.
+    """
+    return getattr(settings, name, os.environ.get(name, default))
+
+
 log = logging.getLogger(__name__)
-BZ_URL = getattr(settings, 'BUGZILLA_API_URL',
-                 os.environ.get('BUGZILLA_API_URL',
-                                'https://bugzilla.mozilla.org/xmlrpc.cgi'))
-BZ_USER = getattr(settings, 'BUGZILLA_USER',
-                  os.environ.get('BUGZILLA_USER'))
-BZ_PASS = getattr(settings, 'BUGZILLA_PASS',
-                  os.environ.get('BUGZILLA_PASS'))
+BZ_URL = get_setting_or_env('BUGZILLA_API_URL',
+                            'https://bugzilla.mozilla.org/xmlrpc.cgi')
+BZ_USER = get_setting_or_env('BUGZILLA_USER')
+BZ_PASS = get_setting_or_env('BUGZILLA_PASS')
 SESSION_COOKIES_CACHE_KEY = 'bugzilla-session-cookies'
+PRODUCTS_CACHE = None
 BUG_OPEN_STATUSES = [
     'UNCONFIRMED',
     'ASSIGNED',
@@ -47,6 +52,13 @@ BZ_FIELDS = [
     'last_change_time',
     'target_milestone',
 ]
+UNWANTED_COMPONENT_FIELDS = [
+    'sort_key',
+    'is_active',
+    'default_qa_contact',
+    'default_assigned_to',
+    'description'
+]
 
 
 def clean_bug_data(bug):
@@ -66,8 +78,6 @@ def clean_bug_data(bug):
     if 'whiteboard' in bug:
         scrum_data = parse_whiteboard(bug['whiteboard'])
         bug.update(dict(('story_' + k, v) for k, v in scrum_data.items() if v))
-    if 'comments' in bug:
-        bug['comments_count'] = len(bug['comments'])
 
 
 def is_closed(status):
@@ -129,14 +139,37 @@ class BugzillaAPI(xmlrpclib.ServerProxy):
             'remember': True,
         })
 
+    def clear_products_cache(self):
+        global PRODUCTS_CACHE
+        PRODUCTS_CACHE = None
+        cache.delete(self._products_cache_key)
+
     def get_products(self):
+        global PRODUCTS_CACHE
+        if PRODUCTS_CACHE is not None:
+            return PRODUCTS_CACHE
         products = cache.get(self._products_cache_key)
         if products is None:
             prod_ids = self.Product.get_enterable_products()
             prod_ids['include_fields'] = ['id', 'name', 'components']
-            products = self.Product.get(prod_ids)
-            cache.set(self._products_cache_key, products, 60 * 60 * 24)
+            products = self.Product.get(prod_ids)['products']
+            for p in products:
+                for c in p['components']:
+                    for fname in UNWANTED_COMPONENT_FIELDS:
+                        try:
+                            del c[fname]
+                        except KeyError:
+                            continue
+            cache.set(self._products_cache_key, products, 60 * 60 * 24 * 7)
+        PRODUCTS_CACHE = products
         return products
+
+    def get_products_simplified(self):
+        products = self.get_products()
+        simple = {}
+        for p in products['products']:
+            simple[p['name']] = [c['name'] for c in p['components']]
+        return simple
 
     def get_bugs(self, **kwargs):
         open_only = kwargs.pop('open_only', False)
@@ -179,7 +212,8 @@ class BugzillaAPI(xmlrpclib.ServerProxy):
                             in comments.iteritems())
         for bug in bugs['bugs']:
             bug['history'] = history.get(bug['id'], [])
-            bug['comments'] = comments.get(bug['id'], {}).get('comments', [])
+            bug['comments_count'] = len(comments.get(bug['id'], {})
+                                        .get('comments', []))
             clean_bug_data(bug)
         return bugs
 

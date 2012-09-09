@@ -1,6 +1,8 @@
+import djcelery
 from unipath import Path
 
 
+djcelery.setup_loader()
 PROJECT_DIR = Path(__file__).absolute().ancestor(2)
 
 DEBUG = False
@@ -129,6 +131,7 @@ INSTALLED_APPS = (
     'cronjobs',
     'bootstrap',
     'floppyforms',
+    'djcelery',
     'scrum',
     'bugzilla',
     'south',
@@ -150,3 +153,24 @@ TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
 NOSE_ARGS = [
     '--logging-clear-handlers',
 ]
+
+# Celery
+CELERY_DISABLE_RATE_LIMITS = True
+CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
+CELERY_RESULT_BACKEND = 'cache'
+CELERY_TASK_RESULT_EXPIRES = 60
+CELERY_TIMEZONE = 'UTC'
+CELERY_ROUTES = {
+    'get_bugmails': {
+        'queue': 'periodic',
+    },
+    'update_bugs': {
+        'queue': 'updates',
+    },
+}
+CELERYBEAT_SCHEDULE = {
+    'get_bugmails': {
+        'task': 'get_bugmails',
+        'schedule': 60,
+    },
+}
