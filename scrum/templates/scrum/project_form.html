@@ -22,24 +22,24 @@
     </div>
   </form>
   {% if project %}
-    <div id="bzurls_container">
-      <h2 id="bzurls">Bugzilla URLs</h2>
-      <div id="bzurl_list_wrapper" data-url="{{ url('scrum_project_urls', project.slug) }}">
-        {% with bzurls=project.urls.all() %}
-          {% include "scrum/bzurl_list.html" %}
+    <div id="bzproducts_container">
+      <h2 id="bzproducts">Bugzilla Products/Components</h2>
+      <div id="bzproducts_list_wrapper" data-url="{{ url('scrum_project_products', project.slug) }}">
+        {% with bzproducts=project.products.all() %}
+          {% include "scrum/bzproduct_list.html" %}
         {% endwith %}
       </div>
-      {% with bzurl_form_url=url('scrum_project_urls', project.slug) %}
-        {% include "scrum/bzurl_form.html" %}
+      {% with bzproduct_form_url=url('scrum_project_products', project.slug) %}
+        {% include "scrum/bzproduct_form.html" %}
       {% endwith %}
       <div class="well">
-        Note: After adding a Bugzilla url, it takes up to 10 minutes
-        for the Scrumbugs faeries to fetch your data from Bugzilla,
-        add the secret Scrumbugs ingredients, shape them it into
-        cookies, frost them, and bake them in the Scrumbugs oven.
-        When that's done, you should see the bugs that are not
-        resolved and that have some scrum data in the whiteboard in
-        your backlog.
+        Note: After adding a Bugzilla product and/or component, it
+        may take a few minutes for the Scrumbugs faeries to fetch
+        your data from Bugzilla, add the secret Scrumbugs ingredients,
+        shape them it into cookies, frost them, and bake them in the
+        Scrumbugs oven. When that's done, you should see the bugs that
+        are not resolved and that have some scrum data in the whiteboard
+        in your backlog.
       </div>
     </div>
   {% endif %}
@@ -47,6 +47,13 @@
 
 {% block js %}
   <script type="text/javascript" src="//cdn.jquerytools.org/1.2.6/form/jquery.tools.min.js"></script>
+  <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.ui.autocomplete.js"></script>
+  <script type="text/javascript" src="{{ STATIC_URL }}js/bz-0.2.4.js"></script>
+  <script type="text/javascript" src="{{ STATIC_URL }}js/fileit.js"></script>
   <script type="text/javascript" src="{{ STATIC_URL }}js/spin.min.js"></script>
   <script type="text/javascript" src="{{ STATIC_URL }}js/forms.js"></script>
+{% endblock %}
+
+{% block css %}
+  <link href="{{ STATIC_URL }}css/jquery.ui.autocomplete.css" rel="stylesheet">
 {% endblock %}
