@@ -66,14 +66,6 @@ tr.bug-closed td{
     background-color: #dff0d8 !important;
 }
 
-tr.bug-scoreless td{
-    background-color: #f2dede !important;
-}
-dd.scoreless,
-dt.scoreless{
-    color: #b94a48;
-}
-
 tr.bug-dataless td{
     background-color: #ccc !important;
 }
