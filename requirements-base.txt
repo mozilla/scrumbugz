@@ -13,8 +13,8 @@ jingo==0.4
 git+https://github.com/auzigog/jinja-bootstrap.git@v0.3.0
 Markdown==2.2.0
 nose==1.2.1
-django-nose=1.1
-nose-progressive=1.3
+django-nose==1.1
+nose-progressive==1.3
 pytz==2012d
 django-cronjobs==0.2.3
 django-model-utils==1.1.0
