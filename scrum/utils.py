@@ -1,8 +1,9 @@
 import hashlib
 import os
 import time
-from django.conf import settings
+from itertools import islice
 
+from django.conf import settings
 from django.http import QueryDict
 from django.utils.encoding import smart_str
 
@@ -20,6 +21,29 @@ BZ_URL_EXCLUDE = (
 #    'list_id',
     'columnlist',
 )
+
+
+# via https://github.com/mozilla/kitsune/blob/master/apps/search/utils.py#L38
+# thanks willkg!
+def chunked(iterable, n):
+    """Returns chunks of n length of iterable
+
+    If len(iterable) % n != 0, then the last chunk will have length
+    less than n.
+
+    Example:
+
+    >>> chunked([1, 2, 3, 4, 5], 2)
+    [(1, 2), (3, 4), (5,)]
+
+    """
+    iterable = iter(iterable)
+    while 1:
+        t = tuple(islice(iterable, n))
+        if t:
+            yield t
+        else:
+            return
 
 
 def get_setting_or_env(name, default=None):
