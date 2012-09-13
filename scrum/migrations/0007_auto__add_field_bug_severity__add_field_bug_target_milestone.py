@@ -1,22 +1,31 @@
 # -*- coding: utf-8 -*-
 import datetime
-import sys
 from south.db import db
-from south.v2 import DataMigration
+from south.v2 import SchemaMigration
 from django.db import models
 
-from scrum.models import BugzillaURL, Sprint
 
-
-class Migration(DataMigration):
+class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        """
-        Moved to a cron command as this breaks things for future.
-        """
+        # Adding field 'Bug.severity'
+        db.add_column('scrum_bug', 'severity',
+                      self.gf('django.db.models.fields.CharField')(default='', max_length=20, blank=True),
+                      keep_default=False)
+
+        # Adding field 'Bug.target_milestone'
+        db.add_column('scrum_bug', 'target_milestone',
+                      self.gf('django.db.models.fields.CharField')(default='', max_length=20, blank=True),
+                      keep_default=False)
+
 
     def backwards(self, orm):
-        pass
+        # Deleting field 'Bug.severity'
+        db.delete_column('scrum_bug', 'severity')
+
+        # Deleting field 'Bug.target_milestone'
+        db.delete_column('scrum_bug', 'target_milestone')
+
 
     models = {
         'scrum.bug': {
@@ -37,12 +46,14 @@ class Migration(DataMigration):
             'product': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
             'project': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'bugs'", 'null': 'True', 'on_delete': 'models.SET_NULL', 'to': "orm['scrum.Project']"}),
             'resolution': ('django.db.models.fields.CharField', [], {'max_length': '20', 'blank': 'True'}),
+            'severity': ('django.db.models.fields.CharField', [], {'max_length': '20', 'blank': 'True'}),
             'sprint': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'bugs'", 'null': 'True', 'on_delete': 'models.SET_NULL', 'to': "orm['scrum.Sprint']"}),
             'status': ('django.db.models.fields.CharField', [], {'max_length': '20'}),
             'story_component': ('django.db.models.fields.CharField', [], {'max_length': '50', 'blank': 'True'}),
             'story_points': ('django.db.models.fields.PositiveSmallIntegerField', [], {'default': '0'}),
             'story_user': ('django.db.models.fields.CharField', [], {'max_length': '50', 'blank': 'True'}),
             'summary': ('django.db.models.fields.CharField', [], {'max_length': '500'}),
+            'target_milestone': ('django.db.models.fields.CharField', [], {'max_length': '20', 'blank': 'True'}),
             'whiteboard': ('django.db.models.fields.CharField', [], {'max_length': '200', 'blank': 'True'})
         },
         'scrum.bugsprintlog': {
@@ -63,7 +74,6 @@ class Migration(DataMigration):
         },
         'scrum.project': {
             'Meta': {'object_name': 'Project'},
-            'has_backlog': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
             'slug': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '50', 'db_index': 'True'}),
@@ -92,4 +102,3 @@ class Migration(DataMigration):
     }
 
     complete_apps = ['scrum']
-    symmetrical = True

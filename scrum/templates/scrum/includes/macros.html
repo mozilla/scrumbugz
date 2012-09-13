@@ -54,7 +54,7 @@
           {% endif %}
           <td data-order-by="{{ bug.priority if bug.priority != '--' else 'z' }}">{{ bug.priority if bug.priority != '--' }}</td>
           <td>{% if blocked_bugs and bug.id in blocked_bugs %}<span class="label label-important">BLOCKED</span> {% endif %}{{ bug.summary }}</td>
-          <td class="ttip" title="{{ bug.assigned_real_name }}">{{ bug.assigned_name }}</td>
+          <td class="ttip" title="{{ bug.assigned_full }}">{{ bug.assigned_name }}</td>
           <td>{{ bug.story_user }}</td>
           <td>{{ bug.story_component }}</td>
           <td>{{ bug.story_points }}</td>
@@ -65,7 +65,7 @@
                 <a class="btn btn-mini{{ ' btn-' + button_color if button_color }} act-{{ action }}"><i class="{{ icon_color }}"></i></a>
               {% endfor %}
             {% else %}
-              <a class="btn btn-mini{{ ' btn-' + button_color if button_color }}" href="{{ BZ_FILE_URL }}blocked={{ bug.id }}&product={{ bug.product }}&component={{ bug.component }}" title="Add Blocking Bug"><i class="icon-ban-circle{{ icon_color }}"></i></a>
+              <a class="btn btn-mini{{ ' btn-' + button_color if button_color }}" href="{{ BUGZILLA_FILE_URL }}blocked={{ bug.id }}&product={{ bug.product }}&component={{ bug.component }}" title="Add Blocking Bug"><i class="icon-ban-circle{{ icon_color }}"></i></a>
             {% endif %}
           </td>
         </tr>

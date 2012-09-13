@@ -1,6 +1,8 @@
+import djcelery
 from unipath import Path
 
 
+djcelery.setup_loader()
 PROJECT_DIR = Path(__file__).absolute().ancestor(2)
 
 DEBUG = False
@@ -12,10 +14,10 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
-BZ_API_URL = 'https://api-dev.bugzilla.mozilla.org/latest/'
-BZ_SHOW_URL = 'https://bugzilla.mozilla.org/show_bug.cgi?'
-BZ_FILE_URL = 'https://bugzilla.mozilla.org/enter_bug.cgi?'
-BZ_SEARCH_URL = 'https://bugzilla.mozilla.org/buglist.cgi?'
+BUGZILLA_API_URL = 'https://bugzilla.mozilla.org/xmlrpc.cgi'
+BUGZILLA_SHOW_URL = 'https://bugzilla.mozilla.org/show_bug.cgi?'
+BUGZILLA_FILE_URL = 'https://bugzilla.mozilla.org/enter_bug.cgi?'
+BUGZILLA_SEARCH_URL = 'https://bugzilla.mozilla.org/buglist.cgi?'
 CACHE_BUGS_FOR = 4  # hours
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
@@ -25,8 +27,8 @@ CONTEXT_SETTINGS = (
     'CACHE_BUGS_FOR',
     'DEBUG',
     'ENABLE_GA',
-    'BZ_SHOW_URL',
-    'BZ_FILE_URL',
+    'BUGZILLA_SHOW_URL',
+    'BUGZILLA_FILE_URL',
     'PROD_MODE',
 )
 
@@ -41,9 +43,10 @@ MARKDOWN_EXTENSIONS = [
 
 CACHES = {
     'default': {
-        'BACKEND': 'django_pylibmc.memcached.PyLibMCCache',
+        'BACKEND': 'scrum.cache_backend.PyLibMCCacheFix',
         'TIMEOUT': 500,
         'BINARY': True,
+        'JOHNNY_CACHE': True,
         'OPTIONS': {
             'tcp_nodelay': True,
             'ketama': True,
@@ -51,12 +54,14 @@ CACHES = {
     },
 }
 PYLIBMC_MIN_COMPRESS_LEN = 150 * 1024
+JOHNNY_MIDDLEWARE_KEY_PREFIX = 'jc_scrumbugz'
 
 TIME_ZONE = 'America/New_York'
 LANGUAGE_CODE = 'en-us'
 SITE_ID = 1
 USE_I18N = False
 USE_L10N = False
+USE_TZ = True
 
 MEDIA_ROOT = PROJECT_DIR.child('media')
 MEDIA_URL = '/media/'
@@ -99,6 +104,8 @@ TEMPLATE_LOADERS = (
 )
 
 MIDDLEWARE_CLASSES = (
+    'johnny.middleware.LocalStoreClearMiddleware',
+    'johnny.middleware.QueryCacheMiddleware',
     'middleware.EnforceHostnameMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -124,7 +131,9 @@ INSTALLED_APPS = (
     'cronjobs',
     'bootstrap',
     'floppyforms',
+    'djcelery',
     'scrum',
+    'bugzilla',
     'south',
     'django_nose',
 )
@@ -144,3 +153,23 @@ TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
 NOSE_ARGS = [
     '--logging-clear-handlers',
 ]
+
+# Celery
+CELERY_DISABLE_RATE_LIMITS = True
+CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
+CELERY_TASK_RESULT_EXPIRES = 60
+CELERY_TIMEZONE = 'UTC'
+#CELERY_ROUTES = {
+#    'get_bugmails': {
+#        'queue': 'sb_periodic',
+#    },
+#    'update_bugs': {
+#        'queue': 'sb_bugmail',
+#    },
+#}
+CELERYBEAT_SCHEDULE = {
+    'get_bugmails': {
+        'task': 'get_bugmails',
+        'schedule': 30,
+    },
+}

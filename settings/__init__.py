@@ -52,7 +52,7 @@ LOGGING = {
         'django': {
             'handlers': ['null'],
             'propagate': False,
-            'level': 'INFO',
+            'level': 'DEBUG',
         },
         'django.request': {
             'handlers': ['mail_admins'],

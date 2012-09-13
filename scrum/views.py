@@ -13,10 +13,10 @@ from django.utils import simplejson as json
 from django.views.generic import (CreateView, DeleteView, DetailView,
                                   ListView, TemplateView, UpdateView, View)
 
-from scrum.forms import (CreateProjectForm, CreateTeamForm, BZURLForm,
+from scrum.forms import (CreateProjectForm, CreateTeamForm, BZProductForm,
                          ProjectBugsForm, ProjectForm, SprintBugsForm,
                          SprintForm, TeamForm)
-from scrum.models import BugzillaURL, BZError, Project, Sprint, Team, Bug
+from scrum.models import BZError, BZProduct, Project, Sprint, Team, Bug
 from scrum.utils import get_blocked_bugs
 
 
@@ -252,25 +252,35 @@ class ManageProjectBugsView(BugsDataMixin, ProtectedUpdateView):
         return context
 
 
-class CreateBZUrlView(ProtectedCreateView):
-    model = BugzillaURL
-    form_class = BZURLForm
-    template_name = 'scrum/bzurl_list.html'
+class CreateBZProductView(ProtectedCreateView):
+    model = BZProduct
+    form_class = BZProductForm
+    template_name = 'scrum/bzproduct_list.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        self.project = get_object_or_404(Project, slug=kwargs['slug'])
+        return super(CreateBZProductView, self).dispatch(request, *args,
+                                                         **kwargs)
 
     def get_context_data(self, **kwargs):
-        obj = get_object_or_404(Project, slug=self.kwargs['slug'])
-        kwargs['target_obj'] = obj
-        kwargs['bzurls'] = obj.urls.all()
-        return super(CreateBZUrlView, self).get_context_data(**kwargs)
+        kwargs['target_obj'] = self.project
+        kwargs['bzproducts'] = self.project.products.all()
+        return super(CreateBZProductView, self).get_context_data(**kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super(CreateBZProductView, self).get_form_kwargs()
+        if 'data' in kwargs:
+            form_data = kwargs['data'].copy()
+            form_data['project'] = self.project.id
+            kwargs['data'] = form_data
+        return kwargs
 
     def form_valid(self, form):
-        url = form.save(commit=False)
-        url.project = get_object_or_404(Project, slug=self.kwargs['slug'])
-        url.save()
+        self.object = form.save()
         if self.request.is_ajax():
             return self.render_to_response(self.get_context_data(form=form))
         else:
-            return redirect(self.target_obj.get_edit_url())
+            return redirect(self.project.get_edit_url())
 
     def form_invalid(self, form):
         if self.request.is_ajax():
@@ -281,21 +291,21 @@ class CreateBZUrlView(ProtectedCreateView):
             return redirect(target_obj.get_edit_url())
 
 
-class DeleteBZUlrView(ProtectedDeleteView):
-    model = BugzillaURL
+class DeleteBZProductView(ProtectedDeleteView):
+    model = BZProduct
     success_url = '/'
 
     def __init__(self):
         # remove GET from allowed methods to throw 405
-        # copy list or modify global copy
+        # copy list to avoid modifying global copy
         self.http_method_names = self.http_method_names[:]
         self.http_method_names.remove('get')
-        super(DeleteBZUlrView, self).__init__()
+        super(DeleteBZProductView, self).__init__()
 
     def delete(self, request, *args, **kwargs):
         if request.is_ajax():
-            super(DeleteBZUlrView, self).delete(request, *args, **kwargs)
-            return HttpResponse(status=204)
+            super(DeleteBZProductView, self).delete(request, *args, **kwargs)
+            return HttpResponse(status=204)  # empty
         return HttpResponseForbidden()
 
 

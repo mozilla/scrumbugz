@@ -17,9 +17,7 @@ def heroku_django(cmd):
 
 
 def deploy():
-    remote = ('prod master' if env.git_remote == 'prod'
-              else 'dev next:master')
-    local('git push ' + remote)
+    local('git push {0} master'.format(env.git_remote))
     heroku_django('collectstatic --noinput')
     heroku_django('syncdb')
     heroku_django('migrate')

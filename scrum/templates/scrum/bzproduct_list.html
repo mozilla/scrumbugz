@@ -1,0 +1,24 @@
+<table class="table table-striped table-condensed" id="bzproduct_list">
+  <thead>
+    <tr>
+      <th>Product</th>
+      <th>Component</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for product in bzproducts %}
+      <tr>
+        <td>{{ product.name }}</td>
+        <td>{{ product.component|d('__ALL__', True) }}</td>
+        <td width="1">
+          <a href="{{ url('scrum_product_delete', product.pk) }}" class="btn btn-mini btn-danger bzproduct-remove" title="Remove Product"><i class="icon-remove icon-white"></i></a>
+        </td>
+      </tr>
+    {% else %}
+      <tr>
+        <td colspan="5">No Products so far</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>

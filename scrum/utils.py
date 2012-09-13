@@ -1,4 +1,5 @@
 import hashlib
+import os
 import time
 from django.conf import settings
 
@@ -19,7 +20,13 @@ BZ_URL_EXCLUDE = (
 #    'list_id',
     'columnlist',
 )
-CLOSED_STATUSES = ['RESOLVED', 'VERIFIED', 'CLOSED']
+
+
+def get_setting_or_env(name, default=None):
+    """
+    Return the setting or environment var name, or default.
+    """
+    return getattr(settings, name, os.environ.get(name, default))
 
 
 def parse_whiteboard(wb):
@@ -61,13 +68,9 @@ def get_bz_url_for_bug_ids(bids):
     """Return a bugzilla search url that will display the list of bug ids."""
     bug_ids = ','.join(str(bid) for bid in bids)
     return '%sbug_id=%s&bug_id_type=anyexact' % (
-        settings.BZ_SEARCH_URL,
+        settings.BUGZILLA_SEARCH_URL,
         bug_ids
     )
-
-
-def is_closed(status):
-    return status in CLOSED_STATUSES
 
 
 def date_range(sdate, edate, step=1):
