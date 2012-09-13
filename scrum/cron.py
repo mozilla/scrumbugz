@@ -9,11 +9,26 @@ from django.conf import settings
 from cronjobs import register
 
 from bugzilla.api import bugzilla
-from scrum.models import BugzillaURL, BZProduct, Sprint
+from scrum.models import Bug, BugzillaURL, BZProduct, Sprint
+from scrum.tasks import update_bugs
 
 
 CACHE_BUGS_FOR = timedelta(hours=getattr(settings, 'CACHE_BUGS_FOR', 4))
 log = logging.getLogger(__name__)
+
+
+# via stack overflow: http://j.mp/TYqw9P
+def chunks(l, n):
+    """ Yield successive n-sized chunks from l. """
+    for i in xrange(0, len(l), n):
+        yield l[i:i + n]
+
+
+@register
+def update_old_format_bugs():
+    bugs = Bug.objects.filter(assigned_to__contains='||').only('id')
+    for bchunk in chunks(bugs, 50):
+        update_bugs.delay([b.id for b in bchunk])
 
 
 @register
