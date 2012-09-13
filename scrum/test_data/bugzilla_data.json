@@ -12,23 +12,6 @@
       "depends_on":[],
       "whiteboard":"u=dev c=infrastructure p=1 s=2012.16",
       "creation_time":"2012-07-28T18:54:00Z",
-      "comments":[
-        {
-          "id":6514592
-        },
-        {
-          "id":6551639
-        },
-        {
-          "id":6589481
-        },
-        {
-          "id":6599171
-        },
-        {
-          "id":6599173
-        }
-      ],
       "summary":"get a -dev server set up",
       "priority":"P2",
       "target_milestone":"---",
@@ -96,35 +79,6 @@
       "depends_on":[778465],
       "whiteboard":"u=dev c=infrastructure p=2 s=2012.16",
       "creation_time":"2012-07-28T18:56:00Z",
-      "comments":[
-        {
-          "id":6514593
-        },
-        {
-          "id":6561411
-        },
-        {
-          "id":6561867
-        },
-        {
-          "id":6567228
-        },
-        {
-          "id":6567230
-        },
-        {
-          "id":6571133
-        },
-        {
-          "id":6574303
-        },
-        {
-          "id":6574305
-        },
-        {
-          "id":6589482
-        }
-      ],
       "summary":"set up localization infrastructure",
       "priority":"P2",
       "target_milestone":"---",
@@ -203,17 +157,6 @@
       "depends_on":[],
       "whiteboard":"u=dev c=infrastructure p=2 s=2012.16",
       "creation_time":"2012-08-10T01:25:00Z",
-      "comments":[
-        {
-          "id":6545467
-        },
-        {
-          "id":6546457
-        },
-        {
-          "id":6589492
-        }
-      ],
       "summary":"implement models for firefox mobile feedback",
       "priority":"P3",
       "target_milestone":"---",
@@ -318,32 +261,6 @@
       "depends_on":[781709, 781721],
       "whiteboard":"u=dev c=infrastructure p=2 s=2012.16",
       "creation_time":"2012-08-10T01:29:00Z",
-      "comments":[
-        {
-          "id":6545476
-        },
-        {
-          "id":6546460
-        },
-        {
-          "id":6546463
-        },
-        {
-          "id":6546475
-        },
-        {
-          "id":6569314
-        },
-        {
-          "id":6569411
-        },
-        {
-          "id":6589486
-        },
-        {
-          "id":6599167
-        }
-      ],
       "summary":"implement firefox desktop feedback view and templates",
       "priority":"P2",
       "target_milestone":"---",
@@ -458,26 +375,6 @@
       "depends_on":[781710, 781721],
       "whiteboard":"u=dev c=infrastructure p=2 s=2012.16",
       "creation_time":"2012-08-10T01:30:00Z",
-      "comments":[
-        {
-          "id":6545479
-        },
-        {
-          "id":6546466
-        },
-        {
-          "id":6546476
-        },
-        {
-          "id":6569271
-        },
-        {
-          "id":6569311
-        },
-        {
-          "id":6589491
-        }
-      ],
       "summary":"implement firefox mobile feedback view and templates",
       "priority":"P3",
       "target_milestone":"---",
@@ -555,23 +452,6 @@
       "depends_on":[781710, 781709],
       "whiteboard":"u=dev c=infrastructure p=2 s=2012.16",
       "creation_time":"2012-08-10T01:35:00Z",
-      "comments":[
-        {
-          "id":6545495
-        },
-        {
-          "id":6546469
-        },
-        {
-          "id":6546479
-        },
-        {
-          "id":6561420
-        },
-        {
-          "id":6589483
-        }
-      ],
       "summary":"implement indexing code",
       "priority":"P2",
       "target_milestone":"---",
@@ -660,26 +540,6 @@
       "depends_on":[781717, 784742],
       "whiteboard":"u=dev c=infrastructure p=2 s=2012.16",
       "creation_time":"2012-08-10T01:42:00Z",
-      "comments":[
-        {
-          "id":6545513
-        },
-        {
-          "id":6545542
-        },
-        {
-          "id":6546480
-        },
-        {
-          "id":6561419
-        },
-        {
-          "id":6589479
-        },
-        {
-          "id":6600838
-        }
-      ],
       "summary":"implement dashboard",
       "priority":"P2",
       "target_milestone":"---",
@@ -768,23 +628,6 @@
       "depends_on":[],
       "whiteboard":"u=dev c=infrastructure p=2 s=2012.17",
       "creation_time":"2012-08-20T20:29:00Z",
-      "comments":[
-        {
-          "id":6568480
-        },
-        {
-          "id":6568482
-        },
-        {
-          "id":6589478
-        },
-        {
-          "id":6601046
-        },
-        {
-          "id":6601269
-        }
-      ],
       "summary":"visual notification of prod vs. non-prod environment",
       "priority":"P2",
       "target_milestone":"---",
@@ -872,20 +715,6 @@
       "depends_on":[],
       "whiteboard":"u=dev c=infrastructure p= s=2012.16",
       "creation_time":"2012-08-21T20:50:00Z",
-      "comments":[
-        {
-          "id":6572145
-        },
-        {
-          "id":6572400
-        },
-        {
-          "id":6572857
-        },
-        {
-          "id":6572878
-        }
-      ],
       "summary":"Desktop and mobile AND TABLETS, oh my!",
       "priority":"--",
       "target_milestone":"---",
@@ -935,17 +764,6 @@
       "depends_on":[],
       "whiteboard":"u=dev c=infrastructure p=2 s=2012.17",
       "creation_time":"2012-08-21T20:56:00Z",
-      "comments":[
-        {
-          "id":6572180
-        },
-        {
-          "id":6572237
-        },
-        {
-          "id":6589500
-        }
-      ],
       "summary":"upgrade playdoh-lib submodules",
       "priority":"P4",
       "target_milestone":"---",
@@ -991,17 +809,6 @@
       "depends_on":[],
       "whiteboard":"u=dev c=infrastructure p=3 s=2012.16",
       "creation_time":"2012-08-22T18:44:00Z",
-      "comments":[
-        {
-          "id":6575079
-        },
-        {
-          "id":6585988
-        },
-        {
-          "id":6589484
-        }
-      ],
       "summary":"implement search infrastructure",
       "priority":"P2",
       "target_milestone":"---",

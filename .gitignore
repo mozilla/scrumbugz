@@ -11,4 +11,4 @@ settings/local.py
 .coverage
 _coverage/*
 .noseids
-
+celerybeat-schedule

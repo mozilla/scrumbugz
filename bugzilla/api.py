@@ -167,7 +167,7 @@ class BugzillaAPI(xmlrpclib.ServerProxy):
     def get_products_simplified(self):
         products = self.get_products()
         simple = {}
-        for p in products['products']:
+        for p in products:
             simple[p['name']] = [c['name'] for c in p['components']]
         return simple
 

@@ -13,16 +13,17 @@ from django.core.cache import cache
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.utils import simplejson as json
-from django.utils.timezone import now
 
-from scrum import cron as scrum_cron
 from scrum import bugmail as scrum_email
 from scrum import models as scrum_models
+from scrum import tasks as scrum_tasks
 from scrum.forms import BZURLForm, CreateProjectForm, SprintBugsForm
 from scrum.models import BugSprintLog, BugzillaURL, Bug, Project, Sprint
+from scrum.tasks import update_product
 
 
 scrum_models.bugzilla = Mock()
+scrum_tasks.bugzilla = Mock()
 TEST_DATA = settings.PROJECT_DIR.child('scrum', 'test_data')
 BUG_DATA_FILE = TEST_DATA.child('bugzilla_data.json')
 BUGMAIL_FILES = (
@@ -37,6 +38,7 @@ GOOD_BZ_URL = BUG_DATA['bz_url']
 
 # have to deepcopy to avoid cross-test-pollution
 scrum_models.bugzilla.get_bugs.side_effect = lambda *x, **y: deepcopy(BUG_DATA)
+scrum_tasks.bugzilla.get_bugs.side_effect = lambda *x, **y: deepcopy(BUG_DATA)
 
 
 def get_messages_mock(delete=True):
@@ -51,33 +53,12 @@ scrum_email.get_messages = Mock()
 scrum_email.get_messages.side_effect = get_messages_mock
 
 
-class TestCron(TestCase):
+class TestEmail(TestCase):
     fixtures = ['test_data.json']
 
     def setUp(self):
-        self.p = Project.objects.get(pk=1)
+        scrum_models.BZProduct.objects._reset_full_list()
 
-    def test_default_sync_date_urls_synced(self):
-        """Test that BugzillaURL objects with NULL sync dates are synced."""
-        BugzillaURL.objects.create(url=GOOD_BZ_URL, project=self.p)
-        scrum_cron.sync_backlogs()
-        eq_(self.p.backlog_bugs.count(), 11)
-
-    def test_recently_synced_urls_not_synced(self):
-        hour_ago = now() - timedelta(hours=1)
-        url = BugzillaURL.objects.create(url=GOOD_BZ_URL, date_synced=hour_ago)
-        scrum_cron.sync_backlogs()
-        url = BugzillaURL.objects.get(id=url.id)
-        eq_(url.date_synced, hour_ago)
-
-    def test_one_time_urls_deleted(self):
-        url = BugzillaURL.objects.create(url=GOOD_BZ_URL, one_time=True)
-        scrum_cron.sync_backlogs()
-        with self.assertRaises(BugzillaURL.DoesNotExist):
-            BugzillaURL.objects.get(id=url.id)
-
-
-class TestEmail(TestCase):
     def test_is_bugmail(self):
         m = scrum_email.get_messages()[0]
         ok_(scrum_email.is_bugmail(m))
@@ -88,6 +69,34 @@ class TestEmail(TestCase):
         good_data = [760693, 760694]
         eq_(good_data, sorted(scrum_email.get_bugmails().keys()))
 
+    def test_not_is_interesting(self):
+        for msg in scrum_email.get_bugmails().values():
+            print scrum_email.is_interesting(msg)
+            ok_(not scrum_email.is_interesting(msg))
+        p = Project.objects.get(pk=1)
+        p.products.create(name='Input')
+        scrum_models.BZProduct.objects._reset_full_list()
+        for msg in scrum_email.get_bugmails().values():
+            ok_(not scrum_email.is_interesting(msg))
+        p.products.create(name='Websites', component='Betafarm')
+        scrum_models.BZProduct.objects._reset_full_list()
+        for msg in scrum_email.get_bugmails().values():
+            ok_(not scrum_email.is_interesting(msg))
+
+    def test_is_interesting(self):
+        p = Project.objects.get(pk=1)
+        comp = p.products.create(name='Websites', component='Scrumbugs')
+        for msg in scrum_email.get_bugmails().values():
+            ok_(scrum_email.is_interesting(msg))
+        comp.delete()
+        scrum_models.BZProduct.objects._reset_full_list()
+        for msg in scrum_email.get_bugmails().values():
+            ok_(not scrum_email.is_interesting(msg))
+        p.products.create(name='Websites')
+        scrum_models.BZProduct.objects._reset_full_list()
+        for msg in scrum_email.get_bugmails().values():
+            ok_(scrum_email.is_interesting(msg))
+
 
 class TestBug(TestCase):
     fixtures = ['test_data.json']
@@ -97,7 +106,7 @@ class TestBug(TestCase):
         self.s = Sprint.objects.get(slug='2.2')
         self.p = Project.objects.get(pk=1)
         self.url = Project.objects.get(pk=1)
-        scrum_cron.sync_backlogs()
+        update_product('MDN')
 
     @patch.object(Bug, 'points_history')
     def test_points_for_date_default(self, mock_bug):
@@ -153,16 +162,6 @@ class TestProject(TestCase):
         self.assertEqual(Bug.objects.filter(sprint=self.s).count(),
                          len(bugs))
 
-    def test_adding_bzurl_adds_backlog_bugs(self):
-        """Adding a url to a project should populate the backlog."""
-        # should have created and loaded bugs when fixture loaded
-        self.p.backlog_bugs.clear()
-        eq_(self.p.backlog_bugs.count(), 0)
-        # now this should update the existing bugs w/ the backlog
-        BugzillaURL.objects.create(url=GOOD_BZ_URL, project=self.p)
-        scrum_cron.sync_backlogs()
-        eq_(self.p.backlog_bugs.count(), 11)
-
 
 class TestSprint(TestCase):
     fixtures = ['test_data.json']
@@ -171,7 +170,11 @@ class TestSprint(TestCase):
         cache.clear()
         self.s = Sprint.objects.get(slug='2.2')
         self.p = Project.objects.get(pk=1)
-        scrum_cron.sync_backlogs()
+        self.p.products.create(name='Input')
+        self.p.products.create(name='Lebowski Enterprise',
+                               component='Urban Achievers')
+        self.p.products.create(name='Lebowski Enterprise',
+                               component='Rugs')
 
     def test_sprint_creation(self):
         User.objects.create_superuser('admin', 'admin@admin.com', 'admin')
@@ -191,14 +194,17 @@ class TestSprint(TestCase):
         }))
 
     def test_get_products(self):
-        products = self.p.get_products()
-        eq_(2, len(products))
-        ok_('mozilla.org' in products)
+        self.assertDictEqual(self.p.get_products(), {
+            'Input': [],
+            'Lebowski Enterprise': ['Rugs', 'Urban Achievers'],
+        })
 
     def test_get_components(self):
-        components = self.p.get_components()
-        eq_(11, len(components))
-        ok_('Website' in components)
+        self.assertSetEqual(set(self.p.get_components()),
+                            set(['Urban Achievers', 'Rugs']))
+        self.p.products.create(name='The Dude', component='Bowling')
+        self.assertSetEqual(set(self.p.get_components()),
+                            set(['Urban Achievers', 'Rugs', 'Bowling']))
 
     def test_sprint_bug_logging(self):
         bzurl = BugzillaURL.objects.create(

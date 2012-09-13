@@ -276,7 +276,7 @@ class CreateBZProductView(ProtectedCreateView):
         return kwargs
 
     def form_valid(self, form):
-        form.save()
+        self.object = form.save()
         if self.request.is_ajax():
             return self.render_to_response(self.get_context_data(form=form))
         else:
@@ -297,7 +297,7 @@ class DeleteBZProductView(ProtectedDeleteView):
 
     def __init__(self):
         # remove GET from allowed methods to throw 405
-        # copy list or modify global copy
+        # copy list to avoid modifying global copy
         self.http_method_names = self.http_method_names[:]
         self.http_method_names.remove('get')
         super(DeleteBZProductView, self).__init__()
@@ -305,7 +305,7 @@ class DeleteBZProductView(ProtectedDeleteView):
     def delete(self, request, *args, **kwargs):
         if request.is_ajax():
             super(DeleteBZProductView, self).delete(request, *args, **kwargs)
-            return HttpResponse(status=204)
+            return HttpResponse(status=204)  # empty
         return HttpResponseForbidden()
 
 

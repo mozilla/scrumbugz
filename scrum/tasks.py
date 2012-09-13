@@ -6,6 +6,7 @@ from bugzilla.api import bugzilla
 from scrum.bugmail import extract_bug_info, get_bugmails
 from scrum.models import Bug, store_bugs
 
+
 try:
     import newrelic.agent
 except ImportError:
@@ -22,7 +23,7 @@ def get_bugmail_messages():
     """
     msgs = get_bugmails()
     if msgs:
-        for bid, msg in msgs.items():
+        for bid, msg in msgs.iteritems():
             bug_data = extract_bug_info(msg)
             bug, created = Bug.objects.get_or_create(id=bid, defaults=bug_data)
             if not created:
@@ -35,6 +36,14 @@ def get_bugmail_messages():
         if newrelic:
             newrelic.agent.record_custom_metric('Custom/Bugmails', numbugs)
         log.info('Synced %d bug(s) from email', numbugs)
+
+
+@task(name='update_product')
+def update_product(product, component=None):
+    kwargs = {'product': product, 'scrum_only': False}
+    if component:
+        kwargs['component'] = component
+    store_bugs(bugzilla.get_bugs(**kwargs))
 
 
 @task(name='update_bugs')

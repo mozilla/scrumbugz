@@ -33,12 +33,8 @@ STATIC_URL = '//s3.amazonaws.com/%s/' % AWS_STORAGE_BUCKET_NAME
 MORE_APPS = ['storages']
 
 # Celery
-BROKER_URL = 'sqs://'
-BROKER_TRANSPORT_OPTIONS = {
-    'visibility_timeout': 60 * 5, # 5 min
-    'polling_interval': 30, # seconds
-    'queue_name_prefix': 'scrumbugz_' if PROD_MODE else 'scrumbugz-dev_'
-}
+BROKER_URL = os.environ['REDISTOGO_URL']
+CELERY_RESULT_BACKEND = BROKER_URL
 
 # SENTRY
 SENTRY_DSN = os.environ.get('SENTRY_DSN')

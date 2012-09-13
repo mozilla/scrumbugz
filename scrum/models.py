@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 import hashlib
 import logging
-from django.utils.functional import cached_property
+import operator
 import re
 import zlib
 from base64 import b64decode, b64encode
@@ -16,7 +16,7 @@ from django.core.validators import RegexValidator
 from django.db import models, transaction
 from django.db.models.query import QuerySet
 from django.db.models.query_utils import Q
-from django.db.models.signals import pre_save
+from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 from django.utils.encoding import force_unicode
 from django.utils.timezone import now
@@ -224,14 +224,18 @@ class Project(DBBugsMixin, BugsListMixin, models.Model):
         """Get a unique set of bugs from all bz urls"""
 
         self.scrum_only = kwargs.get('scrum_only', True)
-        bugs = self.backlog_bugs.open().filter(sprint__isnull=True,
-                                               project__isnull=True)
+        bugs = Bug.objects.open().filter(sprint__isnull=True,
+                                         project__isnull=True)
+        bugs = bugs.by_products(self.get_products())
         if self.scrum_only:
             bugs = bugs.scrum_only()
         return bugs
 
     def get_products(self):
         return get_bzproducts_dict(self.products.all())
+
+    def get_components(self):
+        return reduce(operator.add, self.get_products().values(), [])
 
     @models.permalink
     def get_absolute_url(self):
@@ -247,14 +251,6 @@ class Project(DBBugsMixin, BugsListMixin, models.Model):
         bugs_manager.add(*to_add)
         bugs_manager.remove(*to_remove)
 
-    def update_backlog_bugs(self, bugs):
-        """
-        Add and remove bugs to sync the list with what we receive.
-        :param bug_ids: list of bugs or bug ids
-        :return: None
-        """
-        self._update_bugs(bugs, 'backlog_bugs')
-
     def update_bugs(self, bugs):
         """
         Add and remove bugs to sync the list with what we receive.
@@ -265,14 +261,27 @@ class Project(DBBugsMixin, BugsListMixin, models.Model):
 
 
 class BZProductManager(models.Manager):
-    @cached_property
+    _full_list_cache_key = 'bzproducts-full-list'
+    _full_list = None
+
     def full_list(self):
         """
         Despite the method name, returns a dict of all products (keys) and
         components (values list) that all projects have specified.
         :return: dict
         """
-        return get_bzproducts_dict(self.all())
+        data = self._full_list
+        if not data:
+            data = cache.get(self._full_list_cache_key)
+            if not data:
+                data = get_bzproducts_dict(self.all())
+                self._full_list = data
+                cache.set(self._full_list_cache_key, data, 60)
+        return data
+
+    def _reset_full_list(self):
+        self._full_list = None
+        cache.delete(self._full_list_cache_key)
 
 
 class BZProduct(models.Model):
@@ -461,7 +470,7 @@ class BugzillaURL(models.Model):
         if self.id and not self.one_time:
             self.date_synced = now()
             self.save()
-        return set(store_bugs(bugs, self.project))
+        return set(store_bugs(bugs))
 
     def get_products(self):
         """Return a set of the products in the search url"""
@@ -486,12 +495,38 @@ class BugQuerySet(QuerySet):
                                        one_time=True)
 
     def scrum_only(self):
+        """
+        Only include bugs that have some data in the `story_*` fields.
+        :return: QuerySet
+        """
         return self.filter(~Q(story_component='') |
                            ~Q(story_user='') |
                            Q(story_points__gt=0))
 
     def open(self):
+        """
+        Filter out closed bugs.
+        :return: QuerySet
+        """
         return self.filter(status__in=BUG_OPEN_STATUSES)
+
+    def by_products(self, products):
+        """
+        Filter the bugs based on a dict of products and components like the
+        one returned by `Project.get_products()`.
+        :param products: dict
+        :return: QuerySet
+        """
+        qobjs = []
+        for prod, comps in products.items():
+            kwargs = {'product': prod}
+            if comps:
+                if len(comps) == 1:
+                    kwargs['component'] = comps[0]
+                else:
+                    kwargs['component__in'] = comps
+            qobjs.append(Q(**kwargs))
+        return self.filter(reduce(operator.or_, qobjs, Q()))
 
 
 class BugManager(PassThroughManager):
@@ -502,7 +537,7 @@ class BugManager(PassThroughManager):
 
     def update_or_create(self, data):
         """
-        Create or update a cached bug from the data returned from Bugzilla.
+        Create or update a bug from the data returned from Bugzilla.
         :param data: dict of bug data from the bugzilla api.
         :return: Bug instance, boolean created.
         """
@@ -521,12 +556,12 @@ class Bug(models.Model):
     last_synced_time = models.DateTimeField(default=now)
     product = models.CharField(max_length=200)
     component = models.CharField(max_length=200)
-    assigned_to = models.CharField(max_length=200)
+    assigned_to = models.CharField(max_length=500)
     status = models.CharField(max_length=20)
     resolution = models.CharField(max_length=20, blank=True)
     summary = models.CharField(max_length=500)
     priority = models.CharField(max_length=2, blank=True)
-    whiteboard = models.CharField(max_length=200, blank=True)
+    whiteboard = models.CharField(max_length=2048, blank=True)
     blocks = JSONField(blank=True)
     depends_on = JSONField(blank=True)
     comments_count = models.PositiveSmallIntegerField(default=0)
@@ -542,8 +577,6 @@ class Bug(models.Model):
                                on_delete=models.SET_NULL)
     project = models.ForeignKey(Project, related_name='bugs', null=True,
                                 on_delete=models.SET_NULL)
-    backlog = models.ForeignKey(Project, related_name='backlog_bugs',
-                                null=True, on_delete=models.SET_NULL)
 
     objects = BugManager()
 
@@ -569,9 +602,7 @@ class Bug(models.Model):
         return is_closed(self.status)
 
     def is_assigned(self):
-        if isinstance(self.assigned_to, dict):
-            return self.assigned_to['name'] != 'nobody'
-        return self.assigned_to != 'nobody'
+        return self.assigned_to != 'nobody@mozilla.org'
 
     def points_for_date(self, date):
         cpoints = self.story_points
@@ -581,16 +612,21 @@ class Bug(models.Model):
             cpoints = h['points']
         return cpoints
 
-    def _parse_assigned(self):
-        return self.assigned_to.split('||', 1)
-
     @property
     def assigned_name(self):
-        return self._parse_assigned()[0]
+        # catch old bugs for a bit
+        # TODO remove this later.
+        if '||' in self.assigned_to:
+            return self.assigned_to.split('||', 1)[0]
+        return self.assigned_to.split('@', 1)[0]
 
     @property
-    def assigned_real_name(self):
-        return self._parse_assigned()[-1]
+    def assigned_full(self):
+        # catch old bugs for a bit
+        # TODO remove this later.
+        if '||' in self.assigned_to:
+            return self.assigned_to.split('||', 1)[1]
+        return self.assigned_to
 
     @property
     def basic_status(self):
@@ -680,11 +716,9 @@ class BugSprintLog(models.Model):
 
 
 @transaction.commit_on_success
-def store_bugs(bugs, project=None):
+def store_bugs(bugs):
     bug_objs = []
     for bug in bugs.get('bugs', []):
-        if project:
-            bug['backlog'] = project
         bug_objs.append(Bug.objects.update_or_create(bug)[0])
     return bug_objs
 
@@ -747,3 +781,10 @@ def process_notes(sender, instance, **kwargs):
             output_format='html5',
             safe_mode=True,
         )
+
+
+@receiver(post_save, sender=BZProduct)
+def fetch_product_bugs(sender, instance, **kwargs):
+    # avoid circular imports
+    from .tasks import update_product
+    update_product.delay(instance.name, instance.component)

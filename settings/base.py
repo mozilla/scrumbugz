@@ -157,20 +157,19 @@ NOSE_ARGS = [
 # Celery
 CELERY_DISABLE_RATE_LIMITS = True
 CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
-CELERY_RESULT_BACKEND = 'cache'
 CELERY_TASK_RESULT_EXPIRES = 60
 CELERY_TIMEZONE = 'UTC'
-CELERY_ROUTES = {
-    'get_bugmails': {
-        'queue': 'periodic',
-    },
-    'update_bugs': {
-        'queue': 'updates',
-    },
-}
+#CELERY_ROUTES = {
+#    'get_bugmails': {
+#        'queue': 'sb_periodic',
+#    },
+#    'update_bugs': {
+#        'queue': 'sb_bugmail',
+#    },
+#}
 CELERYBEAT_SCHEDULE = {
     'get_bugmails': {
         'task': 'get_bugmails',
-        'schedule': 60,
+        'schedule': 30,
     },
 }

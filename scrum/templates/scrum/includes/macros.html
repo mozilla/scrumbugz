@@ -54,7 +54,7 @@
           {% endif %}
           <td data-order-by="{{ bug.priority if bug.priority != '--' else 'z' }}">{{ bug.priority if bug.priority != '--' }}</td>
           <td>{% if blocked_bugs and bug.id in blocked_bugs %}<span class="label label-important">BLOCKED</span> {% endif %}{{ bug.summary }}</td>
-          <td class="ttip" title="{{ bug.assigned_real_name }}">{{ bug.assigned_name }}</td>
+          <td class="ttip" title="{{ bug.assigned_full }}">{{ bug.assigned_name }}</td>
           <td>{{ bug.story_user }}</td>
           <td>{{ bug.story_component }}</td>
           <td>{{ bug.story_points }}</td>

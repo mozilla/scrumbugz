@@ -9,7 +9,7 @@ from django.conf import settings
 from cronjobs import register
 
 from bugzilla.api import bugzilla
-from scrum.models import BugzillaURL, BZProduct, Project, Sprint, store_bugs
+from scrum.models import BugzillaURL, BZProduct, Sprint
 
 
 CACHE_BUGS_FOR = timedelta(hours=getattr(settings, 'CACHE_BUGS_FOR', 4))
@@ -41,25 +41,6 @@ def move_project_urls_to_products():
             if not c_in_prod:
                 BZProduct.objects.get_or_create(name=p,
                                                 project_id=url.project_id)
-
-
-@register
-def sync_full_backlogs():
-    """
-    Get all bugs associated with all projects.
-
-    USE EXTREMELY SPARINGLY
-    """
-    for proj in Project.objects.all():
-        prods = proj.get_products()
-        for prod, comps in prods.items():
-            kwargs = {'product': prod, 'scrum_only': False}
-            if comps:
-                kwargs['component'] = comps[0] if len(comps) == 1 else comps
-            store_bugs(bugzilla.get_bugs(**kwargs), proj)
-            sys.stdout.write('.')
-            sys.stdout.flush()
-    print '\nDone.'
 
 
 @register
