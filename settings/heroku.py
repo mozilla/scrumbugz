@@ -13,7 +13,7 @@ if PROD_MODE:
     ENFORCE_HOSTNAME = 'scrumbu.gs'
     ENABLE_GA = True
 else:
-    CELERY_REDIS_MAX_CONNECTIONS = 5
+    CELERY_REDIS_MAX_CONNECTIONS = 1
 
 ADMINS = (
     ('Paul', 'pmac@mozilla.com'),
