@@ -194,7 +194,7 @@ class BugzillaAPI(xmlrpclib.ServerProxy):
         bug_ids = [bug['id'] for bug in bugs.get('bugs', [])]
 
         if not bug_ids:
-            return {'bugs': []}
+            return bugs
 
         # mix in history and comments
         history = comments = {}

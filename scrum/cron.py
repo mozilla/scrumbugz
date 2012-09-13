@@ -27,8 +27,12 @@ def chunks(l, n):
 @register
 def update_old_format_bugs():
     bugs = Bug.objects.filter(assigned_to__contains='||').only('id')
+    numbugs = 0
     for bchunk in chunks(bugs, 50):
+        numbugs += len(bugs)
+        log.debug("Updating %d bugs", len(bugs))
         update_bugs.delay([b.id for b in bchunk])
+    log.debug("Total bugs updated: %d", numbugs)
 
 
 @register

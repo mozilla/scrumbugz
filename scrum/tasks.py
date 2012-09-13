@@ -48,4 +48,12 @@ def update_product(product, component=None):
 
 @task(name='update_bugs')
 def update_bugs(bug_ids):
-    store_bugs(bugzilla.get_bugs(ids=bug_ids, scrum_only=False))
+    bugs = bugzilla.get_bugs(ids=bug_ids, scrum_only=False)
+    for fault in bugs['faults']:
+        if fault['faultCode'] == 102:  # unauthorized
+            try:
+                Bug.objects.get(id=fault['id']).delete()
+                log.warning("DELETED unauthorized bug #%d", fault['id'])
+            except Bug.DoesNotExist:
+                pass
+    store_bugs(bugs)
