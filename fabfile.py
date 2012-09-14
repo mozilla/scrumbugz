@@ -17,7 +17,19 @@ def heroku_django(cmd):
 
 
 def deploy():
+    push()
+    collect_static()
+    syncdb()
+
+
+def push():
     local('git push {0} master'.format(env.git_remote))
+
+
+def collect_static():
     heroku_django('collectstatic --noinput')
+
+
+def syncdb():
     heroku_django('syncdb')
     heroku_django('migrate')
