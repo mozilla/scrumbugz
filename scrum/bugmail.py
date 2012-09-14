@@ -8,6 +8,10 @@ from email.parser import Parser
 from scrum.models import BZProduct
 from scrum.utils import get_setting_or_env
 
+try:
+    import newrelic.agent
+except ImportError:
+    newrelic = False
 
 BUGMAIL_HOST = get_setting_or_env('BUGMAIL_HOST')
 BUGMAIL_USER = get_setting_or_env('BUGMAIL_USER')
@@ -43,6 +47,8 @@ def get_messages(delete=True, max_get=50):
         conn.pass_(BUGMAIL_PASS)
         num_messages = len(conn.list()[1])
         num_get = max(num_messages, max_get)
+        if newrelic:
+            newrelic.agent.record_custom_metric('Custom/AllEmail', num_get)
         for msgid in range(1, num_get + 1):
             msg_str = '\n'.join(conn.retr(msgid)[1])
             msg = Parser().parsestr(msg_str)

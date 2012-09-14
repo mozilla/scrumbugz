@@ -7,7 +7,6 @@ from scrum.bugmail import extract_bug_info, get_bugmails
 from scrum.models import Bug, store_bugs
 from scrum.utils import chunked
 
-
 try:
     import newrelic.agent
 except ImportError:
@@ -66,7 +65,7 @@ def update_bug_chunks(bugs, chunk_size=50):
     :param bugs: Iterable of bug objects.
     """
     numbugs = 0
-    for bchunk in chunked(bugs, 50):
+    for bchunk in chunked(bugs, chunk_size):
         numbugs += len(bugs)
         log.debug("Updating %d bugs", len(bugs))
         update_bugs.delay([b.id for b in bchunk])
