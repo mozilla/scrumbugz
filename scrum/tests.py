@@ -194,10 +194,14 @@ class TestSprint(TestCase):
         }))
 
     def test_get_products(self):
-        self.assertDictEqual(self.p.get_products(), {
+        prods = self.p.get_products()
+        expected = {
             'Input': [],
             'Lebowski Enterprise': ['Rugs', 'Urban Achievers'],
-        })
+        }
+        self.assertSetEqual(set(prods.keys()), set(expected.keys()))
+        for prod in expected.keys():
+            self.assertSetEqual(set(prods[prod]), set(expected[prod]))
 
     def test_get_components(self):
         self.assertSetEqual(set(self.p.get_components()),
