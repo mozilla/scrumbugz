@@ -3,27 +3,7 @@ from django.core.validators import validate_comma_separated_integer_list
 
 import floppyforms as forms
 
-from scrum.models import BugzillaURL, Project, Sprint, Team, BZProduct
-
-
-def validate_bzurl(url):
-    if not url.startswith('https://bugzilla.mozilla.org/buglist.cgi?'):
-        raise ValidationError('Must be a valid bugzilla.mozilla.org '
-                                    'URL.')
-    if 'cmdtype' in url or 'namedcmd' in url:
-        raise ValidationError('Cannot use named commands or saved '
-                                    'searches.')
-
-
-class BZURLField(forms.URLField):
-    def __init__(self, *args, **kwargs):
-        super(BZURLField, self).__init__(*args, **kwargs)
-        if self.label is None:
-            self.label = u'Bugzilla URL'
-        self.widget = forms.URLInput(attrs={
-            'placeholder': 'https://bugzilla.mozilla.org/...',
-        })
-        self.validators.append(validate_bzurl)
+from scrum.models import Project, Sprint, Team, BZProduct
 
 
 date5 = forms.DateInput(attrs={
@@ -51,6 +31,39 @@ class ProjectForm(forms.ModelForm):
             'slug',
             'team',
         )
+
+
+class CreateProjectForm(ProjectForm):
+    """Form for creating new projects."""
+    product = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'placeholder': 'Bugzilla Product/Component',
+        }),
+        help_text=('Select the "__ALL__" component '
+                   'to include the entire Product.'),
+    )
+
+    def clean_product(self):
+        prod = self.cleaned_data['product']
+        if prod and '/' not in prod:
+            raise ValidationError('Must be in the form "product/component"')
+        return prod
+
+    def save(self, commit=True):
+        obj = super(CreateProjectForm, self).save(commit)
+        if commit:
+            self.add_product(obj)
+        return obj
+
+    def add_product(self, obj):
+        prod = self.cleaned_data['product']
+        if prod:
+            prod, comp = prod.split('/', 1)
+            kwargs = {'name': prod, 'project': obj}
+            if comp != '__ALL__':
+                kwargs['component'] = comp
+            obj.products.create(**kwargs)
 
 
 class SprintForm(forms.ModelForm):
@@ -117,24 +130,6 @@ class ProjectBugsForm(SprintBugsForm):
         fields = ('new_bugs',)
 
 
-class CreateFormMixin(forms.ModelForm):
-    url = BZURLField(required=False)
-
-    def save(self, commit=True):
-        obj = super(CreateFormMixin, self).save(commit)
-        if commit:
-            self.add_url(obj)
-        return obj
-
-    def add_url(self, obj):
-        if self.cleaned_data['url']:
-            obj.urls.create(url=self.cleaned_data['url'])
-
-
-class CreateProjectForm(CreateFormMixin, ProjectForm):
-    """Form for creating new projects."""
-
-
 class CreateTeamForm(forms.ModelForm):
 
     class Meta:
@@ -142,16 +137,6 @@ class CreateTeamForm(forms.ModelForm):
         fields = (
             'name',
             'slug',
-        )
-
-
-class BZURLForm(forms.ModelForm):
-    url = BZURLField()
-
-    class Meta:
-        model = BugzillaURL
-        fields = (
-            'url',
         )
 
 

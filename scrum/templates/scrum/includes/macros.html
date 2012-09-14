@@ -1,3 +1,13 @@
+{% macro toggle_stats_button(off=False) -%}
+  <div class="pull-right">
+    <div class="btn-group pull-right stats-toggle" data-toggle="buttons-radio">
+      <button class="btn stats-on{{ ' active' if not off }}">On</button>
+      <button class="btn stats-off{{ ' active' if off }}">Off</button>
+    </div>
+    <strong class="toggle-graphs-label">Pretty Graphs:</strong>
+  </div>
+{% endmacro %}
+
 {% macro left_nav(name, items, active=None) -%}
   <ul class="nav nav-list">
     <li class="nav-header">

@@ -61,7 +61,7 @@ class BugsDataMixin(object):
         if self.request.META.get('HTTP_CACHE_CONTROL') == 'no-cache':
             self.bugs_kwargs['refresh'] = True
             messages.info(self.request, "The bugs will be refreshed from "
-                          "Bugzilla in 10 minutes or so.")
+                          "Bugzilla in a minute or two.")
         if 'all' in self.request.GET:
             self.bugs_kwargs['scrum_only'] = False
         try:

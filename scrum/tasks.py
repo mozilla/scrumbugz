@@ -5,6 +5,7 @@ from celery import task
 from bugzilla.api import bugzilla
 from scrum.bugmail import extract_bug_info, get_bugmails
 from scrum.models import Bug, store_bugs
+from scrum.utils import chunked
 
 
 try:
@@ -57,3 +58,16 @@ def update_bugs(bug_ids):
             except Bug.DoesNotExist:
                 pass
     store_bugs(bugs)
+
+
+def update_bug_chunks(bugs, chunk_size=50):
+    """
+    Update bugs in chunks of `chunk_size`.
+    :param bugs: Iterable of bug objects.
+    """
+    numbugs = 0
+    for bchunk in chunked(bugs, 50):
+        numbugs += len(bugs)
+        log.debug("Updating %d bugs", len(bugs))
+        update_bugs.delay([b.id for b in bchunk])
+    log.debug("Total bugs updated: %d", numbugs)

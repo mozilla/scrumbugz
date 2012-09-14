@@ -22,8 +22,9 @@ ul.jq-ui-autocomplete li.active {
 }
 
 .product {
-    color: #969696;
-    font-size: 0.65em;
+    color: #777;
+    font-size: 0.75em;
+    line-height: 1em;
     width: 30%;
     display: inline-block;
     overflow: hidden;
@@ -37,4 +38,5 @@ ul.jq-ui-autocomplete li.active {
     display: inline-block;
     margin-left: 5px;
     font-size: 0.75em;
+    line-height: 1em;
 }

@@ -265,3 +265,9 @@ tr.active td {
 .act-toggle-sprint i {
     background-position: -216px -120px;
 }
+
+.toggle-graphs-label {
+    position: relative;
+    right: 5px;
+    top: 5px;
+}

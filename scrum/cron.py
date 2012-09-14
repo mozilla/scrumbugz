@@ -10,8 +10,7 @@ from cronjobs import register
 
 from bugzilla.api import bugzilla
 from scrum.models import Bug, BugzillaURL, BZProduct, Sprint
-from scrum.tasks import update_bugs
-from scrum.utils import chunked
+from scrum.tasks import update_bug_chunks
 
 
 CACHE_BUGS_FOR = timedelta(hours=getattr(settings, 'CACHE_BUGS_FOR', 4))
@@ -21,12 +20,7 @@ log = logging.getLogger(__name__)
 @register
 def update_old_format_bugs():
     bugs = Bug.objects.filter(assigned_to__contains='||').only('id')
-    numbugs = 0
-    for bchunk in chunked(bugs, 50):
-        numbugs += len(bugs)
-        log.debug("Updating %d bugs", len(bugs))
-        update_bugs.delay([b.id for b in bchunk])
-    log.debug("Total bugs updated: %d", numbugs)
+    update_bug_chunks(bugs)
 
 
 @register

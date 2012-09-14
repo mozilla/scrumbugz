@@ -1,16 +1,17 @@
 {% extends "scrum/base_team.html" %}
-{% from "scrum/includes/macros.html" import bug_table with context %}
+{% from "scrum/includes/macros.html" import toggle_stats_button, bug_table with context %}
 
 {% block content %}
   <div class="row">
     <div class="span12">
-      <button class="btn btn-primary pull-right stats-toggle" data-toggle="button">Stats</button>
       {% if perms.scrum.change_sprint %}
         <a class="btn btn-primary pull-right"
            href="{{ url('scrum_sprint_edit', team.slug, sprint.slug) }}">
           <i class="icon-edit icon-white"></i> Update Sprint
         </a>
       {% endif %}
+
+      {{ toggle_stats_button(off=True) }}
 
       <h1>
         <a href="{{ team.get_absolute_url() }}">{{ team.name }}</a>
@@ -108,41 +109,5 @@
       });
     });
   </script>
-  <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"></script>
   <script src="{{ STATIC_URL }}js/sprint_bug_management.js"></script>
 {% endblock %}
-
-
-
-{#
-    <div class="span2">
-      <div class="well sidebar-nav">
-        <ul class="nav nav-list">
-          <li class="nav-header">Sprints</li>
-          {% for s in team.sprints.all() %}
-            <li{% if s == sprint %} class="active"{% endif %}><a href="{{ url('scrum_sprint_bugs', team.slug, s.slug) }}">{{ s.name }}</a></li>
-          {% endfor %}
-        </ul>
-      </div>
-    </div>
-    <div class="span5">
-      <h2>Backlog</h2>
-      <ul class="backlog storylist well">
-        {% for bug in team.get_backlog() %}
-          {% include "scrum/storylist_item.html" %}
-        {% endfor %}
-      </ul>
-    </div>
-    <div class="span5">
-      <div class="alert alert-error hide" id="form_error">
-        <a class="close" data-dismiss="alert" href="#">&times;</a>
-        You must select at least one story
-      </div>
-
-      <h2>Sprint: Points = <span id="current-points"></span></h2>
-      <ul class="sprint storylist well">
-        {% for bug in sprint.cached_bugs.all() %}
-          {% include "scrum/storylist_item.html" %}
-        {% endfor %}
-      </ul>
-    </div>#}

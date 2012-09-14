@@ -27,8 +27,8 @@ from markdown import markdown
 from model_utils.managers import PassThroughManager
 
 from bugzilla.api import BUG_OPEN_STATUSES, bugzilla, is_closed
-from .utils import (date_to_js, date_range, get_bz_url_for_buglist,
-                    parse_bz_url, parse_whiteboard)
+from scrum.utils import (date_to_js, date_range, parse_bz_url,
+                         parse_whiteboard)
 
 
 log = logging.getLogger(__name__)
@@ -159,17 +159,9 @@ class DBBugsMixin(object):
             self.refresh_bugs_data(bugs)
         return bugs
 
-    def get_bz_search_url(self, bugs=None):
-        bugs_all = bugs if bugs is not None else self.bugs.all()
-        if bugs_all:
-            return BugzillaURL(url=get_bz_url_for_buglist(bugs_all))
-        return None
-
     def refresh_bugs_data(self, bugs=None):
-        bzurl = self.get_bz_search_url(bugs)
-        if bzurl:
-            bzurl.one_time = True
-            bzurl.save()
+        from scrum.tasks import update_bug_chunks
+        update_bug_chunks(bugs if bugs is not None else self.bugs.all())
 
     def get_bugs(self, **kwargs):
         kwargs['bug_filters'] = {'sprint__isnull': True}
@@ -358,10 +350,7 @@ class Sprint(DBBugsMixin, BugsListMixin, models.Model):
 
     def refresh_bugs_data(self, bugs=None):
         self._clear_bugs_data_cache()
-        bzurl = self.get_bz_search_url(bugs)
-        if bzurl:
-            bzurl.one_time = True
-            bzurl.save()
+        super(Sprint, self).refresh_bugs_data(bugs)
 
     def update_bugs(self, bugs):
         """
@@ -489,10 +478,8 @@ class BugQuerySet(QuerySet):
         """
         Refresh the data for all matched bugs from Bugzilla.
         """
-        bids = self.only('id')
-        if bids:
-            BugzillaURL.objects.create(url=get_bz_url_for_buglist(bids),
-                                       one_time=True)
+        from scrum.tasks import update_bug_chunks
+        update_bug_chunks(self.only('id'))
 
     def scrum_only(self):
         """
@@ -657,10 +644,13 @@ class Bug(models.Model):
             cpoints = 0
             closed = False
             for h in self.history:
-                hdate = dateutil.parser.parse(h['change_time']).date()
+                # TODO remove 'change_time' when all bugs are updated
+                hdate = dateutil.parser.parse(h.get('when') or
+                                              h.get('change_time')).date()
                 for change in h['changes']:
                     fn = change['field_name']
-                    if fn == 'status':
+                    # TODO remove 'status' when all bugs are updated
+                    if fn == 'bug_status' or fn == 'status':
                         now_closed = is_closed(change['added'])
                         if closed != now_closed:
                             pts = 0 if now_closed else cpoints

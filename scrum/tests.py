@@ -17,8 +17,8 @@ from django.utils import simplejson as json
 from scrum import bugmail as scrum_email
 from scrum import models as scrum_models
 from scrum import tasks as scrum_tasks
-from scrum.forms import BZURLForm, CreateProjectForm, SprintBugsForm
-from scrum.models import BugSprintLog, BugzillaURL, Bug, Project, Sprint
+from scrum.forms import CreateProjectForm, SprintBugsForm
+from scrum.models import BugSprintLog, Bug, Project, Sprint
 from scrum.tasks import update_product
 
 
@@ -207,13 +207,9 @@ class TestSprint(TestCase):
                             set(['Urban Achievers', 'Rugs', 'Bowling']))
 
     def test_sprint_bug_logging(self):
-        bzurl = BugzillaURL.objects.create(
-            url='http://example.com/?bug_id=123454'
-        )
-        bugs = bzurl.get_bugs()
-        self.assertSetEqual(bugs, set(Bug.objects.all()))
-        self.assertEqual(0, BugSprintLog.objects.count())
         bugs = self.p.get_backlog(scrum_only=False)
+        self.assertSetEqual(set(bugs), set(Bug.objects.open()))
+        self.assertEqual(0, BugSprintLog.objects.count())
         self.s.update_bugs(bugs)
         self.assertEqual(len(bugs), BugSprintLog.objects.count())
         action = Bug.objects.all()[0].sprint_actions.all()[0].action
@@ -319,38 +315,24 @@ class TestSprint(TestCase):
 class TestForms(TestCase):
     fixtures = ['test_data.json']
 
-    def test_bugzilla_url(self):
-        form_data = {"url": "http://localhost/?bugs"}
-        form = BZURLForm(form_data)
-        eq_(False, form.is_valid())
-        ok_('url' in form.errors.keys())
-        form_data = {"url": "https://bugzilla.mozilla.org/"
-                            "buglist.cgi?cmdtype=runnamed;"
-                            "namedcmd=mdn_20120410;list_id=2693036"}
-        form = BZURLForm(form_data)
-        eq_(False, form.is_valid())
-        ok_('url' in form.errors.keys())
-        form_data = {"url": GOOD_BZ_URL}
-        form = BZURLForm(form_data)
-        eq_(True, form.is_valid())
-
     def test_create_project_form(self):
         form_data = {
             'name': 'Best Project Ever',
             'slug': 'srsly',
             'team': 1,
-            'url': 'not a url',
+            'product': 'Websites',
         }
         form = CreateProjectForm(form_data)
         eq_(False, form.is_valid())
-        ok_('url' in form.errors)
-        form_data['url'] = GOOD_BZ_URL
+        ok_('product' in form.errors)
+        form_data['product'] = 'Websites/__ALL__'
         form = CreateProjectForm(form_data)
         eq_(True, form.is_valid())
         project = form.save()
-        eq_(project.urls.count(), 1)
-        eq_(project.urls.all()[0].url, GOOD_BZ_URL)
-        # no url required
+        eq_(project.products.count(), 1)
+        eq_(project.products.all()[0].name, 'Websites')
+        eq_(project.products.all()[0].component, '')
+        # no product required
         form = CreateProjectForm({
             'name': 'FO REAL Best Ever',
             'slug': 'srsly-fo-real',

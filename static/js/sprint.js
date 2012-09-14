@@ -241,14 +241,14 @@
         }
     };
 
-    /* Show hide stats area, must use negative position due to flot rendering */
-    $(".stats-toggle").click(function() {
-        $('.stats-container').toggleClass('offscreen-hide');
-        if ($('.stats-container').hasClass('offscreen-hide')) {
-            $(this).removeClass('active');
-        } else {
-            $(this).addClass('active');
-        }
+    $(function(){
+        /* Show hide stats area, must use negative position due to flot rendering */
+        $('.stats-toggle button').on('click', function(){
+            if(!$(this).hasClass('active')){
+                var action = $(this).is('.stats-on') ? 'removeClass' : 'addClass';
+                $('.stats-container')[action]('offscreen-hide');
+            }
+        });
     });
 
 })(jQuery);

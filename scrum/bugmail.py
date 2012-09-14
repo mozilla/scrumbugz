@@ -5,8 +5,6 @@ import poplib
 import re
 from email.parser import Parser
 
-from django.conf import settings
-
 from scrum.models import BZProduct
 from scrum.utils import get_setting_or_env
 
