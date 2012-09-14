@@ -33,3 +33,6 @@ def collect_static():
 def syncdb():
     heroku_django('syncdb')
     heroku_django('migrate')
+
+def cron(command):
+    heroku_django('cron {0}'.format(command))

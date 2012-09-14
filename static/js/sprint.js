@@ -247,8 +247,17 @@
             if(!$(this).hasClass('active')){
                 var action = $(this).is('.stats-on') ? 'removeClass' : 'addClass';
                 $('.stats-container')[action]('offscreen-hide');
+                $.cookie('show_pretty_graphs',
+                         action === 'addClass' ? 'false' : 'true',
+                         {expires: 90});
             }
         });
+
+        var show_graphs = $.cookie('show_pretty_graphs');
+        if(show_graphs !== null){
+            $(show_graphs === 'false' ? '.stats-off' : '.stats-on').click();
+        }
+
     });
 
 })(jQuery);
