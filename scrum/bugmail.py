@@ -17,7 +17,7 @@ BUGMAIL_HOST = get_setting_or_env('BUGMAIL_HOST')
 BUGMAIL_USER = get_setting_or_env('BUGMAIL_USER')
 BUGMAIL_PASS = get_setting_or_env('BUGMAIL_PASS')
 BUG_ID_RE = re.compile(r'\[Bug (\d+)\]')
-BUG_SUMMARY_RE = re.compile(r'\[[^]]\](?: New:)? (.+)$')
+BUG_SUMMARY_RE = re.compile(r'[^\]]+\](?: New:)? (.+)$')
 # 'admin' also comes through but is for account creation.
 BUGZILLA_TYPES = (
     'new',
