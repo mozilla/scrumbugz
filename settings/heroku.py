@@ -50,3 +50,6 @@ if os.environ.get('MEMCACHIER_SERVERS'):
     os.environ['MEMCACHE_SERVERS'] = os.environ.get('MEMCACHIER_SERVERS')
     os.environ['MEMCACHE_USERNAME'] = os.environ.get('MEMCACHIER_USERNAME')
     os.environ['MEMCACHE_PASSWORD'] = os.environ.get('MEMCACHIER_PASSWORD')
+
+if os.environ.get('BUGZILLA_BASE_URL'):
+    BUGZILLA_BASE_URL = os.environ['BUGZILLA_BASE_URL']

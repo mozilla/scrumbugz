@@ -18,8 +18,7 @@ def get_setting_or_env(name, default=None):
 
 
 log = logging.getLogger(__name__)
-BZ_URL = get_setting_or_env('BUGZILLA_API_URL',
-                            'https://bugzilla.mozilla.org/xmlrpc.cgi')
+BZ_URL = get_setting_or_env('BUGZILLA_API_URL')
 BZ_USER = get_setting_or_env('BUGZILLA_USER')
 BZ_PASS = get_setting_or_env('BUGZILLA_PASS')
 SESSION_COOKIES_CACHE_KEY = 'bugzilla-session-cookies'

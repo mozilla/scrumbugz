@@ -13,6 +13,16 @@ else:
     except ImportError:
         from .base import *
 
+BUGZILLA_ALL_URLS = {
+    'BUGZILLA_API_URL': '/xmlrpc.cgi',
+    'BUGZILLA_SHOW_URL': '/show_bug.cgi?',
+    'BUGZILLA_FILE_URL': '/enter_bug.cgi?',
+    'BUGZILLA_SEARCH_URL': '/buglist.cgi?',
+}
+for attrname, relurl in BUGZILLA_ALL_URLS.items():
+    if attrname not in locals():
+        globals()[attrname] = BUGZILLA_BASE_URL + relurl
+
 DEFAULT_LOG_LEVEL = 'DEBUG' if DEBUG else 'INFO'
 LOGGING = {
     'version': 1,

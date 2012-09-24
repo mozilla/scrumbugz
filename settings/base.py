@@ -14,10 +14,7 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
-BUGZILLA_API_URL = 'https://bugzilla.mozilla.org/xmlrpc.cgi'
-BUGZILLA_SHOW_URL = 'https://bugzilla.mozilla.org/show_bug.cgi?'
-BUGZILLA_FILE_URL = 'https://bugzilla.mozilla.org/enter_bug.cgi?'
-BUGZILLA_SEARCH_URL = 'https://bugzilla.mozilla.org/buglist.cgi?'
+BUGZILLA_BASE_URL = 'https://bugzilla.mozilla.org'
 CACHE_BUGS_FOR = 4  # hours
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'

@@ -46,7 +46,8 @@ def get_messages(delete=True, max_get=50):
         conn.user(BUGMAIL_USER)
         conn.pass_(BUGMAIL_PASS)
         num_messages = len(conn.list()[1])
-        num_get = max(num_messages, max_get)
+        num_get = min(num_messages, max_get)
+        log.debug('Getting %d bugmails', num_get)
         if newrelic:
             newrelic.agent.record_custom_metric('Custom/AllEmail', num_get)
         for msgid in range(1, num_get + 1):
