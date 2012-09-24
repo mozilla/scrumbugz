@@ -55,10 +55,12 @@ def get_messages(delete=True, max_get=50):
             msg = Parser().parsestr(msg_str)
             if is_bugmail(msg):
                 if is_interesting(msg):
+                    log.debug('Found interesting bugmail')
                     messages.append(msg)
                 if delete:
                     conn.dele(msgid)
         conn.quit()
+    log.debug('Found %d interesting bugmails', len(messages))
     return messages
 
 
@@ -71,6 +73,7 @@ def is_interesting(msg):
     all_products = BZProduct.objects.full_list()
     prod = msg['x-bugzilla-product']
     comp = msg['x-bugzilla-component']
+    log.debug('Bugmail found with product=%s and component=%s', prod, comp)
     if prod in all_products:
         if all_products[prod] and comp not in all_products[prod]:
             return False
