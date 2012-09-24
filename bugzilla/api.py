@@ -25,6 +25,7 @@ SESSION_COOKIES_CACHE_KEY = 'bugzilla-session-cookies'
 PRODUCTS_CACHE = None
 BUG_OPEN_STATUSES = [
     'UNCONFIRMED',
+    'CONFIRMED',
     'ASSIGNED',
     'REOPENED',
     'NEW',
