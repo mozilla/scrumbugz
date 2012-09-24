@@ -198,23 +198,28 @@ class BugzillaAPI(xmlrpclib.ServerProxy):
         # mix in history and comments
         history = comments = {}
         if get_history:
-            log.debug('Getting history for bugs: %s', bug_ids)
-            history = self.Bug.history({'ids': bug_ids}).get('bugs')
-            history = dict((h['id'], h['history']) for h in history)
+            history = self.get_history(bug_ids)
         if get_comments:
-            log.debug('Getting comments for bugs: %s', bug_ids)
-            comments = self.Bug.comments({
-                'ids': bug_ids,
-                'include_fields': ['id'],
-            }).get('bugs')
-            comments = dict((int(bid), cids) for bid, cids
-                            in comments.iteritems())
+            comments = self.get_comments(bug_ids)
         for bug in bugs['bugs']:
             bug['history'] = history.get(bug['id'], [])
             bug['comments_count'] = len(comments.get(bug['id'], {})
                                         .get('comments', []))
             clean_bug_data(bug)
         return bugs
+
+    def get_history(self, bug_ids):
+        log.debug('Getting history for bugs: %s', bug_ids)
+        history = self.Bug.history({'ids': bug_ids}).get('bugs')
+        return dict((h['id'], h['history']) for h in history)
+
+    def get_comments(self, bug_ids):
+        log.debug('Getting comments for bugs: %s', bug_ids)
+        comments = self.Bug.comments({
+            'ids': bug_ids,
+            'include_fields': ['id'],
+            }).get('bugs')
+        return dict((int(bid), cids) for bid, cids in comments.iteritems())
 
 
 bugzilla = BugzillaAPI(BZ_URL, transport=SessionTransport(use_datetime=True),
