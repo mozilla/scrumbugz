@@ -51,7 +51,6 @@ CACHES = {
 }
 PYLIBMC_MIN_COMPRESS_LEN = 150 * 1024
 CACHE_COUNT_TIMEOUT = 10  # seconds, not too long.
-CACHE_EMPTY_QUERYSETS = True
 
 TIME_ZONE = 'America/New_York'
 LANGUAGE_CODE = 'en-us'
