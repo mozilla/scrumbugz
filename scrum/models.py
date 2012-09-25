@@ -226,7 +226,9 @@ class Project(CachingMixin, DBBugsMixin, BugsListMixin, models.Model):
         bugs = bugs.by_products(self.get_products())
         if self.scrum_only:
             bugs = bugs.scrum_only()
-        return bugs.no_cache()
+        # only cache for a short time as bugs added to product/component
+        # won't trigger automatic cache invalidation in cachemachine.
+        return bugs.cache(30)
 
     def get_products(self):
         return get_bzproducts_dict(self.products.all())
