@@ -43,7 +43,7 @@ CACHES = {
         'BACKEND': 'scrum.cache_backend.PyLibMCCacheFix',
         'TIMEOUT': 500,
         'BINARY': True,
-        'JOHNNY_CACHE': True,
+        #'JOHNNY_CACHE': True,
         'OPTIONS': {
             'tcp_nodelay': True,
             'ketama': True,
@@ -101,8 +101,8 @@ TEMPLATE_LOADERS = (
 )
 
 MIDDLEWARE_CLASSES = (
-    'johnny.middleware.LocalStoreClearMiddleware',
-    'johnny.middleware.QueryCacheMiddleware',
+#    'johnny.middleware.LocalStoreClearMiddleware',
+#    'johnny.middleware.QueryCacheMiddleware',
     'middleware.EnforceHostnameMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
