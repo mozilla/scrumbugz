@@ -41,6 +41,14 @@ scrum_models.bugzilla.get_bugs.side_effect = lambda *x, **y: deepcopy(BUG_DATA)
 scrum_tasks.bugzilla.get_bugs.side_effect = lambda *x, **y: deepcopy(BUG_DATA)
 
 
+def get_bug_ids_mock(**kwargs):
+    return [b['id'] for b in BUG_DATA.copy()['bugs']]
+
+
+scrum_models.bugzilla.get_bug_ids.side_effect = get_bug_ids_mock
+scrum_tasks.bugzilla.get_bug_ids.side_effect = get_bug_ids_mock
+
+
 def get_messages_mock(delete=True):
     msgs = []
     for fn in BUGMAIL_FILES:

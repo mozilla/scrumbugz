@@ -45,7 +45,7 @@ def update_product(product, component=None):
         kwargs['component'] = component
     bug_ids = bugzilla.get_bug_ids(**kwargs)
     log.debug('Updating %d bugs from %s', len(bug_ids), kwargs)
-    for bids in chunked(bug_ids, 50):
+    for bids in chunked(bug_ids, 100):
         update_bugs.delay(bids)
 
 
@@ -62,7 +62,7 @@ def update_bugs(bug_ids):
     store_bugs(bugs)
 
 
-def update_bug_chunks(bugs, chunk_size=50):
+def update_bug_chunks(bugs, chunk_size=100):
     """
     Update bugs in chunks of `chunk_size`.
     :param bugs: Iterable of bug objects.
