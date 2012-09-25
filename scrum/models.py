@@ -226,7 +226,7 @@ class Project(CachingMixin, DBBugsMixin, BugsListMixin, models.Model):
         bugs = bugs.by_products(self.get_products())
         if self.scrum_only:
             bugs = bugs.scrum_only()
-        return bugs
+        return bugs.no_cache()
 
     def get_products(self):
         return get_bzproducts_dict(self.products.all())
