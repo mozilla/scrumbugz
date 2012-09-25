@@ -4,8 +4,12 @@ from datetime import date
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
+from django.core.cache import cache
+from django.core.exceptions import ValidationError
 from django.core.urlresolvers import reverse
-from django.http import (HttpResponse, HttpResponseForbidden,
+from django.core.validators import validate_comma_separated_integer_list
+from django.http import (HttpResponse, HttpResponseBadRequest,
+                         HttpResponseForbidden, HttpResponseNotFound,
                          HttpResponsePermanentRedirect)
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.context import Context
@@ -323,3 +327,26 @@ class RedirectOldURLsView(View):
     def get(self, request, *args, **kwargs):
         path = kwargs.get('path', '')
         return HttpResponsePermanentRedirect('/p/' + path)
+
+
+class CheckRecentUpdates(View):
+    """
+    View that when posted a list of bug IDs will return a status code
+    indicating whether any were recently updated.
+    204 = Yes
+    404 = No
+    400 = What you sent me was bad
+    """
+    def post(self, request):
+        bug_ids = request.POST.get('bug_ids')
+        if bug_ids:
+            try:
+                validate_comma_separated_integer_list(bug_ids)
+            except ValidationError:
+                return HttpResponseBadRequest()
+            bug_ids = bug_ids.strip().split(',')
+            bug_keys = ['bug:updated:' + bid for bid in bug_ids]
+            updated = cache.get_many(bug_keys)
+            if updated:
+                return HttpResponse(status=204)  # no content
+        return HttpResponseNotFound()  # not found

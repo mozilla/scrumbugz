@@ -1,9 +1,9 @@
 from django.conf.urls import patterns, url
 
-from scrum.views import (CreateBZProductView, CreateProjectView,
-                         CreateSprintView, CreateTeamView, DeleteBZProductView,
-                         EditProjectView, EditSprintView, EditTeamView,
-                         ListProjectsView, ListTeamsView,
+from scrum.views import (CheckRecentUpdates, CreateBZProductView,
+                         CreateProjectView, CreateSprintView, CreateTeamView,
+                         DeleteBZProductView, EditProjectView, EditSprintView,
+                         EditTeamView, ListProjectsView, ListTeamsView,
                          ManageProjectBugsView, ManageSprintBugsView,
                          ProjectView, RedirectOldURLsView, SprintView,
                          TeamView)
@@ -36,4 +36,6 @@ urlpatterns = patterns('',
     url(r'^t/(?P<slug>[-\w\.]+)/(?P<sslug>[-\w\.]+)/bugs/$',
         ManageSprintBugsView.as_view(), name='scrum_sprint_bugs'),
     url(r'^projects/(?P<path>.*)', RedirectOldURLsView.as_view()),
+    url(r'bugs_updated/$', CheckRecentUpdates.as_view(),
+        name='scrum_bugs_updated'),
 )

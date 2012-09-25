@@ -768,6 +768,11 @@ def log_bug_actions(sender, instance, **kwargs):
             BugSprintLog.objects.added_to_sprint(instance, instance.sprint)
 
 
+@receiver(post_save, sender=Bug)
+def cache_bug_update(sender, instance, **kwargs):
+    cache.set('bug:updated:%s' % instance.id, True, 30)
+
+
 @receiver(pre_save, sender=Sprint)
 def process_notes(sender, instance, **kwargs):
     if instance.notes:

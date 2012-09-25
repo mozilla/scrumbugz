@@ -20,15 +20,15 @@
         ], lines: {fill: false}, points: {show: false}, color: '#0f0', label: 'Ideal'};
         self.bug_plot = {data: bugs_data.bugdown, color: '#db9c04', label: 'Bugs'};
         self.completed_data = [];
-        for (var i=0;i < bugs_data.burndown_axis.length; i++){
-          var prev = i-1;
-          if (prev < 0) {
-              prev = 0;
-          }
-          if (bugs_data.burndown[i] === undefined){
-            bugs_data.burndown[i] = 0;
-          }
-          self.completed_data.push([bugs_data.burndown_axis[i], bugs_data.burndown[prev][1]-bugs_data.burndown[i][1]]);
+        for (var i = 0; i < bugs_data.burndown_axis.length; i++) {
+            var prev = i - 1;
+            if (prev < 0) {
+                prev = 0;
+            }
+            if (bugs_data.burndown[i] === undefined) {
+                bugs_data.burndown[i] = 0;
+            }
+            self.completed_data.push([bugs_data.burndown_axis[i], bugs_data.burndown[prev][1] - bugs_data.burndown[i][1]]);
         }
         self.completed_plot = {
             data: self.completed_data,
