@@ -43,7 +43,10 @@ def update_product(product, component=None):
     kwargs = {'product': product, 'scrum_only': False}
     if component:
         kwargs['component'] = component
-    store_bugs(bugzilla.get_bugs(**kwargs))
+    bug_ids = bugzilla.get_bug_ids(**kwargs)
+    log.debug('Updating %d bugs from %s', len(bug_ids), kwargs)
+    for bids in chunked(bug_ids, 50):
+        update_bugs.delay(bids)
 
 
 @task(name='update_bugs')

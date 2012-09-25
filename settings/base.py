@@ -43,7 +43,6 @@ CACHES = {
         'BACKEND': 'scrum.cache_backend.PyLibMCCacheFix',
         'TIMEOUT': 500,
         'BINARY': True,
-        #'JOHNNY_CACHE': True,
         'OPTIONS': {
             'tcp_nodelay': True,
             'ketama': True,
@@ -51,7 +50,8 @@ CACHES = {
     },
 }
 PYLIBMC_MIN_COMPRESS_LEN = 150 * 1024
-JOHNNY_MIDDLEWARE_KEY_PREFIX = 'jc_scrumbugz'
+CACHE_COUNT_TIMEOUT = 10  # seconds, not too long.
+CACHE_EMPTY_QUERYSETS = True
 
 TIME_ZONE = 'America/New_York'
 LANGUAGE_CODE = 'en-us'

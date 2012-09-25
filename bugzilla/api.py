@@ -171,6 +171,23 @@ class BugzillaAPI(xmlrpclib.ServerProxy):
             simple[p['name']] = [c['name'] for c in p['components']]
         return simple
 
+    def get_bug_ids(self, **kwargs):
+        """
+        Return a list of ids of bugs from a search
+        """
+        open_only = kwargs.pop('open_only', False)
+        scrum_only = kwargs.pop('scrum_only', True)
+        kwargs.update({
+            'include_fields': ['id'],
+        })
+        if open_only and 'status' not in kwargs:
+            kwargs['status'] = BUG_OPEN_STATUSES
+        if scrum_only and 'whiteboard' not in kwargs:
+            kwargs['whiteboard'] = ['u=', 'c=', 'p=']
+        log.debug('Searching bugs with kwargs: %s', kwargs)
+        bugs = self.Bug.search(kwargs)
+        return [bug['id'] for bug in bugs.get('bugs', [])]
+
     def get_bugs(self, **kwargs):
         open_only = kwargs.pop('open_only', False)
         scrum_only = kwargs.pop('scrum_only', True)
