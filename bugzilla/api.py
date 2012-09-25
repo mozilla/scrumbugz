@@ -225,5 +225,3 @@ class BugzillaAPI(xmlrpclib.ServerProxy):
 
 bugzilla = BugzillaAPI(BZ_URL, transport=SessionTransport(use_datetime=True),
                        allow_none=True)
-if BZ_USER and not cache.get(SESSION_COOKIES_CACHE_KEY):
-    bugzilla.login()

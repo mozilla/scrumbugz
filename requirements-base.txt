@@ -18,6 +18,6 @@ nose-progressive==1.3
 pytz==2012d
 django-cronjobs==0.2.3
 django-model-utils==1.1.0
-johnny-cache==1.4
 celery==3.0.9
 django-celery==3.0.9
+git+https://github.com/jbalogh/django-cache-machine.git@3b998e3b876018bc6f490e79abf6416004cde146

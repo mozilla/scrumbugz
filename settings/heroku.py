@@ -12,8 +12,6 @@ PROD_MODE = os.environ.get('PROD_MODE')
 if PROD_MODE:
     ENFORCE_HOSTNAME = 'scrumbu.gs'
     ENABLE_GA = True
-else:
-    CELERY_REDIS_MAX_CONNECTIONS = 1
 
 ADMINS = (
     ('Paul', 'pmac@mozilla.com'),

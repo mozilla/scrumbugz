@@ -14,7 +14,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.core.validators import RegexValidator
 from django.db import models, transaction
-from django.db.models.query import QuerySet
+#from django.db.models.query import QuerySet
 from django.db.models.query_utils import Q
 from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
@@ -22,6 +22,7 @@ from django.utils.encoding import force_unicode
 from django.utils.timezone import now
 
 import dateutil.parser
+from caching.base import CachingManager, CachingMixin, CachingQuerySet
 from jsonfield import JSONField
 from markdown import markdown
 from model_utils.managers import PassThroughManager
@@ -168,10 +169,12 @@ class DBBugsMixin(object):
         return self._get_bugs(**kwargs)
 
 
-class Team(DBBugsMixin, BugsListMixin, models.Model):
+class Team(CachingMixin, DBBugsMixin, BugsListMixin, models.Model):
     name = models.CharField(max_length=200)
     slug = models.CharField(max_length=50, validators=[validate_slug],
                             db_index=True, unique=True)
+
+    objects = CachingManager()
 
     def get_bugs(self, **kwargs):
         """
@@ -194,11 +197,13 @@ class Team(DBBugsMixin, BugsListMixin, models.Model):
         return 'scrum_team_edit', [self.slug]
 
 
-class Project(DBBugsMixin, BugsListMixin, models.Model):
+class Project(CachingMixin, DBBugsMixin, BugsListMixin, models.Model):
     name = models.CharField(max_length=200)
     slug = models.CharField(max_length=50, validators=[validate_slug],
                             db_index=True, unique=True)
     team = models.ForeignKey(Team, related_name='projects', null=True)
+
+    objects = CachingManager()
 
     _date_cached = None
 
@@ -284,7 +289,7 @@ class BZProduct(models.Model):
     objects = BZProductManager()
 
 
-class Sprint(DBBugsMixin, BugsListMixin, models.Model):
+class Sprint(CachingMixin, DBBugsMixin, BugsListMixin, models.Model):
     team = models.ForeignKey(Team, related_name='sprints')
     name = models.CharField(max_length=200)
     slug = models.CharField(max_length=200, validators=[validate_slug],
@@ -299,6 +304,8 @@ class Sprint(DBBugsMixin, BugsListMixin, models.Model):
     bz_url = models.URLField(verbose_name='Bugzilla URL', max_length=2048,
                              null=True, blank=True)
     bugs_data_cache = JSONField(editable=False, null=True)
+
+    objects = CachingManager()
 
     class Meta:
         get_latest_by = 'created_date'
@@ -473,7 +480,7 @@ class BugzillaURL(models.Model):
         return self._get_bz_args().get('status_whiteboard')
 
 
-class BugQuerySet(QuerySet):
+class BugQuerySet(CachingQuerySet):
     def sync_bugs(self):
         """
         Refresh the data for all matched bugs from Bugzilla.
@@ -516,7 +523,7 @@ class BugQuerySet(QuerySet):
         return self.filter(reduce(operator.or_, qobjs, Q()))
 
 
-class BugManager(PassThroughManager):
+class BugManager(CachingManager, PassThroughManager):
     use_for_related_fields = True
 
     def get_query_set(self):
@@ -537,7 +544,7 @@ class BugManager(PassThroughManager):
         return bug, created
 
 
-class Bug(models.Model):
+class Bug(CachingMixin, models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     history = CompressedJSONField(blank=True)
     last_synced_time = models.DateTimeField(default=now)
