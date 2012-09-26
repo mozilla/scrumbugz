@@ -237,12 +237,10 @@ class TestSprint(TestCase):
             team=self.s.team
         )
         bug = Bug.objects.get(id=778465)
-        bug.sprint = None
-        bug.save()
+        self.s.update_bugs(remove=[778465])
         self.assertEqual(BugSprintLog.REMOVED,
                          bug.sprint_actions.all()[0].action)
-        bug.sprint = newsprint
-        bug.save()
+        newsprint.update_bugs([778465])
         self.assertEqual(BugSprintLog.ADDED,
                          bug.sprint_actions.all()[0].action)
 
@@ -260,8 +258,7 @@ class TestSprint(TestCase):
         self.assertEqual(bug.sprint, None)
         bug = Bug.objects.get(id=778465)
         self.assertEqual(bug.sprint, self.s)
-        bug.sprint = newsprint
-        bug.save()
+        newsprint.update_bugs([778465])
         self.assertEqual(bug.sprint_actions.count(), 3)
         self.assertEqual(BugSprintLog.REMOVED,
                          bug.sprint_actions.all()[1].action)
@@ -270,10 +267,14 @@ class TestSprint(TestCase):
 
     def test_backlog_bug_sync(self):
         self.s.update_bugs(self.p.get_backlog())
-        self.s.bugs.remove(Bug.objects.get(id=778465))
+        self.assertEqual(self.s.bug_actions.filter(
+            bug_id=778465,
+            action=BugSprintLog.ADDED
+        ).count(), 1)
+        self.s.update_bugs(remove=[778465])
         self.assertEqual(self.s.bugs.count(), 8)
         new_bug_ids = [778465, 778466, 781717]
-        self.s.update_bugs(new_bug_ids)
+        self.s.update_bugs([778465], self.s.bugs.exclude(id__in=new_bug_ids))
         self.assertEqual(self.s.bugs.count(), 3)
         all_bl_bug_ids = self.s.bugs.values_list('id', flat=True)
         self.assertSetEqual(set(all_bl_bug_ids), set(new_bug_ids))
@@ -283,6 +284,7 @@ class TestSprint(TestCase):
             action=BugSprintLog.REMOVED,
         ).count(), 0)
         # the bug was added back, thus the 2 ADDED actions.
+        print self.s.bug_actions.filter(bug_id=778465)
         self.assertEqual(self.s.bug_actions.filter(
             bug_id=778465,
             action=BugSprintLog.ADDED
@@ -290,11 +292,13 @@ class TestSprint(TestCase):
 
     def test_sprint_bug_management(self):
         self.s.update_bugs(self.p.get_backlog())
-        self.s.bugs.remove(Bug.objects.get(id=778465))
+        self.s.update_bugs(remove=[778465])
         self.assertEqual(self.s.bugs.count(), 8)
         new_bug_ids = [778465, 778466, 781717]
         form = SprintBugsForm(instance=self.s, data={
-            'new_bugs': ','.join(str(bid) for bid in new_bug_ids),
+            'add_bugs': '778465',
+            'remove_bugs': ','.join(str(b.id) for b in
+                                    self.s.bugs.exclude(id__in=new_bug_ids)),
         })
         self.assertTrue(form.is_valid())
         form.save()
@@ -305,21 +309,21 @@ class TestSprint(TestCase):
     def test_sprint_bugs_form_validation(self):
         # non digit
         form = SprintBugsForm(instance=self.s, data={
-            'new_bugs': '1234,234d,2345',
+            'add_bugs': '1234,234d,2345',
         })
         self.assertFalse(form.is_valid())
         # no commas
         form = SprintBugsForm(instance=self.s, data={
-            'new_bugs': '12342342345',
+            'add_bugs': '12342342345',
         })
         self.assertTrue(form.is_valid())
         # blank
         form = SprintBugsForm(instance=self.s, data={
-            'new_bugs': '',
+            'add_bugs': '',
         })
-        self.assertFalse(form.is_valid())
+        self.assertTrue(form.is_valid())
         form = SprintBugsForm(instance=self.s, data={
-            'new_bugs': '1234,23465,2345',
+            'add_bugs': '1234,23465,2345',
         })
         self.assertTrue(form.is_valid())
 

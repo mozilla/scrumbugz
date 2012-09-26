@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import hashlib
 import logging
 import operator
+from django.db.models.query import QuerySet
 import re
 import zlib
 from base64 import b64decode, b64encode
@@ -22,7 +23,6 @@ from django.utils.encoding import force_unicode
 from django.utils.timezone import now
 
 import dateutil.parser
-from caching.base import CachingManager, CachingMixin, CachingQuerySet
 from jsonfield import JSONField
 from markdown import markdown
 from model_utils.managers import PassThroughManager
@@ -168,13 +168,37 @@ class DBBugsMixin(object):
         kwargs['bug_filters'] = {'sprint__isnull': True}
         return self._get_bugs(**kwargs)
 
+    def _force_bug_qs(self, blist):
+        if isinstance(blist, list):
+            blist = Bug.objects.filter(id__in=blist).only('id')
+        return blist
 
-class Team(CachingMixin, DBBugsMixin, BugsListMixin, models.Model):
+    def log_bugs_add(self, bugs):
+        pass
+
+    def log_bugs_remove(self, bugs):
+        pass
+
+    def update_bugs(self, add=None, remove=None):
+        """
+        Add and remove bugs to sync the list with what we receive.
+        :param add, remove: list of bug ids or bugs queryset
+        :return: None
+        """
+        if remove:
+            qs = self._force_bug_qs(remove)
+            self.log_bugs_remove(qs)
+            self.bugs.remove(*qs)
+        if add:
+            qs = self._force_bug_qs(add)
+            self.log_bugs_add(qs)
+            self.bugs.add(*qs)
+
+
+class Team(DBBugsMixin, BugsListMixin, models.Model):
     name = models.CharField(max_length=200)
     slug = models.CharField(max_length=50, validators=[validate_slug],
                             db_index=True, unique=True)
-
-    objects = CachingManager()
 
     def get_bugs(self, **kwargs):
         """
@@ -197,13 +221,11 @@ class Team(CachingMixin, DBBugsMixin, BugsListMixin, models.Model):
         return 'scrum_team_edit', [self.slug]
 
 
-class Project(CachingMixin, DBBugsMixin, BugsListMixin, models.Model):
+class Project(DBBugsMixin, BugsListMixin, models.Model):
     name = models.CharField(max_length=200)
     slug = models.CharField(max_length=50, validators=[validate_slug],
                             db_index=True, unique=True)
     team = models.ForeignKey(Team, related_name='projects', null=True)
-
-    objects = CachingManager()
 
     _date_cached = None
 
@@ -226,9 +248,7 @@ class Project(CachingMixin, DBBugsMixin, BugsListMixin, models.Model):
         bugs = bugs.by_products(self.get_products())
         if self.scrum_only:
             bugs = bugs.scrum_only()
-        # only cache for a short time as bugs added to product/component
-        # won't trigger automatic cache invalidation in cachemachine.
-        return bugs.cache(30)
+        return bugs
 
     def get_products(self):
         return get_bzproducts_dict(self.products.all())
@@ -243,20 +263,6 @@ class Project(CachingMixin, DBBugsMixin, BugsListMixin, models.Model):
     @models.permalink
     def get_edit_url(self):
         return 'scrum_project_edit', [self.slug]
-
-    def _update_bugs(self, bugs, attr_name):
-        bugs_manager = getattr(self, attr_name)
-        to_add, to_remove = get_sync_bugs(bugs_manager.all(), bugs)
-        bugs_manager.add(*to_add)
-        bugs_manager.remove(*to_remove)
-
-    def update_bugs(self, bugs):
-        """
-        Add and remove bugs to sync the list with what we receive.
-        :param bug_ids: list of bugs or bug ids
-        :return: None
-        """
-        self._update_bugs(bugs, 'bugs')
 
 
 class BZProductManager(models.Manager):
@@ -291,7 +297,7 @@ class BZProduct(models.Model):
     objects = BZProductManager()
 
 
-class Sprint(CachingMixin, DBBugsMixin, BugsListMixin, models.Model):
+class Sprint(DBBugsMixin, BugsListMixin, models.Model):
     team = models.ForeignKey(Team, related_name='sprints')
     name = models.CharField(max_length=200)
     slug = models.CharField(max_length=200, validators=[validate_slug],
@@ -306,8 +312,6 @@ class Sprint(CachingMixin, DBBugsMixin, BugsListMixin, models.Model):
     bz_url = models.URLField(verbose_name='Bugzilla URL', max_length=2048,
                              null=True, blank=True)
     bugs_data_cache = JSONField(editable=False, null=True)
-
-    objects = CachingManager()
 
     class Meta:
         get_latest_by = 'created_date'
@@ -361,16 +365,6 @@ class Sprint(CachingMixin, DBBugsMixin, BugsListMixin, models.Model):
         self._clear_bugs_data_cache()
         super(Sprint, self).refresh_bugs_data(bugs)
 
-    def update_bugs(self, bugs):
-        """
-        Add and remove bugs to sync the list with what we receive.
-        :param bugs: list of bugs or bug ids
-        :return: None
-        """
-        to_add, to_remove = get_sync_bugs(self.bugs.all(), bugs)
-        self.bugs.add(*to_add)
-        self.bugs.remove(*to_remove)
-
     def get_burndown(self):
         """Return a list of total point values per day of sprint"""
         today = now().date()
@@ -404,6 +398,16 @@ class Sprint(CachingMixin, DBBugsMixin, BugsListMixin, models.Model):
         if bugs_data is None:
             bugs_data = self.get_bugs_data()
         return bugs_data
+
+    def log_bugs_add(self, bugs):
+        for bug in bugs:
+            if bug.sprint:
+                BugSprintLog.objects.removed_from_sprint(bug, bug.sprint)
+            BugSprintLog.objects.added_to_sprint(bug, self)
+
+    def log_bugs_remove(self, bugs):
+        for bug in bugs:
+            BugSprintLog.objects.removed_from_sprint(bug, self)
 
 
 class BugzillaURL(models.Model):
@@ -482,7 +486,7 @@ class BugzillaURL(models.Model):
         return self._get_bz_args().get('status_whiteboard')
 
 
-class BugQuerySet(CachingQuerySet):
+class BugQuerySet(QuerySet):
     def sync_bugs(self):
         """
         Refresh the data for all matched bugs from Bugzilla.
@@ -525,7 +529,7 @@ class BugQuerySet(CachingQuerySet):
         return self.filter(reduce(operator.or_, qobjs, Q()))
 
 
-class BugManager(CachingManager, PassThroughManager):
+class BugManager(PassThroughManager):
     use_for_related_fields = True
 
     def get_query_set(self):
@@ -546,7 +550,7 @@ class BugManager(CachingManager, PassThroughManager):
         return bug, created
 
 
-class Bug(CachingMixin, models.Model):
+class Bug(models.Model):
     id = models.PositiveIntegerField(primary_key=True)
     history = CompressedJSONField(blank=True)
     last_synced_time = models.DateTimeField(default=now)
@@ -684,9 +688,11 @@ class BugSprintLogManager(models.Manager):
         self.create(bug=bug, sprint=sprint, action=action)
 
     def added_to_sprint(self, bug, sprint):
+        log.debug('Adding %s to %s', bug, sprint)
         self._record_action(bug, sprint, BugSprintLog.ADDED)
 
     def removed_from_sprint(self, bug, sprint):
+        log.debug('Removing %s from %s', bug, sprint)
         self._record_action(bug, sprint, BugSprintLog.REMOVED)
 
 
@@ -752,24 +758,6 @@ def get_bzproducts_dict(qs):
     return prods
 
 
-class DummyBug:
-    sprint = None
-    sprint_id = None
-
-
-@receiver(pre_save, sender=Bug)
-def log_bug_actions(sender, instance, **kwargs):
-    try:
-        old_bug = Bug.objects.get(id=instance.id)
-    except Bug.DoesNotExist:
-        old_bug = DummyBug()
-    if old_bug.sprint_id != instance.sprint_id:
-        if old_bug.sprint:
-            BugSprintLog.objects.removed_from_sprint(instance, old_bug.sprint)
-        if instance.sprint:
-            BugSprintLog.objects.added_to_sprint(instance, instance.sprint)
-
-
 @receiver(post_save, sender=Bug)
 def cache_bug_update(sender, instance, **kwargs):
     cache.set('bug:updated:%s' % instance.id, True, 30)
@@ -780,7 +768,6 @@ def process_notes(sender, instance, **kwargs):
     if instance.notes:
         instance.notes_html = markdown(
             force_unicode(instance.notes),
-            # http://packages.python.org/Markdown/extensions/index.html
             extensions=settings.MARKDOWN_EXTENSIONS,
             output_format='html5',
             safe_mode=True,

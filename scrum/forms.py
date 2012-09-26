@@ -101,25 +101,38 @@ class TeamForm(forms.ModelForm):
 
 
 class SprintBugsForm(forms.ModelForm):
-    new_bugs = forms.CharField(
+    add_bugs = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput,
+        validators=[validate_comma_separated_integer_list],
+    )
+    remove_bugs = forms.CharField(
+        required=False,
         widget=forms.HiddenInput,
         validators=[validate_comma_separated_integer_list],
     )
 
     class Meta:
         model = Sprint
-        fields = ('new_bugs',)
+        fields = ('add_bugs', 'remove_bugs')
 
-    def clean_new_bugs(self):
-        new_bugs = self.cleaned_data['new_bugs']
+    def _clean_bugs_list(self, field_name):
+        bugs = self.cleaned_data[field_name]
         bugs_list = []
-        if new_bugs:
-            bugs_list = [int(b) for b in new_bugs.split(',')]
+        if bugs:
+            bugs_list = [int(b) for b in bugs.split(',')]
         return bugs_list
 
+    def clean_add_bugs(self):
+        return self._clean_bugs_list('add_bugs')
+
+    def clean_remove_bugs(self):
+        return self._clean_bugs_list('remove_bugs')
+
     def save(self, commit=True):
-        new_bugs = self.cleaned_data['new_bugs']
-        self.instance.update_bugs(new_bugs)
+        add_bugs = self.cleaned_data['add_bugs']
+        remove_bugs = self.cleaned_data['remove_bugs']
+        self.instance.update_bugs(add_bugs, remove_bugs)
         self.instance._clear_bugs_data_cache()
         return self.instance
 
@@ -127,7 +140,7 @@ class SprintBugsForm(forms.ModelForm):
 class ProjectBugsForm(SprintBugsForm):
     class Meta:
         model = Project
-        fields = ('new_bugs',)
+        fields = ('add_bugs', 'remove_bugs')
 
 
 class CreateTeamForm(forms.ModelForm):

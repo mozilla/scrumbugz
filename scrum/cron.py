@@ -15,7 +15,7 @@ log = logging.getLogger(__name__)
 
 @register
 def update_old_format_bugs():
-    bugs = Bug.objects.filter(assigned_to__contains='||').only('id').no_cache()
+    bugs = Bug.objects.filter(assigned_to__contains='||').only('id')
     update_bug_chunks(bugs)
 
 
