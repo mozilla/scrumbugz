@@ -51,3 +51,12 @@ if os.environ.get('MEMCACHIER_SERVERS'):
 
 if os.environ.get('BUGZILLA_BASE_URL'):
     BUGZILLA_BASE_URL = os.environ['BUGZILLA_BASE_URL']
+    BUG_OPEN_STATUSES = [
+        'UNCONFIRMED',
+        'CONFIRMED',
+        'IN_PROGRESS',
+    ]
+    BUG_CLOSED_STATUSES = [
+        'RESOLVED',
+        'VERIFIED',
+    ]

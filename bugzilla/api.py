@@ -23,18 +23,8 @@ BZ_USER = get_setting_or_env('BUGZILLA_USER')
 BZ_PASS = get_setting_or_env('BUGZILLA_PASS')
 SESSION_COOKIES_CACHE_KEY = 'bugzilla-session-cookies'
 PRODUCTS_CACHE = None
-BUG_OPEN_STATUSES = [
-    'UNCONFIRMED',
-    'CONFIRMED',
-    'ASSIGNED',
-    'REOPENED',
-    'NEW',
-]
-BUG_CLOSED_STATUSES = [
-    'RESOLVED',
-    'VERIFIED',
-    'CLOSED',
-]
+BUG_OPEN_STATUSES = settings.BUG_OPEN_STATUSES
+BUG_CLOSED_STATUSES = settings.BUG_CLOSED_STATUSES
 BZ_FIELDS = [
     'id',
     'status',
@@ -130,7 +120,7 @@ class SessionTransport(xmlrpclib.SafeTransport):
 
 
 class BugzillaAPI(xmlrpclib.ServerProxy):
-    _products_cache_key = 'bugzilla-products-components'
+    _products_cache_key = 'bugzilla:products:components'
 
     def login(self, username=None, password=None):
         return self.User.login({

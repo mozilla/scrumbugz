@@ -155,19 +155,23 @@ CELERY_DISABLE_RATE_LIMITS = True
 CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
 CELERY_TASK_RESULT_EXPIRES = 60
 CELERY_TIMEZONE = 'UTC'
-CELERYD_CONCURRENCY = 2
-#CELERYD_HIJACK_ROOT_LOGGER = False
-#CELERY_ROUTES = {
-#    'get_bugmails': {
-#        'queue': 'sb_periodic',
-#    },
-#    'update_bugs': {
-#        'queue': 'sb_bugmail',
-#    },
-#}
+CELERYD_CONCURRENCY = 4
 CELERYBEAT_SCHEDULE = {
     'get_bugmails': {
         'task': 'get_bugmails',
         'schedule': 30,
     },
 }
+
+BUG_OPEN_STATUSES = [
+    'UNCONFIRMED',
+    'CONFIRMED',
+    'ASSIGNED',
+    'REOPENED',
+    'NEW',
+]
+BUG_CLOSED_STATUSES = [
+    'RESOLVED',
+    'VERIFIED',
+    'CLOSED',
+]

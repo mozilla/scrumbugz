@@ -12,6 +12,7 @@ urlpatterns = patterns('',
     url(r'^help/', TemplateView.as_view(template_name='help.html'),
         name='help'),
     url(r'^$', 'scrum.views.home', name='scrum_home'),
+    url(r'^bugzilla/', include('bugzilla.urls')),
     url(r'', include('scrum.urls')),
 )
 

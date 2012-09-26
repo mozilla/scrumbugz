@@ -55,12 +55,12 @@ def get_messages(delete=True, max_get=50):
             msg = Parser().parsestr(msg_str)
             if is_bugmail(msg):
                 if is_interesting(msg):
-                    log.debug('Found interesting bugmail')
                     messages.append(msg)
                 if delete:
                     conn.dele(msgid)
         conn.quit()
-    log.debug('Found %d interesting bugmails', len(messages))
+    if messages:
+        log.debug('Found %d interesting bugmails', len(messages))
     return messages
 
 

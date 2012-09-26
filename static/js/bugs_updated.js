@@ -10,10 +10,10 @@
                 type: 'POST',
                 data: {'bug_ids': bug_ids},
                 statusCode: {
-                    404: function(){
+                    204: function(){
                         window.setTimeout(bugsUpdatedRecently, 25000);
                     },
-                    204: function(){
+                    200: function(){
                         $('#alert_messages').append([
                             '<div class="alert alert-info hide">',
                             '<a class="close" data-dismiss="alert">&times;</a>',

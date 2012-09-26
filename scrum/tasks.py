@@ -40,7 +40,7 @@ def get_bugmail_messages():
 
 @task(name='update_product')
 def update_product(product, component=None):
-    kwargs = {'product': product, 'scrum_only': False}
+    kwargs = {'product': product, 'scrum_only': True}
     if component:
         kwargs['component'] = component
     bug_ids = bugzilla.get_bug_ids(**kwargs)

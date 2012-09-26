@@ -9,8 +9,7 @@ from django.core.exceptions import ValidationError
 from django.core.urlresolvers import reverse
 from django.core.validators import validate_comma_separated_integer_list
 from django.http import (HttpResponse, HttpResponseBadRequest,
-                         HttpResponseForbidden, HttpResponseNotFound,
-                         HttpResponsePermanentRedirect)
+                         HttpResponseForbidden, HttpResponsePermanentRedirect)
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.context import Context
 from django.utils import simplejson as json
@@ -333,8 +332,8 @@ class CheckRecentUpdates(View):
     """
     View that when posted a list of bug IDs will return a status code
     indicating whether any were recently updated.
-    204 = Yes
-    404 = No
+    200 = Yes
+    204 = No
     400 = What you sent me was bad
     """
     def post(self, request):
@@ -348,5 +347,5 @@ class CheckRecentUpdates(View):
             bug_keys = ['bug:updated:' + bid for bid in bug_ids]
             updated = cache.get_many(bug_keys)
             if updated:
-                return HttpResponse(status=204)  # no content
-        return HttpResponseNotFound()  # not found
+                return HttpResponse()
+        return HttpResponse(status=204)  # no content
