@@ -2,9 +2,6 @@ from __future__ import absolute_import
 
 import logging
 import sys
-from datetime import timedelta
-
-from django.conf import settings
 
 from cronjobs import register
 
@@ -13,13 +10,12 @@ from scrum.models import Bug, BugzillaURL, BZProduct, Sprint
 from scrum.tasks import update_bug_chunks
 
 
-CACHE_BUGS_FOR = timedelta(hours=getattr(settings, 'CACHE_BUGS_FOR', 4))
 log = logging.getLogger(__name__)
 
 
 @register
 def update_old_format_bugs():
-    bugs = Bug.objects.filter(assigned_to__contains='||').only('id')
+    bugs = Bug.objects.filter(assigned_to__contains='||').only('id').no_cache()
     update_bug_chunks(bugs)
 
 

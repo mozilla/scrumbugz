@@ -1,7 +1,7 @@
 (function($){
 
     "use strict";
-    // via https://github.com/harthur/fileit
+    // based on https://github.com/harthur/fileit
 
     var product_ls_name = 'scrumbugs-products-config';
 
@@ -27,19 +27,19 @@
 
     function populateAutocomplete(config) {
         var components = [];
-        var product;
-        var i;
-        for (product in config) {
-            var comps = config[product];
-            comps.push('__ALL__');
-            for (i in comps) {
+        _(config).forIn(function(comps, product){
+            comps.unshift('__ALL__');
+            _(comps).forEach(function(component){
                 components.push({
                     product: product,
-                    component: comps[i],
-                    string:componentName({product: product, component: comps[i]})
+                    component: component,
+                    string: componentName({
+                        product: product,
+                        component: component
+                    })
                 });
-            }
-        }
+            });
+        });
 
         var input = $("#id_product");
         input.autocomplete({
