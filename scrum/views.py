@@ -208,9 +208,22 @@ class SprintView(BugsDataMixin, SprintMixin, DetailView):
         return context
 
 
-class EditSprintView(SprintMixin, ProjectsMixin, ProtectedUpdateView):
+class EditSprintView(SprintMixin, ProtectedUpdateView):
     form_class = SprintForm
     template_name = 'scrum/sprint_form.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(EditSprintView, self).get_context_data(**kwargs)
+        context['teams'] = Team.objects.all()
+        return context
+
+    def get_form_kwargs(self):
+        kwargs = super(EditSprintView, self).get_form_kwargs()
+        if 'data' in kwargs:
+            form_data = kwargs['data'].copy()
+            form_data['team'] = self.team.id
+            kwargs['data'] = form_data
+        return kwargs
 
 
 class EditTeamView(ProtectedUpdateView):

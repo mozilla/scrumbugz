@@ -3,9 +3,9 @@
 
 {% block main_content %}
   {% if sprint %}
-    <h1>Edit <a href="{{ url('scrum_project', team.slug) }}">{{ team.name }}</a> / <a href="{{ url('scrum_sprint', team.slug, sprint.slug) }}">{{ sprint.name }}</a></h1>
+    <h1>Edit <a href="{{ url('scrum_team', team.slug) }}">{{ team.name }}</a> / <a href="{{ url('scrum_sprint', team.slug, sprint.slug) }}">{{ sprint.name }}</a></h1>
   {% else %}
-    <h1>Create <a href="{{ url('scrum_project', team.slug) }}">{{ team.name }}</a> Sprint</h1>
+    <h1>Create <a href="{{ url('scrum_team', team.slug) }}">{{ team.name }}</a> Sprint</h1>
   {% endif %}
   <hr>
   <form action="{{ request.get_full_path() }}"

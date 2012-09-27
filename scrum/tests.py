@@ -201,6 +201,23 @@ class TestSprint(TestCase):
             'sslug': '1.3.37',
         }))
 
+    def test_sprint_editing(self):
+        User.objects.create_superuser('admin', 'admin@admin.com', 'admin')
+        self.client.login(username='admin', password='admin')
+        t = self.s.team
+        fdata = {
+            'name': '1.3.37',
+            'slug': '1.3.37',
+            'start_date': '2012-01-01',
+            'end_date': '2012-01-15',
+        }
+        url = reverse('scrum_sprint_edit', args=[t.slug, self.s.slug])
+        resp = self.client.post(url, fdata, follow=True)
+        self.assertRedirects(resp, reverse('scrum_sprint', kwargs={
+            'slug': t.slug,
+            'sslug': '1.3.37',
+        }))
+
     def test_get_products(self):
         prods = self.p.get_products()
         expected = {
