@@ -271,3 +271,7 @@ tr.active td {
     right: 5px;
     top: 5px;
 }
+
+.blocked-bug {
+    cursor: pointer;
+}

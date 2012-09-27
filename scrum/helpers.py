@@ -8,6 +8,11 @@ from jinja2.runtime import Undefined
 from markdown import markdown as parse_markdown
 
 
+@register.function
+def bugzilla_url(bug_id):
+    return '%sid=%s' % (settings.BUGZILLA_SHOW_URL, bug_id)
+
+
 @register.filter
 def markdown(value):
     return parse_markdown(
@@ -23,7 +28,7 @@ def now(fmt=None):
     return helpers.datetime(django_now(), fmt)
 
 
-# from https://github.com/coffin/coffin/blob/master/coffin/template/defaultfilters.py#L72
+# from http://j.mp/TIi5SQ
 @register.filter
 def pluralize(value, s1='s', s2=None):
     """Like Django's pluralize-filter, but instead of using an optional

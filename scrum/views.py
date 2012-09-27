@@ -20,7 +20,6 @@ from scrum.forms import (CreateProjectForm, CreateTeamForm, BZProductForm,
                          ProjectBugsForm, ProjectForm, SprintBugsForm,
                          SprintForm, TeamForm)
 from scrum.models import BZError, BZProduct, Project, Sprint, Team, Bug
-from scrum.utils import get_blocked_bugs
 
 
 log = logging.getLogger(__name__)
@@ -71,7 +70,7 @@ class BugsDataMixin(object):
         context['refresh'] = self.bugs_kwargs.get('refresh', False)
         try:
             bugs = self.object.get_bugs(**self.bugs_kwargs)
-            context['blocked_bugs'] = get_blocked_bugs(bugs)
+            context['blocked_bugs'] = bugs.get_blocked()
             context['bugs'] = bugs
             context['bz_search_url'] = bugs.get_bz_search_url()
             context['bugs_data'] = self.object.get_graph_bug_data()
@@ -108,7 +107,7 @@ class ProjectView(BugsDataMixin, ProjectsMixin, DetailView):
                                   sprint__end_date__gte=today,
                                   project=self.object)
         context['sprinting'] = bugs
-        context['sprinting_blocked'] = get_blocked_bugs(bugs)
+        context['sprinting_blocked'] = bugs.get_blocked()
         return context
 
 
@@ -239,7 +238,7 @@ class ManageSprintBugsView(BugsDataMixin, SprintMixin, ProtectedUpdateView):
             try:
                 bugs = self.team.get_bugs(**self.bugs_kwargs)
                 context['backlog_bugs'] = bugs
-                context['blocked_backlog_bugs'] = get_blocked_bugs(bugs)
+                context['blocked_backlog_bugs'] = bugs.get_blocked()
                 context['bugs_data'].update(self.object.get_burndown_data())
                 context['bugs_data_json'] = json.dumps(context['bugs_data'])
             except BZError:
@@ -259,7 +258,7 @@ class ManageProjectBugsView(BugsDataMixin, ProtectedUpdateView):
             try:
                 bugs = self.object.get_backlog(**self.bugs_kwargs)
                 context['backlog_bugs'] = bugs
-                context['blocked_backlog_bugs'] = get_blocked_bugs(bugs)
+                context['blocked_backlog_bugs'] = bugs.get_blocked()
             except BZError:
                 context['bzerror'] = True
         return context

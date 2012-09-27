@@ -165,6 +165,15 @@ class TestBug(TestCase):
         b = Bug.objects.get(id=781714)
         eq_(b.depends_on, [781709, 781721])
 
+    def test_blocked_bugs(self):
+        self.assertSetEqual(set([778466, 781718, 781715, 781717, 781718]),
+                            set(Bug.objects.get_blocked().keys()))
+        b = Bug.objects.get(id=778465)
+        b.status = 'RESOLVED'
+        b.save()
+        self.assertSetEqual(set([781718, 781715, 781717, 781718]),
+                            set(Bug.objects.get_blocked().keys()))
+
     def test_get_by_products(self):
         eq_(Bug.objects.by_products(self.p.get_products()).count(), 11)
         b = Bug.objects.get(id=778466)

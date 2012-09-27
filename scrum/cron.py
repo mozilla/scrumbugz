@@ -5,7 +5,6 @@ import sys
 
 from cronjobs import register
 
-from bugzilla.api import bugzilla
 from scrum.models import Bug, BugzillaURL, BZProduct, Project, Sprint
 from scrum.tasks import update_bug_chunks
 
@@ -25,18 +24,13 @@ def move_project_urls_to_products():
     Get products and components from legacy project urls and set them on
     the project.
     """
-    bz_products = bugzilla.get_products_simplified()
     for url in BugzillaURL.objects.filter(project__isnull=False):
         products = url.get_products()
         components = url.get_components()
         for p in products:
-            if p not in bz_products:
-                continue
             c_in_prod = 0
             if components:
                 for c in components:
-                    if c not in bz_products[p]:
-                        continue
                     BZProduct.objects.get_or_create(name=p,
                                                     component=c,
                                                     project_id=url.project_id)

@@ -63,7 +63,7 @@
             <td data-order-by="{{ bug.sprint.slug }}">{% if bug.sprint %}<a href="{{ bug.sprint.get_absolute_url() }}">{{ bug.sprint.name }}</a>{% endif %}</td>
           {% endif %}
           <td data-order-by="{{ bug.priority if bug.priority != '--' else 'z' }}">{{ bug.priority if bug.priority != '--' }}</td>
-          <td>{% if blocked_bugs and bug.id in blocked_bugs %}<span class="label label-important">BLOCKED</span> {% endif %}{{ bug.summary }}</td>
+          <td>{% if blocked_bugs and bug.id in blocked_bugs %}<span class="label label-important blocked-bug">BLOCKED<span class="hide blocker-links">{{ bug_links(blocked_bugs[bug.id]) }}</span></span> {% endif %}{{ bug.summary }}</td>
           <td class="ttip" title="{{ bug.assigned_full }}">{{ bug.assigned_name }}</td>
           <td>{{ bug.story_user }}</td>
           <td>{{ bug.story_component }}</td>
@@ -93,4 +93,10 @@
       {% endfor %}
     </tbody>
   </table>
+{% endmacro %}
+
+{% macro bug_links(bug_ids) %}
+  {%- for bid in bug_ids -%}
+    <a href="{{ bugzilla_url(bid) }}" target="_blank">{{ bid }}</a>{{ ', ' if not loop.last }}
+  {%- endfor -%}
 {% endmacro %}

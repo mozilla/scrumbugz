@@ -119,21 +119,3 @@ def make_sha1_key(key, key_prefix, version):
     """A cache key generating function that uses a sha1 hash."""
     prekey = ':'.join([key_prefix, str(version), smart_str(key)])
     return hashlib.sha1(prekey).hexdigest()
-
-
-def get_blocked_bugs(bugs):
-    id_to_bug = dict([(b.id, b) for b in bugs])
-    blocked_bugs = []
-
-    # Build a list of blocked_bugs where a blocked bug is any
-    # bug that depends on another bug in this sprint and that
-    # other bug is not resolved.
-    for bug in bugs:
-        if not bug.depends_on:
-            continue
-        blockers = [blocker for blocker in bug.depends_on
-                    if (blocker in id_to_bug and
-                        not id_to_bug[blocker].is_closed())]
-        if blockers:
-            blocked_bugs.append(bug.id)
-    return blocked_bugs

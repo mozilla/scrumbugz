@@ -18,7 +18,17 @@
 </div>
 
 <div class="row">
-  <div class="span6">
+    <div class="span12">
+        {% if bz_search_url %}
+            <a href="{{ bz_search_url }}" target="_blank" class="btn pull-right">See in Bugzilla</a>
+        {% endif %}
+        {% for product in object.get_products() %}
+            <a class="btn" target="_blank" href="{{ BUGZILLA_FILE_URL }}product={{ product }}"><i class="icon-plus-sign"></i> {{ product }} bug</a>
+        {% endfor %}
+    </div>
+</div>
+<div class="row">
+  <div class="span12">
     <h4>Legend</h4>
     <table class="table-condensed">
       <tbody>
@@ -28,21 +38,8 @@
       <tr class="bug-open pull-left">
         <td>Unassigned</td>
       </tr>
-      {% if not object.scrum_only %}
-        <tr class="bug-dataless pull-left">
-          <td>Dataless</td>
-        </tr>
-      {% endif %}
       </tbody>
     </table>
-  </div>
-  <div class="span6">
-    {% for product in object.get_products() %}
-      <a class="btn" target="_blank" href="{{ BUGZILLA_FILE_URL }}product={{ product }}"><i class="icon-plus-sign"></i> {{ product }} bug</a>
-    {% endfor %}
-    {% if bz_search_url %}
-      <a href="{{ bz_search_url }}" target="_blank" class="btn">See in Bugzilla</a>
-    {% endif %}
   </div>
 </div>
 

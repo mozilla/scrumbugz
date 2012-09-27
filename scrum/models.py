@@ -538,6 +538,23 @@ class BugQuerySet(QuerySet):
         """
         return get_bz_url_for_bug_ids(self.all().values_list('id', flat=True))
 
+    def get_blocked(self):
+        """
+        Return a list of bug IDs from this QS that have open blocking bugs.
+        """
+        blocker_to_bug = defaultdict(list)
+        for bug in self.only('id', 'depends_on'):
+            for dep_id in bug.depends_on:
+                blocker_to_bug[dep_id].append(bug.id)
+        open_blockers = Bug.objects.filter(id__in=blocker_to_bug.keys()) \
+                           .open().values_list('id', flat=True)
+        all_blocked = defaultdict(list)
+        for blocker, blocked in blocker_to_bug.iteritems():
+            if blocker in open_blockers:
+                for bid in blocked:
+                    all_blocked[bid].append(blocker)
+        return all_blocked
+
 
 class BugManager(PassThroughManager):
     use_for_related_fields = True
