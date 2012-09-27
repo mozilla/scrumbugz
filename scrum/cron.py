@@ -6,7 +6,7 @@ import sys
 from cronjobs import register
 
 from bugzilla.api import bugzilla
-from scrum.models import Bug, BugzillaURL, BZProduct, Sprint
+from scrum.models import Bug, BugzillaURL, BZProduct, Project, Sprint
 from scrum.tasks import update_bug_chunks
 
 
@@ -44,6 +44,17 @@ def move_project_urls_to_products():
             if not c_in_prod:
                 BZProduct.objects.get_or_create(name=p,
                                                 project_id=url.project_id)
+
+
+@register
+def fix_projectless_bugs():
+    """
+    Find bugs in sprints that have no project and give them one.
+    """
+    for project in Project.objects.all():
+        product_bugs = Bug.objects.by_products(project.get_products())
+        product_bugs.filter(sprint__isnull=False, project__isnull=True) \
+                    .update(project=project)
 
 
 @register

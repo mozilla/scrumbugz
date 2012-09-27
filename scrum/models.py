@@ -517,6 +517,9 @@ class BugQuerySet(QuerySet):
         :param products: dict
         :return: QuerySet
         """
+        # empty products dict should return no bugs
+        if not products:
+            return self.filter(product='')
         qobjs = []
         for prod, comps in products.items():
             kwargs = {'product': prod}
@@ -526,7 +529,7 @@ class BugQuerySet(QuerySet):
                 else:
                     kwargs['component__in'] = comps
             qobjs.append(Q(**kwargs))
-        return self.filter(reduce(operator.or_, qobjs, Q()))
+        return self.filter(reduce(operator.or_, qobjs))
 
 
 class BugManager(PassThroughManager):

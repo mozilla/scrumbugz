@@ -15,6 +15,7 @@ from django.test import TestCase
 from django.utils import simplejson as json
 
 from scrum import bugmail as scrum_email
+from scrum import cron as scrum_cron
 from scrum import models as scrum_models
 from scrum import tasks as scrum_tasks
 from scrum.forms import CreateProjectForm, SprintBugsForm
@@ -106,6 +107,22 @@ class TestEmail(TestCase):
             ok_(scrum_email.is_interesting(msg))
 
 
+class TestCron(TestCase):
+    fixtures = ['test_data.json']
+
+    def setUp(self):
+        self.s = Sprint.objects.get(slug='2.2')
+        self.p = Project.objects.get(pk=1)
+        self.p.products.create(name='Input')
+        update_product('MDN')
+
+    def test_fix_projectless_bugs(self):
+        self.s.update_bugs(self.p.get_backlog())
+        eq_(self.s.bugs.filter(project__isnull=True).count(), 9)
+        scrum_cron.fix_projectless_bugs()
+        self.assertSetEqual(set(self.s.bugs.all()), set(self.p.bugs.all()))
+
+
 class TestBug(TestCase):
     fixtures = ['test_data.json']
 
@@ -113,7 +130,7 @@ class TestBug(TestCase):
         cache.clear()
         self.s = Sprint.objects.get(slug='2.2')
         self.p = Project.objects.get(pk=1)
-        self.url = Project.objects.get(pk=1)
+        self.p.products.create(name='Input')
         update_product('MDN')
 
     @patch.object(Bug, 'points_history')
@@ -147,6 +164,14 @@ class TestBug(TestCase):
         eq_(b.depends_on, [778465])
         b = Bug.objects.get(id=781714)
         eq_(b.depends_on, [781709, 781721])
+
+    def test_get_by_products(self):
+        eq_(Bug.objects.by_products(self.p.get_products()).count(), 11)
+        b = Bug.objects.get(id=778466)
+        b.product = 'The Bot Lebowski'
+        b.save()
+        eq_(Bug.objects.by_products(self.p.get_products()).count(), 10)
+        eq_(Bug.objects.by_products({}).count(), 0)
 
 
 class TestProject(TestCase):
