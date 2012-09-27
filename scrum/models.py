@@ -28,8 +28,8 @@ from markdown import markdown
 from model_utils.managers import PassThroughManager
 
 from bugzilla.api import BUG_OPEN_STATUSES, bugzilla, is_closed
-from scrum.utils import (date_to_js, date_range, parse_bz_url,
-                         parse_whiteboard)
+from scrum.utils import (date_to_js, date_range, get_bz_url_for_bug_ids,
+                         parse_bz_url, parse_whiteboard)
 
 
 log = logging.getLogger(__name__)
@@ -530,6 +530,13 @@ class BugQuerySet(QuerySet):
                     kwargs['component__in'] = comps
             qobjs.append(Q(**kwargs))
         return self.filter(reduce(operator.or_, qobjs))
+
+    def get_bz_search_url(self):
+        """
+        Return a url for the list of bugs in this QS.
+        :return: str
+        """
+        return get_bz_url_for_bug_ids(self.all().values_list('id', flat=True))
 
 
 class BugManager(PassThroughManager):

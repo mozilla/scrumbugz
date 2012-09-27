@@ -67,16 +67,13 @@ class BugsDataMixin(object):
                           "Bugzilla in a minute or two.")
         if 'all' in self.request.GET:
             self.bugs_kwargs['scrum_only'] = False
-        try:
-            context['bz_search_url'] = self.object.get_bz_search_url().url
-        except AttributeError:
-            pass
         context['scrum_only'] = self.bugs_kwargs.get('scrum_only', True)
         context['refresh'] = self.bugs_kwargs.get('refresh', False)
         try:
             bugs = self.object.get_bugs(**self.bugs_kwargs)
             context['blocked_bugs'] = get_blocked_bugs(bugs)
             context['bugs'] = bugs
+            context['bz_search_url'] = bugs.get_bz_search_url()
             context['bugs_data'] = self.object.get_graph_bug_data()
             context['bugs_data_json'] = json.dumps(context['bugs_data'])
             context['bzerror'] = False
