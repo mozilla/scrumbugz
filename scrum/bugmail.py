@@ -5,6 +5,8 @@ import poplib
 import re
 from email.parser import Parser
 
+from django.conf import settings
+
 import celery
 
 from scrum.models import BZProduct
@@ -16,7 +18,9 @@ except ImportError:
     newrelic = False
 
 
-redis_client = celery.current_app.backend.client
+redis_client = None
+if settings.BROKER_URL.startswith('redis:'):
+    redis_client = celery.current_app.backend.client
 
 BUGMAIL_HOST = get_setting_or_env('BUGMAIL_HOST')
 BUGMAIL_USER = get_setting_or_env('BUGMAIL_USER')
@@ -53,7 +57,8 @@ def get_messages(delete=True, max_get=50):
         num_messages = len(conn.list()[1])
         num_get = min(num_messages, max_get)
         log.debug('Getting %d bugmails', num_get)
-        redis_client.incr('STATS:BUGMAILS:TOTAL', num_get)
+        if redis_client:
+            redis_client.incr('STATS:BUGMAILS:TOTAL', num_get)
         if newrelic:
             newrelic.agent.record_custom_metric('Custom/AllEmail', num_get)
         for msgid in range(1, num_get + 1):
@@ -67,7 +72,8 @@ def get_messages(delete=True, max_get=50):
         conn.quit()
     if messages:
         num_msgs = len(messages)
-        redis_client.incr('STATS:BUGMAILS:USED', num_msgs)
+        if redis_client:
+            redis_client.incr('STATS:BUGMAILS:USED', num_msgs)
         log.debug('Found %d interesting bugmails', num_msgs)
     return messages
 

@@ -218,15 +218,23 @@ class BugzillaAPI(xmlrpclib.ServerProxy):
 
     def get_history(self, bug_ids):
         log.debug('Getting history for bugs: %s', bug_ids)
-        history = self.Bug.history({'ids': bug_ids}).get('bugs')
+        try:
+            history = self.Bug.history({'ids': bug_ids}).get('bugs')
+        except xmlrpclib.Fault:
+            log.exception('Problem getting history for bug ids: %s', bug_ids)
+            return {}
         return dict((h['id'], h['history']) for h in history)
 
     def get_comments(self, bug_ids):
         log.debug('Getting comments for bugs: %s', bug_ids)
-        comments = self.Bug.comments({
-            'ids': bug_ids,
-            'include_fields': ['id'],
-            }).get('bugs')
+        try:
+            comments = self.Bug.comments({
+                'ids': bug_ids,
+                'include_fields': ['id'],
+                }).get('bugs')
+        except xmlrpclib.Fault:
+            log.exception('Problem getting comments for bug ids: %s', bug_ids)
+            return {}
         return dict((int(bid), cids) for bid, cids in comments.iteritems())
 
 
