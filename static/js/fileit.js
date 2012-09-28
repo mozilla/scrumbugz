@@ -41,8 +41,7 @@
             });
         });
 
-        var input = $("#id_product");
-        input.autocomplete({
+        $("#id_product").autocomplete({
             list:components,
             minCharacters:2,
             timeout:200,

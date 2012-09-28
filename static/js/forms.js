@@ -28,10 +28,10 @@ $(function(){
         });
     }
 
-    // url management
-    var $btn_icon = $('#add_url_icon');
-    var $add_url_btn = $('#add_url_btn');
-    var add_url_spinner = new Spinner({
+    // product management
+    var $btn_icon = $('#add_product_icon');
+    var $add_product_btn = $('#add_product_btn');
+    var add_product_spinner = new Spinner({
         lines: 12,
         length: 5,
         width: 1,
@@ -39,23 +39,23 @@ $(function(){
     });
     function start_spin () {
         //$btn_icon.detach();
-        add_url_spinner.spin();
+        add_product_spinner.spin();
         $btn_icon
             .attr('disabled', 'disabled')
             .addClass('icon-blank')
             .removeClass('icon-plus');
-        $(add_url_spinner.el).prependTo($add_url_btn).css({
+        $(add_product_spinner.el).prependTo($add_product_btn).css({
             top: '8px',
             left: '6px'
         });
-        $add_url_btn.attr('disabled', 'disabled');
+        $add_product_btn.attr('disabled', 'disabled');
     }
     function stop_spin () {
-        add_url_spinner.stop();
+        add_product_spinner.stop();
         $btn_icon
             .removeClass('icon-blank')
             .addClass('icon-plus');
-        $add_url_btn.removeAttr('disabled');
+        $add_product_btn.removeAttr('disabled');
     }
     $('#bzproduct_form').on('submit', function(e){
         e.preventDefault();
@@ -89,4 +89,9 @@ $(function(){
                 $('#bzproducts_list_wrapper').load($('#bzproducts_list_wrapper').data('url'));
             });
     });
+
+    var toComponent = function(name) {
+        var slash = name.indexOf("/");
+        return [name.slice(0, slash), name.slice(slash + 1)];
+    };
 });

@@ -15,6 +15,7 @@ from django.template.context import Context
 from django.utils import simplejson as json
 from django.views.generic import (CreateView, DeleteView, DetailView,
                                   ListView, TemplateView, UpdateView, View)
+from bugzilla.api import bugzilla
 
 from scrum.forms import (CreateProjectForm, CreateTeamForm, BZProductForm,
                          ProjectBugsForm, ProjectForm, SprintBugsForm,
@@ -133,13 +134,25 @@ class ListProjectsView(ProjectsMixin, ListView):
     context_object_name = 'projects'
 
 
-class CreateProjectView(ProjectsMixin, ProtectedCreateView):
+class EditProjectMixin(object):
+    def get_context_data(self, **kwargs):
+        context = super(EditProjectMixin, self).get_context_data(**kwargs)
+        bz_prod_choices = []
+        for prod, comps in bugzilla.get_products_simplified().items():
+            comps.insert(0, '__ALL__')
+            for comp in comps:
+                bz_prod_choices.append('%s/%s' % (prod, comp))
+        context['bz_product_choices'] = json.dumps(bz_prod_choices)
+        return context
+
+
+class CreateProjectView(EditProjectMixin, ProjectsMixin, ProtectedCreateView):
     model = Project
     form_class = CreateProjectForm
     template_name = 'scrum/project_form.html'
 
 
-class EditProjectView(ProjectsMixin, ProtectedUpdateView):
+class EditProjectView(EditProjectMixin, ProjectsMixin, ProtectedUpdateView):
     form_class = ProjectForm
     template_name = 'scrum/project_form.html'
 
