@@ -5,6 +5,8 @@ import poplib
 import re
 from email.parser import Parser
 
+import celery
+
 from scrum.models import BZProduct
 from scrum.utils import get_setting_or_env
 
@@ -12,6 +14,9 @@ try:
     import newrelic.agent
 except ImportError:
     newrelic = False
+
+
+redis_client = celery.current_app.backend.client
 
 BUGMAIL_HOST = get_setting_or_env('BUGMAIL_HOST')
 BUGMAIL_USER = get_setting_or_env('BUGMAIL_USER')
@@ -48,6 +53,7 @@ def get_messages(delete=True, max_get=50):
         num_messages = len(conn.list()[1])
         num_get = min(num_messages, max_get)
         log.debug('Getting %d bugmails', num_get)
+        redis_client.incr('STATS:BUGMAILS:TOTAL', num_get)
         if newrelic:
             newrelic.agent.record_custom_metric('Custom/AllEmail', num_get)
         for msgid in range(1, num_get + 1):
@@ -60,7 +66,9 @@ def get_messages(delete=True, max_get=50):
                     conn.dele(msgid)
         conn.quit()
     if messages:
-        log.debug('Found %d interesting bugmails', len(messages))
+        num_msgs = len(messages)
+        redis_client.incr('STATS:BUGMAILS:USED', num_msgs)
+        log.debug('Found %d interesting bugmails', num_msgs)
     return messages
 
 
@@ -124,9 +132,10 @@ def extract_bug_info(msg):
     :param msg: message
     :return: dict
     """
-    info = {
-        'summary': BUG_SUMMARY_RE.match(msg['subject']).group(1),
-    }
+    info = {}
+    m = BUG_SUMMARY_RE.match(msg['subject'])
+    if m:
+        info['summary'] = m.group(1)
     for h in BUGZILLA_INFO_HEADERS:
         val = msg.get('x-bugzilla-' + h)
         if val:
