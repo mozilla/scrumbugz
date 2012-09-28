@@ -36,10 +36,11 @@
           <dd>{{ bugs_data.total_points }}</dd>
           <dt>Total Bugs</dt>
           <dd>{{ bugs_data.total_bugs }}</dd>
+          {# Disabled for now
           {% if bugs_data.scoreless_bugs %}
             <dt class="scoreless">Scoreless Stories</dt>
             <dd class="scoreless">{{ bugs_data.scoreless_bugs }}</dd>
-          {% endif %}
+          {% endif %} #}
           <dt>Points Remaining</dt>
           <dd>{{ bugs_data.points_remaining }}{% if not bugs_data.points_remaining %}
             <span class="woot">\o/</span>{% endif %}</dd>

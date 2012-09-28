@@ -659,8 +659,6 @@ class Bug(models.Model):
     def basic_status(self):
         if not self.has_scrum_data:
             status = 'dataless'
-        elif not self.story_points:
-            status = 'scoreless'
         elif self.is_closed():
             status = 'closed'
         else:
