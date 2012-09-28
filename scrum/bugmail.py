@@ -136,6 +136,8 @@ def extract_bug_info(msg):
     m = BUG_SUMMARY_RE.match(msg['subject'])
     if m:
         info['summary'] = m.group(1)
+    else:
+        log.warning('Subject did not match: %s', msg['subject'])
     for h in BUGZILLA_INFO_HEADERS:
         val = msg.get('x-bugzilla-' + h)
         if val:
