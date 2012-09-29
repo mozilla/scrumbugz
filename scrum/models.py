@@ -574,6 +574,7 @@ class BugManager(PassThroughManager):
         if not created:
             bug.fill_from_data(defaults)
             bug.save()
+        cache.set('bug:updated:%s' % bug.id, True, 60)
         return bug, created
 
 
@@ -783,9 +784,11 @@ def get_bzproducts_dict(qs):
     return prods
 
 
-@receiver(post_save, sender=Bug)
-def cache_bug_update(sender, instance, **kwargs):
-    cache.set('bug:updated:%s' % instance.id, True, 30)
+@receiver(pre_save, sender=Bug)
+def update_scrum_data(sender, instance, **kwargs):
+    scrum_data = parse_whiteboard(instance.whiteboard)
+    for k, v in scrum_data.items():
+        setattr(instance, 'story_' + k, v)
 
 
 @receiver(pre_save, sender=Sprint)

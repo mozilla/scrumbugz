@@ -7,8 +7,6 @@ from django.conf import settings
 from django.core.cache import cache
 from django.utils.timezone import make_aware, utc
 
-from scrum.utils import parse_whiteboard
-
 
 def get_setting_or_env(name, default=None):
     """
@@ -65,9 +63,6 @@ def clean_bug_data(bug):
     if 'history' in bug:
         for h in bug['history']:
             h['when'] = make_aware(h['when'], utc)
-    if 'whiteboard' in bug:
-        scrum_data = parse_whiteboard(bug['whiteboard'])
-        bug.update(dict(('story_' + k, v) for k, v in scrum_data.items() if v))
 
 
 def is_closed(status):

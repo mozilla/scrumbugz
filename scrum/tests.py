@@ -133,6 +133,18 @@ class TestBug(TestCase):
         self.p.products.create(name='Input')
         update_product('MDN')
 
+    def test_whiteboard_update(self):
+        b = Bug.objects.get(id=778465)
+        eq_(b.story_points, 1)
+        eq_(b.story_user, 'dev')
+
+    def test_whiteboard_clearable(self):
+        b = Bug.objects.get(id=778465)
+        b.whiteboard = ''
+        b.save()
+        eq_(b.story_points, 0)
+        eq_(b.story_user, '')
+
     @patch.object(Bug, 'points_history')
     def test_points_for_date_default(self, mock_bug):
         """ should default to points in whiteboard """

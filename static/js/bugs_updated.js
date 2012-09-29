@@ -11,7 +11,7 @@
                 data: {'bug_ids': bug_ids},
                 statusCode: {
                     204: function(){
-                        window.setTimeout(bugsUpdatedRecently, 25000);
+                        window.setTimeout(bugsUpdatedRecently, 30000);
                     },
                     200: function(){
                         $('#alert_messages').append([
@@ -28,7 +28,7 @@
 
     $(function(){
         // Check for bug updates.
-        window.setTimeout(bugsUpdatedRecently, 35000);
+        window.setTimeout(bugsUpdatedRecently, 30000);
     });
 
 })(jQuery);

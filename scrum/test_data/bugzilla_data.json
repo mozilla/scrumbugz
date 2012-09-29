@@ -4,11 +4,9 @@
   "bugs":[
     {
       "status":"ASSIGNED",
-      "story_component":"infrastructure",
       "product":"Input",
       "blocks":[778466],
       "severity":"normal",
-      "story_user":"dev",
       "depends_on":[],
       "whiteboard":"u=dev c=infrastructure p=1 s=2012.16",
       "creation_time":"2012-07-28T18:54:00Z",
@@ -19,7 +17,6 @@
       "assigned_to":"willkg@mozilla.com",
       "id":778465,
       "comments_count":5,
-      "story_points":1,
       "resolution":"",
       "last_change_time":"2012-08-31T00:56:45Z",
       "history":[
@@ -71,11 +68,9 @@
     },
     {
       "status":"ASSIGNED",
-      "story_component":"infrastructure",
       "product":"Input",
       "blocks":[],
       "severity":"normal",
-      "story_user":"dev",
       "depends_on":[778465],
       "whiteboard":"u=dev c=infrastructure p=2 s=2012.16",
       "creation_time":"2012-07-28T18:56:00Z",
@@ -86,7 +81,6 @@
       "assigned_to":"willkg@mozilla.com",
       "id":778466,
       "comments_count":9,
-      "story_points":2,
       "resolution":"",
       "last_change_time":"2012-08-28T14:07:44Z",
       "history":[
@@ -149,11 +143,9 @@
     },
     {
       "status":"NEW",
-      "story_component":"infrastructure",
       "product":"Input",
       "blocks":[780626, 781715, 781717],
       "severity":"normal",
-      "story_user":"dev",
       "depends_on":[],
       "whiteboard":"u=dev c=infrastructure p=2 s=2012.16",
       "creation_time":"2012-08-10T01:25:00Z",
@@ -164,7 +156,6 @@
       "assigned_to":"nobody@mozilla.org",
       "id":781710,
       "comments_count":3,
-      "story_points":2,
       "resolution":"",
       "last_change_time":"2012-08-28T14:09:26Z",
       "history":[
@@ -253,11 +244,9 @@
     },
     {
       "status":"RESOLVED",
-      "story_component":"infrastructure",
       "product":"Input",
       "blocks":[780626],
       "severity":"normal",
-      "story_user":"dev",
       "depends_on":[781709, 781721],
       "whiteboard":"u=dev c=infrastructure p=2 s=2012.16",
       "creation_time":"2012-08-10T01:29:00Z",
@@ -268,7 +257,6 @@
       "assigned_to":"mcooper@mozilla.com",
       "id":781714,
       "comments_count":8,
-      "story_points":2,
       "resolution":"FIXED",
       "last_change_time":"2012-08-31T00:53:47Z",
       "history":[
@@ -367,11 +355,9 @@
     },
     {
       "status":"NEW",
-      "story_component":"infrastructure",
       "product":"Input",
       "blocks":[780626],
       "severity":"normal",
-      "story_user":"dev",
       "depends_on":[781710, 781721],
       "whiteboard":"u=dev c=infrastructure p=2 s=2012.16",
       "creation_time":"2012-08-10T01:30:00Z",
@@ -382,7 +368,6 @@
       "assigned_to":"nobody@mozilla.org",
       "id":781715,
       "comments_count":6,
-      "story_points":2,
       "resolution":"",
       "last_change_time":"2012-08-28T14:09:25Z",
       "history":[
@@ -444,11 +429,9 @@
     },
     {
       "status":"NEW",
-      "story_component":"infrastructure",
       "product":"Input",
       "blocks":[780626, 781718],
       "severity":"normal",
-      "story_user":"dev",
       "depends_on":[781710, 781709],
       "whiteboard":"u=dev c=infrastructure p=2 s=2012.16",
       "creation_time":"2012-08-10T01:35:00Z",
@@ -459,7 +442,6 @@
       "assigned_to":"nobody@mozilla.org",
       "id":781717,
       "comments_count":5,
-      "story_points":2,
       "resolution":"",
       "last_change_time":"2012-08-28T14:07:50Z",
       "history":[
@@ -532,11 +514,9 @@
     },
     {
       "status":"NEW",
-      "story_component":"infrastructure",
       "product":"Input",
       "blocks":[780626],
       "severity":"normal",
-      "story_user":"dev",
       "depends_on":[781717, 784742],
       "whiteboard":"u=dev c=infrastructure p=2 s=2012.16",
       "creation_time":"2012-08-10T01:42:00Z",
@@ -547,7 +527,6 @@
       "assigned_to":"nobody@mozilla.org",
       "id":781718,
       "comments_count":6,
-      "story_points":2,
       "resolution":"",
       "last_change_time":"2012-08-31T16:36:28Z",
       "history":[
@@ -620,11 +599,9 @@
     },
     {
       "status":"RESOLVED",
-      "story_component":"infrastructure",
       "product":"Input",
       "blocks":[],
       "severity":"normal",
-      "story_user":"dev",
       "depends_on":[],
       "whiteboard":"u=dev c=infrastructure p=2 s=2012.17",
       "creation_time":"2012-08-20T20:29:00Z",
@@ -635,7 +612,6 @@
       "assigned_to":"mcooper@mozilla.com",
       "id":784138,
       "comments_count":5,
-      "story_points":2,
       "resolution":"FIXED",
       "last_change_time":"2012-08-31T18:27:58Z",
       "history":[
@@ -707,11 +683,9 @@
     },
     {
       "status":"NEW",
-      "story_component":"infrastructure",
       "product":"Input",
       "blocks":[],
       "severity":"normal",
-      "story_user":"dev",
       "depends_on":[],
       "whiteboard":"u=dev c=infrastructure p= s=2012.16",
       "creation_time":"2012-08-21T20:50:00Z",
@@ -756,11 +730,9 @@
     },
     {
       "status":"NEW",
-      "story_component":"infrastructure",
       "product":"Input",
       "blocks":[],
       "severity":"normal",
-      "story_user":"dev",
       "depends_on":[],
       "whiteboard":"u=dev c=infrastructure p=2 s=2012.17",
       "creation_time":"2012-08-21T20:56:00Z",
@@ -771,7 +743,6 @@
       "assigned_to":"nobody@mozilla.org",
       "id":784494,
       "comments_count":3,
-      "story_points":2,
       "resolution":"",
       "last_change_time":"2012-08-28T14:10:26Z",
       "history":[
@@ -801,11 +772,9 @@
     },
     {
       "status":"NEW",
-      "story_component":"infrastructure",
       "product":"Input",
       "blocks":[781718],
       "severity":"normal",
-      "story_user":"dev",
       "depends_on":[],
       "whiteboard":"u=dev c=infrastructure p=3 s=2012.16",
       "creation_time":"2012-08-22T18:44:00Z",
@@ -816,7 +785,6 @@
       "assigned_to":"willkg@mozilla.com",
       "id":784742,
       "comments_count":3,
-      "story_points":3,
       "resolution":"",
       "last_change_time":"2012-08-28T14:07:51Z",
       "history":[
