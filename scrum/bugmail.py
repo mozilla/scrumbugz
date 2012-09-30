@@ -19,7 +19,7 @@ except ImportError:
 
 
 redis_client = None
-if settings.BROKER_URL.startswith('redis:'):
+if getattr(settings, 'BROKER_URL', '').startswith('redis:'):
     redis_client = celery.current_app.backend.client
 
 BUGMAIL_HOST = get_setting_or_env('BUGMAIL_HOST')
