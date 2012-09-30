@@ -312,7 +312,7 @@ class CreateBZProductView(ProtectedCreateView):
             return HttpResponse(json.dumps(form.errors), status=400)
         else:
             target_obj = get_object_or_404(Project, slug=self.kwargs['slug'])
-            messages.error(self.request, form['url'].errors[0])
+            messages.error(self.request, form['name'].errors[0])
             return redirect(target_obj.get_edit_url())
 
 
