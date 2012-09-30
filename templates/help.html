@@ -46,14 +46,13 @@ Bug updates are now pushed to scrumbugs via email. This greatly simplyfies how w
 
 #### When Do Bugs Update
 
-Bug data outside of backlogs is refreshed via cron every 10 minutes.
-Backlog data is refreshed every 4 hours, however a shift refresh when viewing the backlog will schedule an update at the next 10 minute cron run.
+Bug data is refreshed via bugmail every 30 seconds. Scrumbugz gets all bugmail and filters out only the ones
+that matter using the Products/Components you specify in your project settings. These are then parsed and
+the bugs are updated with what info we can get from the mail. The bug is then queued for a full refresh within
+the next few minutes. Full backlog refreshes should no longer be necessary.
 
-***
-
-## What will happen when we launch.
-
-A migration script will run and create a project for each existing team. All bugs will be migrated over.
+When you add a new Product/Component all open bugs with scrum data in the whiteboard will be pulled into
+the system within a few minutes.
 
 ***
 
@@ -62,7 +61,7 @@ A migration script will run and create a project for each existing team. All bug
 
 ### Single Project Teams
 
-If you only have a single project in scrumbugs, all you need to add to your project is a backlog url. This will enable you to use the ready list and manage your sprints.
+If you only have a single project in scrumbugs, all you need to add to your project is a bugzilla product and component (optional). This will enable you to use the ready list and manage your sprints.
 
 
 ### Multiple Project Teams
@@ -71,8 +70,7 @@ If you have multiple projects you will need to create each of them in scrumbugs 
 
 ### IMPORTANT Things To Note
 
-1. When you add a backlog, bugs will not appear immediately, they will appear after the next cron run every 10 minutes
-2. If you add a new project, please file a [Github Issue](https://github.com/mozilla/scrumbugz/issues/new) with the Bugzilla product(s) and component(s) (or all) your project uses so we can add them to our scrumbugs watch list, this is a temporary pain and this step will be removed in a future release.
+1. When you add a backlog, bugs will not appear immediately, but will appear within a few (<5) minutes.
 
 ***
 
