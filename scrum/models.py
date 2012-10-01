@@ -574,7 +574,7 @@ class BugManager(PassThroughManager):
         if not created:
             bug.fill_from_data(defaults)
             bug.save()
-        cache.set('bug:updated:%s' % bug.id, True, 60)
+        cache.set('bug:updated:%s' % bug.id, True, 35)
         return bug, created
 
 

@@ -1,6 +1,9 @@
 (function($){
     "use strict";
 
+    var loadedStamp = Date.now();
+    var initialWait = 30000;  // 30 sec
+
     var bugsUpdatedRecently = function(){
         var bug_ids = $('.bug-list tbody tr').map(function(i, el){return $(el).data('bugid');}).get();
         if(bug_ids.length){
@@ -10,9 +13,7 @@
                 type: 'POST',
                 data: {'bug_ids': bug_ids},
                 statusCode: {
-                    204: function(){
-                        window.setTimeout(bugsUpdatedRecently, 30000);
-                    },
+                    204: checkUpdatesAgain,
                     200: function(){
                         $('#alert_messages').append([
                             '<div class="alert alert-info hide">',
@@ -26,9 +27,15 @@
         }
     };
 
-    $(function(){
-        // Check for bug updates.
-        window.setTimeout(bugsUpdatedRecently, 30000);
-    });
+    var waitMultiplier = function(){
+        // increase wait every 5 min
+        return Math.ceil((Date.now() - loadedStamp)/300000);
+    };
+
+    var checkUpdatesAgain = function(){
+        window.setTimeout(bugsUpdatedRecently, initialWait * waitMultiplier());
+    };
+
+    $(checkUpdatesAgain);
 
 })(jQuery);
