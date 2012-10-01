@@ -31,16 +31,11 @@ Setup for development
 Requirements
 ------------
 
-* Bugzilla 4
-* a recent version of the Bugzilla API
+* Bugzilla 4+
+* The Bugzilla XMLRPC API.
 
-Currently, scrumbugz uses Bugzilla search urls to define a sprint. It converts
-the parameters in the search url to a form which it then uses with the Bugzilla
-API.
-
-Thus, in order to use scrumbugz, you need a Bugzilla instance that's running
-a recent version of Bugzilla and the Bugzilla API. We think the minimum
-version is Bugzilla 4, but haven't verified this.
+Currently, scrumbugz uses Bugzilla searches for Product(s)/Component(s) and
+bug IDs via the XMLRPC api (/xmlrpc.cgi).
 
 
 Get dependencies
@@ -95,7 +90,7 @@ Run it
 
     ./manage.py runserver
 
-Static media will be handled automatically by Django 1.3's built-in
+Static media will be handled automatically by Django 1.4's built-in
 handler.
 
 
@@ -106,9 +101,3 @@ Pull up the home page which should now be at http://localhost:8000/. Click
 the `Admin` link on the right of the nav bar. Login with the admin account
 you setup in during `syncdb`, then go back to the home page. Once you're
 logged in you'll see buttons for creating and editing projects and sprints.
-
-The bugzilla url for a sprint should be the url for a query defining the sprint. For
-example, SUMO uses the target to define sprints, so the query url for our 2012.6 sprint
-is::
-
-    https://bugzilla.mozilla.org/buglist.cgi?quicksearch=ALL%20product%3Asupport%20milestone%3A2012.6
