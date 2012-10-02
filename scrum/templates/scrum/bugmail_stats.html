@@ -1,0 +1,16 @@
+{% extends "scrum/base.html" %}
+
+{% block title %}Bugmail Stats{% endblock %}
+
+{% block content %}
+  <div class="hero-unit">
+    <h1>Bugmail Stats</h1>
+    {% if bugmail_stats %}
+      <h2>Total Mail Recieved: {{ bugmail_stats.total }}</h2>
+      <h2>Bugmail Used: {{ bugmail_stats.used }}</h2>
+      <h2>Percent Used: {{ bugmail_stats.percent_used }}</h2>
+    {% else %}
+      <p>Redis is not configured. Stats are not being collected.</p>
+    {% endif %}
+  </div>
+{% endblock %}

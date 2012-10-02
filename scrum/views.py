@@ -15,14 +15,19 @@ from django.template.context import Context
 from django.utils import simplejson as json
 from django.views.generic import (CreateView, DeleteView, DetailView,
                                   ListView, TemplateView, UpdateView, View)
-from bugzilla.api import bugzilla
 
+import celery
+
+from bugzilla.api import bugzilla
 from scrum.forms import (CreateProjectForm, CreateTeamForm, BZProductForm,
                          ProjectBugsForm, ProjectForm, SprintBugsForm,
                          SprintForm, TeamForm)
 from scrum.models import BZError, BZProduct, Project, Sprint, Team, Bug
 
 
+redis_client = None
+if getattr(settings, 'BROKER_URL', '').startswith('redis:'):
+    redis_client = celery.current_app.backend.client
 log = logging.getLogger(__name__)
 
 
@@ -371,3 +376,20 @@ class CheckRecentUpdates(View):
             if updated:
                 return HttpResponse()
         return HttpResponse(status=204)  # no content
+
+
+class BugmailStatsView(TemplateView):
+    template_name = 'scrum/bugmail_stats.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(BugmailStatsView, self).get_context_data(**kwargs)
+        if redis_client:
+            bmail_total = int(redis_client.get('STATS:BUGMAILS:TOTAL') or 1)
+            bmail_used = int(redis_client.get('STATS:BUGMAILS:USED') or 1)
+            context['bugmail_stats'] = {
+                'total': bmail_total,
+                'used': bmail_used,
+                'percent_used': "{0:.1%}".format(float(bmail_used) /
+                                                 bmail_total),
+            }
+        return context
