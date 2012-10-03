@@ -7,74 +7,93 @@
 
 ## Terms
 ### Teams
-Teams aggregage tasks across projects and every project in scrumbugs belongs to a team. Example teams are Web Productions
-and SUMO
+Teams aggregage tasks across projects and every project in scrumbugs belongs to
+a team. An example teams is Web Productions.
 
 ### Projects
-Projects are the things teams work on. These will often correspond to products in bugzilla. Example projects are Mozilla.org
-and Affiliates.
+Projects are the things teams work on. These will often correspond to products
+in Bugzilla. Example projects are Mozilla.org and Affiliates.
 
 ### Backlog
-The backlog is a list of bugs from bugzilla. These are defined per project by specifing a product and component. Scrumbugs
-will suck in all bugs within that product component that have U C P tags. We assume if U C P tags are filled out, the task
-is ready enough to go into a backlog
+The backlog is a list of bugs from Bugzilla. These are defined per project by
+specifying a product and component. Scrumbugs will suck in all bugs within that
+product component that have u c p tags. We assume if u c p tags are filled out,
+the task is ready enough to go into a backlog.
 
 ### Ready List
-The ready list is a list of bugs that are ready to be worked on, this is a subset of the backlog and defines work that
-should be worked on if a developer is available.
+The ready list is a list of bugs that are ready to be worked on, this is a
+subset of the backlog and defines work that should be worked on if a developer
+is available.
 
 ### Sprint
-A defined period of time where work is assigned
+A defined period of time where work is assigned.
 
 ***
 ## Getting Started
 
 ### Creating a Team
-If you are new to scrumbugs you will need to create a team. To do this navigate to the team page and click create.
+If you are new to scrumbugs you will need to create a team. To do this navigate
+to the *team page* and click *create*.
 
 ### Creating Projects
-To create a new project, navigate to projects and create new. You will need to specify the product and component in
-bugzilla for the backlog. Note some teams only work on one project. In this scenario having a single team with a single
+To create a new project, navigate to *projects* and *create new*. You will need to
+specify the product and component in Bugzilla for the backlog. Note some teams
+only work on one project. In this scenario having a single team with a single
 project is OK.
+
+### Creating Sprints
+To create a new sprint, navigate to *teams* select your team and click the button
+*new sprint*. Enter name and date range for your sprint. You may also add comments.
+You can name your sprints using whatever convention works best for your team,
+for example WebProd uses 2012.1, 2012.2, 2012.3.
+
 
 ***
 ## Managing Bugs
 
 ### Managing The Backlog
-Any bugs with U C P tags will appear in the backlog. U C P tags denote User Component & Points and tell scrumbugs that
-the bug has been vetted and should appear in the backlog.
+Any bugs with u c p tags in the whiteboard will appear in the backlog.
+Example whiteboard: "u=dev c=infrastructure p=2". u c p tags denote
+User Component & Points and tell scrumbugs that the bug has been vetted and
+should appear in the backlog.
 
 ### Managing The Ready List
-When bugs can be worked on they should be moved from the backlog to the ready list. Bugs that are in the ready list
-will appear on the aggregated ready list under the team.
+When bugs can be worked on they should be moved from the backlog to the ready
+list. Bugs that are in the ready list will appear on the aggregated ready
+list under the team.
 
 ### Assigning Work
-Work is assigned under teams using sprints. You should create a sprint for whatever time period your team usually works
-(2 weeks is common). As a 'team' you should move tasks from the ready list into a sprint making sure your devs have enough
-to work on.
+Work is assigned under teams using sprints. You should create a sprint for
+whatever time period your team usually works (2 weeks is common). As a 'team'
+you should move tasks from the ready list into a sprint making sure your devs
+have enough to work on.
 
 ***
 ## Permissions
 Only admins can create projects/teams and manage tasks. Non admins can view
-sprints and team pages. If you need permission to do something please ask in #scrum or file a bug.
+sprints and team pages. If you need permission to do something please ask in
+\#scrum or file a bug.
 
 ***
 ## When Do Bugs Update
 
-Bug updates are pushed scrumbugs via email. This greatly simplyfies how we cache and update bug data.
+Bug updates are pushed scrumbugs via email. This greatly simplyfies how we
+cache and update bug data.
 
-Bug data is refreshed via bugmail every 30 seconds. Scrumbugz gets all bugmail and filters out only the ones
-that matter using the Products/Components you specify in your project settings. These are then parsed and
-the bugs are updated with what info we can get from the mail. The bug is then queued for a full refresh within
-the next few minutes. Full backlog refreshes should no longer be necessary.
+Bug data is refreshed via bugmail every 30 seconds. Scrumbugz gets all bugmail
+and filters out only the ones that matter using the Products/Components you
+specify in your project settings. These are then parsed and the bugs are
+updated with what info we can get from the mail. The bug is then queued for a
+full refresh within the next few minutes. Full backlog refreshes should no
+longer be necessary.
 
-When you add a new Product/Component all open bugs with scrum data in the whiteboard will be pulled into
-the system within a few minutes.
+When you add a new Product/Component all open bugs with scrum data in the
+whiteboard will be pulled into the system within a few minutes.
 
 ***
 ## Feedback Loop
 
-If you encounter bugs or have suggestions, please file them in bugzilla under the scrumbugs component,
+If you encounter bugs or have suggestions, please [file them in Bugzilla](https://bugzilla.mozilla.org/enter_bug.cgi?product=Websites&component=Scrumbugs&rep_platform=all&op_sys=all)
 or reach out directly in #scrum.
 
     {% endfilter %}
