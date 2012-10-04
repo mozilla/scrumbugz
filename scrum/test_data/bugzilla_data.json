@@ -8,7 +8,7 @@
       "blocks":[778466],
       "severity":"normal",
       "depends_on":[],
-      "whiteboard":"u=dev c=infrastructure p=1 s=2012.16",
+      "whiteboard":"u=dev c=infrastructure p=1",
       "creation_time":"2012-07-28T18:54:00Z",
       "summary":"get a -dev server set up",
       "priority":"P2",
@@ -72,7 +72,7 @@
       "blocks":[],
       "severity":"normal",
       "depends_on":[778465],
-      "whiteboard":"u=dev c=infrastructure p=2 s=2012.16",
+      "whiteboard":"u=dev c=infrastructure p=2",
       "creation_time":"2012-07-28T18:56:00Z",
       "summary":"set up localization infrastructure",
       "priority":"P2",
@@ -147,7 +147,7 @@
       "blocks":[780626, 781715, 781717],
       "severity":"normal",
       "depends_on":[],
-      "whiteboard":"u=dev c=infrastructure p=2 s=2012.16",
+      "whiteboard":"u=dev c=infrastructure p=2",
       "creation_time":"2012-08-10T01:25:00Z",
       "summary":"implement models for firefox mobile feedback",
       "priority":"P3",
@@ -169,7 +169,7 @@
             {
               "removed":"",
               "field_name":"status_whiteboard",
-              "added":"u=dev c=infrastructure p=2 s=2012.16"
+              "added":"u=dev c=infrastructure p=2"
             }
           ],
           "who":"willkg@mozilla.com",
@@ -248,7 +248,7 @@
       "blocks":[780626],
       "severity":"normal",
       "depends_on":[781709, 781721],
-      "whiteboard":"u=dev c=infrastructure p=2 s=2012.16",
+      "whiteboard":"u=dev c=infrastructure p=2",
       "creation_time":"2012-08-10T01:29:00Z",
       "summary":"implement firefox desktop feedback view and templates",
       "priority":"P2",
@@ -270,7 +270,7 @@
             {
               "removed":"",
               "field_name":"status_whiteboard",
-              "added":"u=dev c=infrastructure p=2 s=2012.16"
+              "added":"u=dev c=infrastructure p=2"
             }
           ],
           "who":"willkg@mozilla.com",
@@ -359,7 +359,7 @@
       "blocks":[780626],
       "severity":"normal",
       "depends_on":[781710, 781721],
-      "whiteboard":"u=dev c=infrastructure p=2 s=2012.16",
+      "whiteboard":"u=dev c=infrastructure p=2",
       "creation_time":"2012-08-10T01:30:00Z",
       "summary":"implement firefox mobile feedback view and templates",
       "priority":"P3",
@@ -381,7 +381,7 @@
             {
               "removed":"",
               "field_name":"status_whiteboard",
-              "added":"u=dev c=infrastructure p=2 s=2012.16"
+              "added":"u=dev c=infrastructure p=2"
             }
           ],
           "who":"willkg@mozilla.com",
@@ -433,7 +433,7 @@
       "blocks":[780626, 781718],
       "severity":"normal",
       "depends_on":[781710, 781709],
-      "whiteboard":"u=dev c=infrastructure p=2 s=2012.16",
+      "whiteboard":"u=dev c=infrastructure p=2",
       "creation_time":"2012-08-10T01:35:00Z",
       "summary":"implement indexing code",
       "priority":"P2",
@@ -455,7 +455,7 @@
             {
               "removed":"",
               "field_name":"status_whiteboard",
-              "added":"u=dev c=infrastructure p=2 s=2012.17"
+              "added":"u=dev c=infrastructure p=2"
             }
           ],
           "who":"willkg@mozilla.com",
@@ -491,9 +491,9 @@
         {
           "changes":[
             {
-              "removed":"u=dev c=infrastructure p=2 s=2012.17",
+              "removed":"u=dev c=infrastructure p=2",
               "field_name":"status_whiteboard",
-              "added":"u=dev c=infrastructure p=2 s=2012.16"
+              "added":"u=dev c=infrastructure p=2"
             }
           ],
           "who":"willkg@mozilla.com",
@@ -518,7 +518,7 @@
       "blocks":[780626],
       "severity":"normal",
       "depends_on":[781717, 784742],
-      "whiteboard":"u=dev c=infrastructure p=2 s=2012.16",
+      "whiteboard":"u=dev c=infrastructure p=2",
       "creation_time":"2012-08-10T01:42:00Z",
       "summary":"implement dashboard",
       "priority":"P2",
@@ -545,7 +545,7 @@
             {
               "removed":"",
               "field_name":"status_whiteboard",
-              "added":"u=dev c=infrastructure p=2 s=2012.17"
+              "added":"u=dev c=infrastructure p=2"
             }
           ],
           "who":"willkg@mozilla.com",
@@ -554,9 +554,9 @@
         {
           "changes":[
             {
-              "removed":"u=dev c=infrastructure p=2 s=2012.17",
+              "removed":"u=dev c=infrastructure p=2",
               "field_name":"status_whiteboard",
-              "added":"u=dev c=infrastructure p=2 s=2012.16"
+              "added":"u=dev c=infrastructure p=2"
             }
           ],
           "who":"willkg@mozilla.com",
@@ -603,7 +603,7 @@
       "blocks":[],
       "severity":"normal",
       "depends_on":[],
-      "whiteboard":"u=dev c=infrastructure p=2 s=2012.17",
+      "whiteboard":"u=dev c=infrastructure p=2",
       "creation_time":"2012-08-20T20:29:00Z",
       "summary":"visual notification of prod vs. non-prod environment",
       "priority":"P2",
@@ -620,7 +620,7 @@
             {
               "removed":"",
               "field_name":"status_whiteboard",
-              "added":"u=dev c=infrastructure p=2 s=2012.17"
+              "added":"u=dev c=infrastructure p=2"
             }
           ],
           "who":"willkg@mozilla.com",
@@ -687,7 +687,7 @@
       "blocks":[],
       "severity":"normal",
       "depends_on":[],
-      "whiteboard":"u=dev c=infrastructure p= s=2012.16",
+      "whiteboard":"u=dev c=infrastructure p=",
       "creation_time":"2012-08-21T20:50:00Z",
       "summary":"Desktop and mobile AND TABLETS, oh my!",
       "priority":"--",
@@ -734,7 +734,7 @@
       "blocks":[],
       "severity":"normal",
       "depends_on":[],
-      "whiteboard":"u=dev c=infrastructure p=2 s=2012.17",
+      "whiteboard":"u=dev c=infrastructure p=2",
       "creation_time":"2012-08-21T20:56:00Z",
       "summary":"upgrade playdoh-lib submodules",
       "priority":"P4",
@@ -776,7 +776,7 @@
       "blocks":[781718],
       "severity":"normal",
       "depends_on":[],
-      "whiteboard":"u=dev c=infrastructure p=3 s=2012.16",
+      "whiteboard":"u=dev c=infrastructure p=3",
       "creation_time":"2012-08-22T18:44:00Z",
       "summary":"implement search infrastructure",
       "priority":"P2",

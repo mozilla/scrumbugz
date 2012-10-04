@@ -29,7 +29,8 @@ from model_utils.managers import PassThroughManager
 
 from bugzilla.api import BUG_OPEN_STATUSES, bugzilla, is_closed
 from scrum.utils import (date_to_js, date_range, get_bz_url_for_bug_ids,
-                         parse_bz_url, parse_whiteboard)
+                         get_date, get_story_data, parse_bz_url,
+                         parse_whiteboard)
 
 
 log = logging.getLogger(__name__)
@@ -200,6 +201,9 @@ class Team(DBBugsMixin, BugsListMixin, models.Model):
     slug = models.CharField(max_length=50, validators=[validate_slug],
                             db_index=True, unique=True)
 
+    class Meta:
+        ordering = ('name',)
+
     def get_bugs(self, **kwargs):
         """
         Get all bugs from the ready backlogs of the projects.
@@ -228,6 +232,9 @@ class Project(DBBugsMixin, BugsListMixin, models.Model):
     team = models.ForeignKey(Team, related_name='projects', null=True)
 
     _date_cached = None
+
+    class Meta:
+        ordering = ('name',)
 
     def __unicode__(self):
         return self.name
@@ -615,6 +622,18 @@ class Bug(models.Model):
     def __unicode__(self):
         return unicode(self.id)
 
+    @property
+    def project_from_product(self):
+        prodcomp = BZProduct.objects.filter(name=self.product,
+                                            component=self.component)
+        if prodcomp:
+            return prodcomp[0].project
+        else:
+            prod = BZProduct.objects.filter(name=self.product)
+            if prod:
+                return prod[0].project
+        return None
+
     def fill_from_data(self, data):
         for attr_name, value in data.items():
             setattr(self, attr_name, value)
@@ -669,7 +688,7 @@ class Bug(models.Model):
 
     @property
     def scrum_data(self):
-        return parse_whiteboard(self.whiteboard)
+        return get_story_data(self.whiteboard)
 
     @property
     def has_scrum_data(self):
@@ -700,7 +719,7 @@ class Bug(models.Model):
                                 })
                             closed = now_closed
                     elif fn == 'status_whiteboard':
-                        pts = parse_whiteboard(change['added'])['points']
+                        pts = get_story_data(change['added'])['points']
                         if pts != cpoints:
                             cpoints = pts
                             if not closed:
@@ -787,9 +806,44 @@ def get_bzproducts_dict(qs):
 
 @receiver(pre_save, sender=Bug)
 def update_scrum_data(sender, instance, **kwargs):
-    scrum_data = parse_whiteboard(instance.whiteboard)
-    for k, v in scrum_data.items():
+    for k, v in instance.scrum_data.items():
         setattr(instance, 'story_' + k, v)
+
+
+@receiver(pre_save, sender=Bug)
+def move_to_sprint(sender, instance, **kwargs):
+    wb_data = parse_whiteboard(instance.whiteboard)
+    if 's' in wb_data:
+        newsprint = wb_data['s']
+        if instance.sprint and newsprint == instance.sprint.slug:
+            return
+        if instance.project is None:
+            new_prod = instance.project_from_product
+            if new_prod is None:
+                return
+            log.debug('Adding %s to %s', instance, new_prod)
+            instance.project = new_prod
+
+        newsprint_obj = None
+        try:
+            newsprint_obj = Sprint.objects.get(team=instance.project.team,
+                                               slug=newsprint)
+        except Sprint.DoesNotExist:
+            sprintdate = get_date(newsprint)
+            if sprintdate:
+                newsprint_obj = Sprint.objects.create(
+                    team=instance.project.team,
+                    name=newsprint,
+                    slug=newsprint,
+                    start_date=sprintdate,
+                    end_date=sprintdate + timedelta(days=14),
+                )
+        if newsprint_obj:
+            if instance.sprint:
+                BugSprintLog.objects.removed_from_sprint(instance,
+                                                         instance.sprint)
+            instance.sprint = newsprint_obj
+            BugSprintLog.objects.added_to_sprint(instance, newsprint_obj)
 
 
 @receiver(pre_save, sender=Sprint)

@@ -31,7 +31,6 @@ CONTEXT_SETTINGS = (
 
 # http://packages.python.org/Markdown/extensions/index.html
 MARKDOWN_EXTENSIONS = [
-    'nl2br',
     'fenced_code',
     'tables',
     'smart_strong',

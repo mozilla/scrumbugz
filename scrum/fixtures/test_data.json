@@ -12,7 +12,8 @@
         "model":"scrum.project",
         "fields":{
             "name":"MDN",
-            "slug":"mdn"
+            "slug":"mdn",
+            "team":1
         }
     },
     {

@@ -145,6 +145,91 @@ class TestBug(TestCase):
         eq_(b.story_points, 0)
         eq_(b.story_user, '')
 
+    def test_whiteboard_add_to_sprint(self):
+        """
+        Specifying `s=SPRINT_SLUG` in the whiteboard should add the bug to
+        the sprint if it exists.
+        """
+        b = Bug.objects.get(id=778465)
+        assert b.sprint is None
+        assert b.project is None
+        b.whiteboard = 's=2.2'
+        b.save()
+        b = Bug.objects.get(id=778465)
+        eq_(b.sprint, self.s)
+        eq_(b.project, self.p)
+
+    def test_whiteboard_add_to_created_sprint(self):
+        """
+        Specifying `s=YYYY-MM-DD` in the whiteboard should add the bug to
+        a new sprint if it doesn't exist.
+        """
+        with self.assertRaises(Sprint.DoesNotExist):
+            Sprint.objects.get(slug='2012-01-01')
+        b = Bug.objects.get(id=778465)
+        assert b.sprint is None
+        assert b.project is None
+        b.whiteboard = 's=2012-01-01'
+        b.save()
+        b = Bug.objects.get(id=778465)
+        s = Sprint.objects.get(slug='2012-01-01')
+        eq_(b.sprint, s)
+        eq_(b.project, self.p)
+        eq_(s.name, '2012-01-01')
+        eq_(s.start_date, date(2012, 1, 1))
+        eq_(s.end_date, date(2012, 1, 15))
+
+    def test_whiteboard_invalid_date_no_created(self):
+        """
+        Specifying `s=YYYY-MM-DD` in the whiteboard should add the bug to
+        a new sprint if it doesn't exist unless the date is invalid.
+        """
+        b = Bug.objects.get(id=778465)
+        assert b.sprint is None
+        assert b.project is None
+        b.whiteboard = 's=2012-30-01'  # invalid date
+        b.save()
+        with self.assertRaises(Sprint.DoesNotExist):
+            Sprint.objects.get(slug='2012-30-01')
+        b = Bug.objects.get(id=778465)
+        assert b.sprint is None
+        eq_(b.project, self.p)
+
+    def test_whiteboard_add_to_project_if_no_sprint(self):
+        """
+        Specifying a nonexistent sprint not in a date format should only add
+        to project.
+        """
+        b = Bug.objects.get(id=778465)
+        assert b.sprint is None
+        assert b.project is None
+        b.whiteboard = 's=does-not-exist'
+        b.save()
+        b = Bug.objects.get(id=778465)
+        assert b.sprint is None
+        eq_(b.project, self.p)
+        with self.assertRaises(Sprint.DoesNotExist):
+            Sprint.objects.get(slug='does-not-exist')
+
+    def test_whiteboard_change_moves_bug_to_new_sprint(self):
+        """ Changes to the s= whiteboard tag should move the bug. """
+        self.test_whiteboard_add_to_sprint()
+        b = Bug.objects.get(id=778465)
+        b.whiteboard = 's=2012-01-15'
+        b.save()
+        b = Bug.objects.get(id=778465)
+        eq_(b.sprint, Sprint.objects.get(slug='2012-01-15'))
+
+    def test_whiteboard_sprint_moves_logged(self):
+        """ Bugs added to and removed from sprints should be in the log. """
+        self.test_whiteboard_change_moves_bug_to_new_sprint()
+        logs = BugSprintLog.objects.filter(bug_id=778465,
+                                           action=BugSprintLog.ADDED)
+        eq_(logs.count(), 2)
+        logs = BugSprintLog.objects.filter(bug_id=778465,
+                                           action=BugSprintLog.REMOVED)
+        eq_(logs.count(), 1)
+
     @patch.object(Bug, 'points_history')
     def test_points_for_date_default(self, mock_bug):
         """ should default to points in whiteboard """
