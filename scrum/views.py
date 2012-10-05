@@ -92,7 +92,6 @@ class ProjectsMixin(object):
 
     def get_context_data(self, **kwargs):
         context = super(ProjectsMixin, self).get_context_data(**kwargs)
-        context['projects'] = Project.objects.all()
         if hasattr(self, 'project'):
             context['project'] = self.project
         return context
@@ -225,11 +224,6 @@ class SprintView(BugsDataMixin, SprintMixin, DetailView):
 class EditSprintView(SprintMixin, ProtectedUpdateView):
     form_class = SprintForm
     template_name = 'scrum/sprint_form.html'
-
-    def get_context_data(self, **kwargs):
-        context = super(EditSprintView, self).get_context_data(**kwargs)
-        context['teams'] = Team.objects.all()
-        return context
 
     def get_form_kwargs(self):
         kwargs = super(EditSprintView, self).get_form_kwargs()

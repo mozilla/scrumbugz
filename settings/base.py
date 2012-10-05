@@ -70,10 +70,8 @@ STATICFILES_DIRS = (
 JINGO_EXCLUDE_APPS = (
     'admin',
     'auth',
-    'context_processors',  # needed for django tests
     'debug_toolbar',
     'floppyforms',
-    'registration',  # needed for django tests
 )
 
 JINJA_CONFIG = {
@@ -142,6 +140,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "django.core.context_processors.request",
     "django.contrib.messages.context_processors.messages",
     "context_processors.context_settings",
+    "scrum.context_processors.projects_and_teams",
 )
 
 TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'

@@ -27,7 +27,7 @@
   </head>
 
   <body>
-    <div class="navbar navbar-fixed-top">
+    <div class="navbar navbar-fixed-top navbar-inverse">
       <div class="navbar-inner">
         <div class="container">
           <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
@@ -38,12 +38,38 @@
           <a class="brand" href="{{ url('scrum_home') }}">ScrumBugs{% if not PROD_MODE %}-DEV{% endif %}</a>
           <div class="nav-collapse">
             <ul class="nav">
-              <li{% if request.path == '/' %} class="active"{% endif %}><a href="{{ url('scrum_home') }}">Home</a></li>
-              <li{% if request.path.startswith('/t') %} class="active"{% endif %}><a href="{{ url('scrum_teams_list') }}"><i class="icon-user icon-white"></i> Teams</a></li>
-              <li{% if request.path.startswith('/p') %} class="active"{% endif %}><a href="{{ url('scrum_projects_list') }}"><i class="icon-briefcase icon-white"></i> Projects</a></li>
+              <li{% if request.path_info == '/' %} class="active"{% endif %}><a href="{{ url('scrum_home') }}">Home</a></li>
+              <li class="dropdown{% if request.path_info.startswith('/t') %} active{% endif %}">
+                <a href="{{ url('scrum_teams_list') }}"
+                   class="dropdown-toggle"
+                   data-toggle="dropdown"><i class="icon-user icon-white"></i> Teams <b class="caret"></b></a>
+                <ul class="dropdown-menu">
+                  {% for _team in teams %}
+                    <li{% if team == _team %} class="active"{% endif %}><a href="{{ _team.get_absolute_url() }}">{{ _team.name }}</a></li>
+                  {% endfor %}
+                  {% if perms.scrum.add_team %}
+                    <li class="divider"></li>
+                    <li><a href="{{ url('scrum_team_new') }}"><i class="icon-plus-sign"></i> New Team</a></li>
+                  {% endif %}
+                </ul>
+              </li>
+              <li class="dropdown{% if request.path_info.startswith('/p') %} active{% endif %}">
+                <a href="{{ url('scrum_projects_list') }}"
+                   class="dropdown-toggle"
+                   data-toggle="dropdown"><i class="icon-briefcase icon-white"></i> Projects <b class="caret"></b></a>
+                <ul class="dropdown-menu">
+                  {% for _proj in projects %}
+                    <li{% if project == _proj %} class="active"{% endif %}><a href="{{ _proj.get_absolute_url() }}">{{ _proj.name }}</a></li>
+                  {% endfor %}
+                  {% if perms.scrum.add_project %}
+                    <li class="divider"></li>
+                    <li><a href="{{ url('scrum_project_new') }}"><i class="icon-plus-sign"></i> New Project</a></li>
+                  {% endif %}
+                </ul>
+              </li>
             </ul>
             <ul class="nav pull-right">
-              <li{% if request.path == url('help') %} class="active"{% endif %}><a href="{{ url('help') }}">Help</a></li>
+              <li{% if request.path_info == url('help') %} class="active"{% endif %}><a href="{{ url('help') }}">Help</a></li>
               <li><a href="{{ url('admin:index') }}">Admin</a></li>
             </ul>
           </div><!--/.nav-collapse -->
