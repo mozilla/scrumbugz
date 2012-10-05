@@ -54,21 +54,25 @@ def get_setting_or_env(name, default=None):
 
 
 def parse_whiteboard(wb):
+    wb = wb.strip()
+    if wb:
+        return dict(i.split('=', 1) for i in wb.split() if '=' in i)
+    return {}
+
+
+def get_story_data(wb):
     wb_dict = {
         'points': 0,
         'user': '',
         'component': '',
     }
-    wb = wb.strip()
-    if wb:
-        data = dict(i.split('=', 1) for i in wb.split() if '=' in i)
-        for k, v in data.iteritems():
-            if v:
-                cast = int if k == 'p' else str
-                try:
-                    wb_dict[TAG_2_ATTR[k]] = cast(v)
-                except (KeyError, ValueError):
-                    continue
+    for k, v in parse_whiteboard(wb).iteritems():
+        if v:
+            cast = int if k == 'p' else str
+            try:
+                wb_dict[TAG_2_ATTR[k]] = cast(v)
+            except (KeyError, ValueError):
+                continue
     return wb_dict
 
 

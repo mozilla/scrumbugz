@@ -145,6 +145,62 @@ class TestBug(TestCase):
         eq_(b.story_points, 0)
         eq_(b.story_user, '')
 
+    def test_whiteboard_add_to_sprint(self):
+        """
+        Specifying `s=SPRINT_SLUG` in the whiteboard should add the bug to
+        the sprint if it exists.
+        """
+        b = Bug.objects.get(id=778465)
+        assert b.sprint is None
+        assert b.project is None
+        b.whiteboard += ' s=2.2'
+        b.save()
+        b = Bug.objects.get(id=778465)
+        eq_(b.sprint, self.s)
+        eq_(b.project, self.p)
+
+    def test_whiteboard_add_to_project_if_no_sprint(self):
+        """
+        Specifying a nonexistent sprint not in a date format should only add
+        to project.
+        """
+        b = Bug.objects.get(id=778465)
+        assert b.sprint is None
+        assert b.project is None
+        b.whiteboard += ' s=2012-01-15'
+        b.save()
+        b = Bug.objects.get(id=778465)
+        assert b.sprint is None
+        eq_(b.project, self.p)
+        with self.assertRaises(Sprint.DoesNotExist):
+            Sprint.objects.get(slug='2012-01-15')
+
+    def test_whiteboard_change_moves_bug_to_new_sprint(self):
+        """ Changes to the s= whiteboard tag should move the bug. """
+        self.test_whiteboard_add_to_sprint()
+        newsprint = Sprint.objects.create(
+            name='New Sprint',
+            slug='newsprint',
+            start_date=date.today(),
+            end_date=date.today() + timedelta(days=10),
+            team=self.s.team
+        )
+        b = Bug.objects.get(id=778465)
+        b.whiteboard += ' s=newsprint'
+        b.save()
+        b = Bug.objects.get(id=778465)
+        eq_(b.sprint, newsprint)
+
+    def test_whiteboard_sprint_moves_logged(self):
+        """ Bugs added to and removed from sprints should be in the log. """
+        self.test_whiteboard_change_moves_bug_to_new_sprint()
+        logs = BugSprintLog.objects.filter(bug_id=778465,
+                                           action=BugSprintLog.ADDED)
+        eq_(logs.count(), 2)
+        logs = BugSprintLog.objects.filter(bug_id=778465,
+                                           action=BugSprintLog.REMOVED)
+        eq_(logs.count(), 1)
+
     @patch.object(Bug, 'points_history')
     def test_points_for_date_default(self, mock_bug):
         """ should default to points in whiteboard """
