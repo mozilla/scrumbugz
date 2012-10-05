@@ -39,20 +39,23 @@
     $(checkUpdatesAgain);
 
     // blocker popovers
+    var $blocked_labels = $('.blocked-bug');
     var hide_all = function(){
-        $('.blocked-bug').popover('hide');
+        $blocked_labels.popover('hide');
     };
-    $('.blocked-bug').popover({
+    $blocked_labels.popover({
         title: 'Blocked By',
         content: function(){
             return $(this).find('.blocker-links').html();
         },
-        trigger: 'manual'
-    }).on('click', function(e){
+        trigger: 'manual',
+        animation: false
+    });
+    $blocked_labels.on('click', function(e){
         hide_all();
         $(this).popover('toggle');
         return false;
     });
-    $(document).on('click', hide_all);
+    $('body').on('click', hide_all);
 
 })(jQuery);
