@@ -28,12 +28,13 @@
 
 {% macro bug_table(bugs, id='bugs_table', actions=None, button_color=None, show_project=True, show_sprint=False, blocked_bugs=None) %}
   {%- set actions=[actions] if actions is string -%}
+  {%- set status_to_rowclass = {'closed': 'success', 'open': 'warning'} -%}
   {% if button_color -%}
     {%- set icon_color=' icon-white' -%}
   {%- else -%}
     {%- set icon_color='' -%}
   {%- endif -%}
-  <table class="table table-striped table-condensed bug-list{{ ' empty' if not bugs }}" id="{{ id }}">
+  <table class="table table-bordered table-hover table-condensed bug-list{{ ' empty' if not bugs }}" id="{{ id }}">
     <thead>
       <tr>
         <th class="type-int">ID</th>
@@ -54,7 +55,7 @@
     </thead>
     <tbody>
       {% for bug in bugs %}
-        <tr data-bugid="{{ bug.id }}" data-points="{{ bug.story_points }}" id="bug{{ bug.id }}" class="bug-{{ bug.basic_status }}">
+        <tr data-bugid="{{ bug.id }}" data-points="{{ bug.story_points }}" id="bug{{ bug.id }}" class="bug-{{ bug.basic_status }} {{ status_to_rowclass[bug.basic_status] }}">
           <td data-order-by="{{ bug.id }}"><a href="{{ bug.get_absolute_url() }}">{{ bug.id }}</a></td>
           {% if show_project %}
             <td data-order-by="{{ bug.project }}">{% if bug.project %}<a href="{{ bug.project.get_absolute_url() }}">{{ bug.project }}</a>{% endif %}</td>

@@ -10,8 +10,11 @@
           <i class="icon-edit icon-white"></i> Edit
         </a>
       {% endif %}
-      <h1>{{ project.name }} Project</h1>
-      <p>Part of the <a href="{{ project.team.get_absolute_url() }}">{{ project.team.name }}</a> team.</p>
+      <div class="page-header">
+        <h1>{{ project.name }}
+          <small>Part of the <a href="{{ project.team.get_absolute_url() }}">{{ project.team.name }}</a> team.</small>
+        </h1>
+      </div>
     </div>
   </div>
   <div class="row">

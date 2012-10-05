@@ -62,18 +62,6 @@ table thead tr .headerSortDown {
     background-color: rgb(221, 221, 221);
 }
 
-tr.bug-closed td{
-    background-color: #dff0d8 !important;
-}
-
-tr.bug-dataless td{
-    background-color: #ccc !important;
-}
-
-tr.bug-open td{
-    background-color: #fcf8e3 !important;
-}
-
 /* For the details, see: http://flowplayer.org/tools/dateinput/index.html#skinning */
 
 /* calendar root element */

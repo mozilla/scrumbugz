@@ -13,8 +13,9 @@
       <i class="icon-edit icon-white"></i> Edit
     </a>
   {% endif %}
-  <h1>{{ team.name }} Team</h1>
-  <hr>
+  <div class="page-header">
+    <h1>{{ team.name }} Team</h1>
+  </div>
   <h2>Projects</h2>
   <ul>
     {% for p in team.projects.all() %}
