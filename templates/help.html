@@ -1,82 +1,100 @@
 {% extends 'base.html' %}
 
 {% block content %}
-{% filter markdown %}
+    {% filter markdown %}
 # Scrumbugs Help
 ***
-On or around August 23rd 2012 we launched a major update to scrumbugs. The major features added in this update were:
 
-1. Teams & Projects
-2. Backlogs & Readylists
-3. Changes to bugs are pushed from bugzilla to scrumbugs via email
+## Terms
+### Teams
+Teams aggregage tasks across projects and every project in scrumbugs belongs to
+a team. An example teams is Web Productions.
 
-***
+### Projects
+Projects are the things teams work on. These will often correspond to products
+in Bugzilla. Example projects are Mozilla.org and Affiliates.
 
-## New Features Explained
+### Backlog
+The backlog is a list of bugs from Bugzilla. These are defined per project by
+specifying a product and component. Scrumbugs will suck in all bugs within that
+product component that have u c p tags. We assume if u c p tags are filled out,
+the task is ready enough to go into a backlog.
 
+### Ready List
+The ready list is a list of bugs that are ready to be worked on, this is a
+subset of the backlog and defines work that should be worked on if a developer
+is available.
 
-### Teams & Projects
-
-Every project in scrumbugs now must belong to a team. This realtionship allows us to manage multiple projects in a single sprint.
-
-### Backlogs & Readylists
-
-We have added the concepts of "backlogs" & "readylists" to every project.
-
-Backlogs: A curated bugzilla list that could be worked on
-Readylist: A subest of the backlog of bugs that should be worked on
-
-
-The above will require some changes to your existing workflow.
-
-#### Example Workflow
-
-1. A hypothetical new team is added "Mozilla Scrum", the team has 2 projects
-  A. Scrumbugs
-  B. Robotic Kanban Board
-2. Both projects have a backlog of many unrelated tasks.
-3. Seperately within each project bugs are moved by a TPM or developer into the ready list, these are the bugs that should be worked on next.
-4. In the planning session for the next dev cycle bugs from both projects ready lists are displayed on the team page. Through discussion, bugs from these lists are moved into a sprint.
-5. The sprint now contains bugs from 2 projects
-6. Stakeholders for each project can look at the individual project pages and see what is currently being worked on and what will be worked on next. Developers and PMs can look at the team page and see all the tasks across projects that are currently assigned.
-
-### Bug Updates Via Email
-
-Bug updates are now pushed to scrumbugs via email. This greatly simplyfies how we cache and update bug data.
-
-#### When Do Bugs Update
-
-Bug data is refreshed via bugmail every 30 seconds. Scrumbugz gets all bugmail and filters out only the ones
-that matter using the Products/Components you specify in your project settings. These are then parsed and
-the bugs are updated with what info we can get from the mail. The bug is then queued for a full refresh within
-the next few minutes. Full backlog refreshes should no longer be necessary.
-
-When you add a new Product/Component all open bugs with scrum data in the whiteboard will be pulled into
-the system within a few minutes.
+### Sprint
+A defined period of time where work is assigned.
 
 ***
+## Getting Started
 
-## What do you need to do after we launch.
+### Creating a Team
+If you are new to scrumbugs you will need to create a team. To do this navigate
+to the *team page* and click *create*.
 
+### Creating Projects
+To create a new project, navigate to *projects* and *create new*. You will need to
+specify the product and component in Bugzilla for the backlog. Note some teams
+only work on one project. In this scenario having a single team with a single
+project is OK.
 
-### Single Project Teams
+### Creating Sprints
+To create a new sprint, navigate to *teams* select your team and click the button
+*new sprint*. Enter name and date range for your sprint. You may also add comments.
+You can name your sprints using whatever convention works best for your team,
+for example WebProd uses 2012.1, 2012.2, 2012.3.
 
-If you only have a single project in scrumbugs, all you need to add to your project is a bugzilla product and component (optional). This will enable you to use the ready list and manage your sprints.
-
-
-### Multiple Project Teams
-
-If you have multiple projects you will need to create each of them in scrumbugs with a backlog. Make sure to assign them to your team. If the project already exists in scrumbugs as a team (Mozilla.org for example), it should be created as a project, then request PMAC or BSTERNTH delete the team. Note you will lose historical sprint data when a team is deleted.
-
-### IMPORTANT Things To Note
-
-1. When you add a backlog, bugs will not appear immediately, but will appear within a few (<5) minutes.
 
 ***
+## Managing Bugs
 
+### Managing The Backlog
+Any bugs with u c p tags in the whiteboard will appear in the backlog.
+Example whiteboard: "u=dev c=infrastructure p=2". u c p tags denote
+User Component & Points and tell scrumbugs that the bug has been vetted and
+should appear in the backlog.
+
+### Managing The Ready List
+When bugs can be worked on they should be moved from the backlog to the ready
+list. Bugs that are in the ready list will appear on the aggregated ready
+list under the team.
+
+### Assigning Work
+Work is assigned under teams using sprints. You should create a sprint for
+whatever time period your team usually works (2 weeks is common). As a 'team'
+you should move tasks from the ready list into a sprint making sure your devs
+have enough to work on.
+
+***
+## Permissions
+Only admins can create projects/teams and manage tasks. Non admins can view
+sprints and team pages. If you need permission to do something please ask in
+\#scrum or file a bug.
+
+***
+## When Do Bugs Update
+
+Bug updates are pushed scrumbugs via email. This greatly simplyfies how we
+cache and update bug data.
+
+Bug data is refreshed via bugmail every 30 seconds. Scrumbugz gets all bugmail
+and filters out only the ones that matter using the Products/Components you
+specify in your project settings. These are then parsed and the bugs are
+updated with what info we can get from the mail. The bug is then queued for a
+full refresh within the next few minutes. Full backlog refreshes should no
+longer be necessary.
+
+When you add a new Product/Component all open bugs with scrum data in the
+whiteboard will be pulled into the system within a few minutes.
+
+***
 ## Feedback Loop
 
-This is a version of scrumbugs that we would like to iterate quickly on. It has the backlog/ready list features we need but the interface and how you move through screens has not been optimized. If you encounter bugs, please file them in bugzilla under the scrumbugs component, or reach out directly to myself or pmac.
+If you encounter bugs or have suggestions, please [file them in Bugzilla](https://bugzilla.mozilla.org/enter_bug.cgi?product=Websites&component=Scrumbugs&rep_platform=all&op_sys=all)
+or reach out directly in #scrum.
 
-{% endfilter %}
+    {% endfilter %}
 {% endblock %}
