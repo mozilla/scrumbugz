@@ -168,6 +168,7 @@ BUG_OPEN_STATUSES = [
     'CONFIRMED',
     'ASSIGNED',
     'REOPENED',
+    'READY',
     'NEW',
 ]
 BUG_CLOSED_STATUSES = [
