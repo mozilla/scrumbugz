@@ -15,7 +15,6 @@ from django.conf import settings
 from django.core.cache import cache
 from django.core.validators import RegexValidator
 from django.db import models, transaction
-#from django.db.models.query import QuerySet
 from django.db.models.query_utils import Q
 from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
@@ -29,8 +28,7 @@ from model_utils.managers import PassThroughManager
 
 from bugzilla.api import BUG_OPEN_STATUSES, bugzilla, is_closed
 from scrum.utils import (date_to_js, date_range, get_bz_url_for_bug_ids,
-                         get_date, get_story_data, parse_bz_url,
-                         parse_whiteboard)
+                         get_story_data, parse_bz_url, parse_whiteboard)
 
 
 log = logging.getLogger(__name__)
@@ -816,34 +814,27 @@ def move_to_sprint(sender, instance, **kwargs):
     if 's' in wb_data:
         newsprint = wb_data['s']
         if instance.sprint and newsprint == instance.sprint.slug:
+            # already in the sprint
             return
         if instance.project is None:
-            new_prod = instance.project_from_product
-            if new_prod is None:
+            new_proj = instance.project_from_product
+            if new_proj is None:
                 return
-            log.debug('Adding %s to %s', instance, new_prod)
-            instance.project = new_prod
+            # add to ready backlog
+            log.debug('Adding %s to %s', instance, new_proj)
+            instance.project = new_proj
 
-        newsprint_obj = None
         try:
             newsprint_obj = Sprint.objects.get(team=instance.project.team,
                                                slug=newsprint)
         except Sprint.DoesNotExist:
-            sprintdate = get_date(newsprint)
-            if sprintdate:
-                newsprint_obj = Sprint.objects.create(
-                    team=instance.project.team,
-                    name=newsprint,
-                    slug=newsprint,
-                    start_date=sprintdate,
-                    end_date=sprintdate + timedelta(days=14),
-                )
-        if newsprint_obj:
-            if instance.sprint:
-                BugSprintLog.objects.removed_from_sprint(instance,
-                                                         instance.sprint)
-            instance.sprint = newsprint_obj
-            BugSprintLog.objects.added_to_sprint(instance, newsprint_obj)
+            return
+
+        if instance.sprint:
+            BugSprintLog.objects.removed_from_sprint(instance,
+                                                     instance.sprint)
+        instance.sprint = newsprint_obj
+        BugSprintLog.objects.added_to_sprint(instance, newsprint_obj)
 
 
 @receiver(pre_save, sender=Sprint)

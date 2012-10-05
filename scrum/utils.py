@@ -1,7 +1,6 @@
 import hashlib
 import os
 import time
-from datetime import datetime
 from itertools import islice
 
 from django.conf import settings
@@ -100,14 +99,6 @@ def get_bz_url_for_bug_ids(bids):
         settings.BUGZILLA_SEARCH_URL,
         bug_ids
     )
-
-
-def get_date(datestr):
-    try:
-        newdate = datetime.strptime(datestr, '%Y-%m-%d')
-    except ValueError:
-        return None
-    return newdate.date()
 
 
 def date_range(sdate, edate, step=1):
