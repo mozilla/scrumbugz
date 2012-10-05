@@ -258,21 +258,6 @@
             $(show_graphs === 'false' ? '.stats-off' : '.stats-on').click();
         }
 
-        // blocker popovers
-        $('.blocked-bug').popover({
-            title: 'Blocked By',
-            content: function(){
-                return $(this).find('.blocker-links').html();
-            },
-            trigger: 'manual'
-        }).on('click', function(e){
-            $(this).popover('toggle');
-            return false;
-        });
-        $(document).on('click', function(){
-            $('.blocked-bug').popover('hide');
-        });
-
     });
 
 })(jQuery);

@@ -38,4 +38,21 @@
 
     $(checkUpdatesAgain);
 
+    // blocker popovers
+    var hide_all = function(){
+        $('.blocked-bug').popover('hide');
+    };
+    $('.blocked-bug').popover({
+        title: 'Blocked By',
+        content: function(){
+            return $(this).find('.blocker-links').html();
+        },
+        trigger: 'manual'
+    }).on('click', function(e){
+        hide_all();
+        $(this).popover('toggle');
+        return false;
+    });
+    $(document).on('click', hide_all);
+
 })(jQuery);
