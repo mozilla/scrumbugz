@@ -46,16 +46,10 @@
 {% endblock %}
 
 {% block js %}
-  <script type="text/javascript" src="//cdn.jquerytools.org/1.2.6/form/jquery.tools.min.js"></script>
-  <script type="text/javascript" src="{{ STATIC_URL }}js/jquery-ui-1.8.23.custom.min.js"></script>
   <script type="text/javascript" src="{{ STATIC_URL }}js/spin.min.js"></script>
   <script type="text/javascript" src="{{ STATIC_URL }}js/forms.js"></script>
   <script type="text/javascript">
     var bz_product_choices = {{ bz_product_choices|safe }};
-    $("#id_product").autocomplete({source: bz_product_choices});
+    $("#id_product").typeahead({source: bz_product_choices, items: 10});
   </script>
-{% endblock %}
-
-{% block css %}
-  <link href="{{ STATIC_URL }}css/jquery-ui-1.8.23.custom.css" rel="stylesheet">
 {% endblock %}
