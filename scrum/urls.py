@@ -6,8 +6,8 @@ from scrum.views import (BugmailStatsView, CheckRecentUpdates,
                          EditProjectView, EditSprintView, EditTeamView,
                          ListProjectsView, ListTeamsView,
                          ManageProjectBugsView, ManageSprintBugsView,
-                         ProjectView, RedirectOldURLsView, SprintView,
-                         TeamView)
+                         ProjectView, ProjectBacklogView, RedirectOldURLsView,
+                         SprintView, TeamView)
 
 
 urlpatterns = patterns('',
@@ -30,6 +30,8 @@ urlpatterns = patterns('',
         name='scrum_project_products'),
     url(r'^p/(?P<slug>[-\w\.]+)/bugs/$', ManageProjectBugsView.as_view(),
         name='scrum_project_bugs'),
+    url(r'^p/(?P<slug>[-\w\.]+)/backlog/$', ProjectBacklogView.as_view(),
+        name='scrum_project_backlog'),
     url(r'^t/(?P<slug>[-\w\.]+)/(?P<sslug>[-\w\.]+)/$', SprintView.as_view(),
         name='scrum_sprint'),
     url(r'^t/(?P<slug>[-\w\.]+)/(?P<sslug>[-\w\.]+)/edit/$',

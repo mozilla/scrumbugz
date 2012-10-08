@@ -4,7 +4,7 @@ from celery import task
 
 from bugzilla.api import bugzilla
 from scrum.bugmail import extract_bug_info, get_bugmails
-from scrum.models import Bug, store_bugs
+from scrum.models import Bug, store_bugs, Sprint
 from scrum.utils import chunked
 
 try:
@@ -60,6 +60,13 @@ def update_bugs(bug_ids):
             except Bug.DoesNotExist:
                 pass
     store_bugs(bugs)
+
+
+@task(name='update_sprint_data')
+def update_sprint_data(sprint_ids):
+    for sprint in Sprint.objects.filter(id__in=sprint_ids):
+        sprint.bugs_data_cache = sprint.get_bugs().get_aggregate_data()
+        sprint.save()
 
 
 def update_bug_chunks(bugs, chunk_size=100):

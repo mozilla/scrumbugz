@@ -28,6 +28,9 @@
           <i class="icon-list icon-white"></i> Manage Ready Stories
         </a>
       {% endif %}
+      <a class="btn btn-small pull-right" href="{{ url('scrum_project_backlog', project.slug) }}">
+        <i class="icon-list"></i> Full Backlog
+      </a>
       <h2>Sprint Ready</h2>
       {{ bug_table(bugs, 'backlog_table', show_project=False, blocked_bugs=blocked_bugs) }}
     </div>

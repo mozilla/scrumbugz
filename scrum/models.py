@@ -90,28 +90,7 @@ class BugsListMixin(object):
         raise NotImplementedError
 
     def _get_bugs_data(self):
-        bugs = self.get_bugs()
-        data = {
-            'users': defaultdict(int),
-            'components': defaultdict(int),
-            'status': defaultdict(int),
-            'basic_status': defaultdict(int),
-            'total_points': 0,
-            'total_bugs': len(bugs),
-            'scoreless_bugs': 0,
-        }
-        for bug in bugs:
-            if bug.story_points:
-                data['users'][bug.story_user] += bug.story_points
-                data['components'][bug.story_component] += bug.story_points
-                data['status'][bug.status] += bug.story_points
-                data['basic_status'][bug.basic_status] += bug.story_points
-                data['total_points'] += bug.story_points
-            else:
-                data['scoreless_bugs'] += 1
-        data['points_remaining'] = (data['total_points'] -
-                                    data['basic_status']['closed'])
-        return data
+        return self.get_bugs().get_aggregate_data()
 
     @property
     def _bugs_data_cache_key(self):
@@ -132,12 +111,7 @@ class BugsListMixin(object):
         return data
 
     def get_graph_bug_data(self):
-        data = self.get_bugs_data()
-        for item in ['users', 'components', 'status', 'basic_status']:
-            data[item] = [{'label': k, 'data': v} for k, v in
-                          sorted(data[item].iteritems(), key=itemgetter(1),
-                                 reverse=True)]
-        return data
+        return self.get_bugs().get_graph_data()
 
 
 class DBBugsMixin(object):
@@ -560,6 +534,38 @@ class BugQuerySet(QuerySet):
                     all_blocked[bid].append(blocker)
         return all_blocked
 
+    def get_aggregate_data(self):
+        bugs = self.all()
+        data = {
+            'users': defaultdict(int),
+            'components': defaultdict(int),
+            'status': defaultdict(int),
+            'basic_status': defaultdict(int),
+            'total_points': 0,
+            'total_bugs': len(bugs),
+            'scoreless_bugs': 0,
+        }
+        for bug in bugs:
+            if bug.story_points:
+                data['users'][bug.story_user] += bug.story_points
+                data['components'][bug.story_component] += bug.story_points
+                data['status'][bug.status] += bug.story_points
+                data['basic_status'][bug.basic_status] += bug.story_points
+                data['total_points'] += bug.story_points
+            else:
+                data['scoreless_bugs'] += 1
+        data['points_remaining'] = (data['total_points'] -
+                                    data['basic_status']['closed'])
+        return data
+
+    def get_graph_data(self):
+        data = self.get_aggregate_data()
+        for item in ['users', 'components', 'status', 'basic_status']:
+            data[item] = [{'label': k, 'data': v} for k, v in
+                          sorted(data[item].iteritems(), key=itemgetter(1),
+                                 reverse=True)]
+        return data
+
 
 class BugManager(PassThroughManager):
     use_for_related_fields = True
@@ -767,8 +773,15 @@ class BugSprintLog(models.Model):
 @transaction.commit_on_success
 def store_bugs(bugs):
     bug_objs = []
+    update_sprints = set()
     for bug in bugs.get('bugs', []):
-        bug_objs.append(Bug.objects.update_or_create(bug)[0])
+        bug_obj = Bug.objects.update_or_create(bug)[0]
+        bug_objs.append(bug_obj)
+        if bug_obj.sprint:
+            update_sprints.add(bug_obj.sprint.id)
+    if update_sprints:
+        from scrum.tasks import update_sprint_data
+        update_sprint_data.delay(list(update_sprints))
     return bug_objs
 
 

@@ -1,0 +1,87 @@
+{% extends "scrum/base_project.html" %}
+{% from "scrum/includes/macros.html" import toggle_stats_button, bug_table with context %}
+
+{% block content %}
+  <div class="row">
+    <div class="span12">
+      {{ toggle_stats_button(off=True) }}
+      <h1>
+        <a href="{{ project.get_absolute_url() }}">{{ project.name }}</a> Backlog
+      </h1>
+    </div>
+  </div>
+  <div class="row">
+    <div class="span12">
+      <div class="stats-container offscreen-hide">
+        <div class="row">
+          <div class="span3">
+            <h2>Numbers</h2>
+            <dl class="well sprint-numbers">
+              <dt>Total Points</dt>
+              <dd>{{ bugs_data.total_points }}</dd>
+              <dt>Total Bugs</dt>
+              <dd>{{ bugs_data.total_bugs }}</dd>
+              {% if bugs_data.scoreless_bugs %}
+                <dt class="scoreless">Scoreless Stories</dt>
+                <dd class="scoreless">{{ bugs_data.scoreless_bugs }}</dd>
+              {% endif %}
+              <dt>Points Remaining</dt>
+              <dd>{{ bugs_data.points_remaining }}{% if not bugs_data.points_remaining %}
+                <span class="woot">\o/</span>{% endif %}</dd>
+              {% if bugs_data.points_remaining %}
+                {% for data in bugs_data.basic_status %}
+                  <dt>{{ data.label|capitalize }} Points</dt>
+                  <dd>{{ data.data }}</dd>
+                {% endfor %}
+              {% endif %}
+            </dl>
+          </div>
+          <div class="span3">
+            <h2>Status</h2>
+            <div class="piegraph" id="status-pie"></div>
+          </div>
+          <div class="span3">
+            <h2>Component</h2>
+            <div class="piegraph" id="component-pie"></div>
+          </div>
+          <div class="span3">
+            <h2>Story User</h2>
+            <div class="piegraph" id="user-pie"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="span12">
+      <h2>Backlog</h2>
+      {{ bug_table(bugs, 'backlog_table', blocked_bugs=blocked_bugs, show_project=False) }}
+    </div>
+  </div>
+{% endblock %}
+
+{% block js %}
+  <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.flot.min.js"></script>
+  <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.flot.pie.min.js"></script>
+  <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.flot.resize.min.js"></script>
+  <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.stupidtable.min.js"></script>
+  <script type="text/javascript" src="{{ STATIC_URL }}js/sprint.js"></script>
+  <script type="text/javascript" src="{{ STATIC_URL }}js/bugs_updated.js"></script>
+  <script type="text/javascript">
+    $(function(){
+      "use strict";
+
+      var BUGS_DATA = {{ bugs_data_json|safe }};
+      init_sprint();
+      new PieFlot('#component-pie', BUGS_DATA.components);
+      new PieFlot('#user-pie', BUGS_DATA.users);
+      new PieFlot('#status-pie', BUGS_DATA.basic_status, {
+        color: {
+          open: "rgb(237, 194, 64)",
+          closed: "rgb(77, 167, 77)",
+          assigned: "rgb(175, 216, 248)"
+        }
+      });
+    });
+  </script>
+{% endblock %}

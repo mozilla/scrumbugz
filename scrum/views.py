@@ -23,7 +23,7 @@ from bugzilla.api import bugzilla
 from scrum.forms import (CreateProjectForm, CreateTeamForm, BZProductForm,
                          ProjectBugsForm, ProjectForm, SprintBugsForm,
                          SprintForm, TeamForm)
-from scrum.models import BZError, BZProduct, Project, Sprint, Team, Bug
+from scrum.models import BZProduct, Project, Sprint, Team, Bug
 from scrum.utils import get_setting_or_env
 
 
@@ -64,28 +64,29 @@ class ProtectedDeleteView(DeleteView):
 
 
 class BugsDataMixin(object):
-    def get_context_data(self, **kwargs):
-        context = super(BugsDataMixin, self).get_context_data(**kwargs)
+    def get_bugs_context(self, context, kwargs, bugs=None):
         self.bugs_kwargs = {}
         # clear cache if requested
         if self.request.META.get('HTTP_CACHE_CONTROL') == 'no-cache':
             self.bugs_kwargs['refresh'] = True
             messages.info(self.request, "The bugs will be refreshed from "
-                          "Bugzilla in a minute or two.")
+                                        "Bugzilla in a minute or two.")
         if 'all' in self.request.GET:
             self.bugs_kwargs['scrum_only'] = False
         context['scrum_only'] = self.bugs_kwargs.get('scrum_only', True)
         context['refresh'] = self.bugs_kwargs.get('refresh', False)
-        try:
-            bugs = self.object.get_bugs(**self.bugs_kwargs)
-            context['blocked_bugs'] = bugs.get_blocked()
-            context['bugs'] = bugs
-            context['bz_search_url'] = bugs.get_bz_search_url()
-            context['bugs_data'] = self.object.get_graph_bug_data()
-            context['bugs_data_json'] = json.dumps(context['bugs_data'])
-            context['bzerror'] = False
-        except BZError:
-            context['bzerror'] = True
+        if bugs is not None:
+            self.bugs_kwargs['bugs'] = bugs
+        bugs = self.object.get_bugs(**self.bugs_kwargs)
+        context['blocked_bugs'] = bugs.get_blocked()
+        context['bugs'] = bugs
+        context['bz_search_url'] = bugs.get_bz_search_url()
+        context['bugs_data'] = bugs.get_graph_data()
+        context['bugs_data_json'] = json.dumps(context['bugs_data'])
+
+    def get_context_data(self, **kwargs):
+        context = super(BugsDataMixin, self).get_context_data(**kwargs)
+        self.get_bugs_context(context, kwargs)
         return context
 
 
@@ -115,6 +116,15 @@ class ProjectView(BugsDataMixin, ProjectsMixin, DetailView):
                                   project=self.object)
         context['sprinting'] = bugs
         context['sprinting_blocked'] = bugs.get_blocked()
+        return context
+
+
+class ProjectBacklogView(BugsDataMixin, ProjectsMixin, DetailView):
+    template_name = 'scrum/project_backlog.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(ProjectBacklogView, self).get_context_data(**kwargs)
+        self.get_bugs_context(context, kwargs, self.object.get_backlog())
         return context
 
 
@@ -217,9 +227,8 @@ class SprintView(BugsDataMixin, SprintMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super(SprintView, self).get_context_data(**kwargs)
         context['team'] = self.team
-        if not context['bzerror']:
-            context['bugs_data'].update(self.object.get_burndown_data())
-            context['bugs_data_json'] = json.dumps(context['bugs_data'])
+        context['bugs_data'].update(self.object.get_burndown_data())
+        context['bugs_data_json'] = json.dumps(context['bugs_data'])
         return context
 
 
@@ -248,15 +257,11 @@ class ManageSprintBugsView(BugsDataMixin, SprintMixin, ProtectedUpdateView):
 
     def get_context_data(self, **kwargs):
         context = super(ManageSprintBugsView, self).get_context_data(**kwargs)
-        if not context['bzerror']:
-            try:
-                bugs = self.team.get_bugs(**self.bugs_kwargs)
-                context['backlog_bugs'] = bugs
-                context['blocked_backlog_bugs'] = bugs.get_blocked()
-                context['bugs_data'].update(self.object.get_burndown_data())
-                context['bugs_data_json'] = json.dumps(context['bugs_data'])
-            except BZError:
-                context['bzerror'] = True
+        bugs = self.team.get_bugs(**self.bugs_kwargs)
+        context['backlog_bugs'] = bugs
+        context['blocked_backlog_bugs'] = bugs.get_blocked()
+        context['bugs_data'].update(self.object.get_burndown_data())
+        context['bugs_data_json'] = json.dumps(context['bugs_data'])
         return context
 
 
@@ -268,13 +273,9 @@ class ManageProjectBugsView(BugsDataMixin, ProtectedUpdateView):
 
     def get_context_data(self, **kwargs):
         context = super(ManageProjectBugsView, self).get_context_data(**kwargs)
-        if not context['bzerror']:
-            try:
-                bugs = self.object.get_backlog(**self.bugs_kwargs)
-                context['backlog_bugs'] = bugs
-                context['blocked_backlog_bugs'] = bugs.get_blocked()
-            except BZError:
-                context['bzerror'] = True
+        bugs = self.object.get_backlog(**self.bugs_kwargs)
+        context['backlog_bugs'] = bugs
+        context['blocked_backlog_bugs'] = bugs.get_blocked()
         return context
 
 
