@@ -4,11 +4,12 @@
 
 {% block content %}
   <div class="hero-unit">
-    <h1>Bugmail Stats</h1>
+    <h1>Bugmail Stats <small>Since {{ bugmail_stats.date_started|datetime }}</small></h1>
     {% if bugmail_stats %}
-      <h2>Total Mail Recieved: {{ bugmail_stats.total }}</h2>
-      <h2>Bugmail Used: {{ bugmail_stats.used }}</h2>
-      <h2>Percent Used: {{ bugmail_stats.percent_used }}</h2>
+      <h2>Total Mail Recieved: <span class="text-info">{{ bugmail_stats.total }}</span></h2>
+      <h2>Bugmail Used: <span class="text-info">{{ bugmail_stats.used }}</span></h2>
+      <h2>Percent Used: <span class="text-info">{{ bugmail_stats.percent_used }}</span></h2>
+      <h2>Average Mail Per Day: <span class="text-info">{{ bugmail_stats.avg_mail }}</span></h2>
     {% else %}
       <p>Redis is not configured. Stats are not being collected.</p>
     {% endif %}
