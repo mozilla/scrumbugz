@@ -263,3 +263,8 @@ tr.active td {
 .blocked-bug {
     cursor: pointer;
 }
+
+.browserid-login {
+    padding-top: 7.5px !important;
+    padding-bottom: 7.5px !important;
+}

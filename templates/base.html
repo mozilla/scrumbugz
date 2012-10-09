@@ -71,6 +71,10 @@
             </ul>
             <ul class="nav pull-right">
               <li{% if request.path_info == url('help') %} class="active"{% endif %}><a href="{{ url('help') }}">Help</a></li>
+              {% if not user.is_authenticated() -%}
+                <li><a class="browserid-login" href="#" data-site-name="ScrumBugs"><img
+                    src="{{ STATIC_URL }}img/persona_sign_in.png" alt="Sign In"></a></li>
+              {% endif -%}
               <li><a href="{{ url('admin:index') }}">Admin</a></li>
             </ul>
           </div><!--/.nav-collapse -->
@@ -115,8 +119,13 @@
     </script>
     <script src="{{ STATIC_URL }}js/bootstrap.min.js"></script>
     <script src="{{ STATIC_URL }}js/jquery.cookie.js"></script>
+    {{ browserid_form.media|safe }}
     {% block js %}{% endblock %}
 
+    <form method="POST" action="{{ url('browserid_verify') }}">
+        {{ csrf() }}
+        {{ browserid_form.as_p()|safe }}
+    </form>
     {% if ENABLE_GA %}
       <script type="text/javascript">
         var _gaq = _gaq || [];
