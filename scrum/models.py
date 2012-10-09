@@ -529,12 +529,13 @@ class BugQuerySet(QuerySet):
             for dep_id in bug.depends_on:
                 blocker_to_bug[dep_id].append(bug.id)
         open_blockers = Bug.objects.filter(id__in=blocker_to_bug.keys()) \
-                           .open().values_list('id', flat=True)
+                           .open()
+        open_blocker = dict((b.id, b) for b in open_blockers)
         all_blocked = defaultdict(list)
         for blocker, blocked in blocker_to_bug.iteritems():
-            if blocker in open_blockers:
+            if blocker in open_blocker:
                 for bid in blocked:
-                    all_blocked[bid].append(blocker)
+                    all_blocked[bid].append(open_blocker[blocker])
         return all_blocked
 
     def get_aggregate_data(self):

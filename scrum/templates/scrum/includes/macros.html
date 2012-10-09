@@ -96,8 +96,8 @@
   </table>
 {% endmacro %}
 
-{% macro bug_links(bug_ids) %}
-  {%- for bid in bug_ids -%}
-    <a href="{{ bugzilla_url(bid) }}" target="_blank">{{ bid }}</a>{{ ', ' if not loop.last }}
+{% macro bug_links(bug_objs) %}
+  {%- for bug in bug_objs -%}
+    <a href="{{ bug.get_absolute_url() }}" class="ttip" target="_blank" title="{{ bug.summary }}">{{ bug.id }}</a>{{ ', ' if not loop.last }}
   {%- endfor -%}
 {% endmacro %}

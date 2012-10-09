@@ -54,6 +54,7 @@
     $blocked_labels.on('click', function(e){
         hide_all();
         $(this).popover('toggle');
+        $('a.ttip').tooltip();
         return false;
     });
     $('body').on('click', hide_all);
