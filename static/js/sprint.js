@@ -213,6 +213,7 @@
         $tooltip = $('<div id="tooltip"></div>').appendTo("body");
         $('#bugs_table').stupidtable();
         $('#backlog_table').stupidtable();
+        $('#old_sprint_table').stupidtable();
         $('td.ttip').tooltip();
     };
 

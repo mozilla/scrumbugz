@@ -2,6 +2,8 @@ $(function(){
     "use strict";
 
     var bug_actions = {'add': [], 'remove': []};
+    var original_bugs = $('#bugs_table tbody tr')
+        .map(function(i, el){return $(el).data('bugid');}).get();
 
     function set_sprint_points(){
         var points = $('#bugs_table tbody tr')
@@ -30,20 +32,36 @@ $(function(){
     var button_colors = 'btn-danger btn-success';
 
     $('.bug-list').each(function(){
-        var table_type = $(this).attr('id').split('_')[0];
+        var table_type = $(this).attr('id').split('_')[0] == 'bugs' ? 'bugs' : 'backlog';
         $('.act-toggle-sprint', this).each(function(){
             $(this).prop('title', button_props[table_type].title);
         });
     }).on('click', '.act-toggle-sprint', function(){
         var $button = $(this);
-        var $table = $button.closest('table');
+        var $bug = $button.closest('tr');
+        var $table = $bug.closest('table');
+        var bugid = $bug.data('bugid');
         var new_table_type = $table.is('#bugs_table') ? 'backlog' : 'bugs';
         var action = new_table_type === 'bugs' ? 'add' : 'remove';
         var other_action = action === 'add' ? 'remove' : 'add';
-        var $new_table = $('#'+new_table_type+'_table');
-        var $bug = $button.closest('tr');
-        var bugid = $bug.data('bugid');
-        bug_actions[action].push(bugid);
+        var $original_table = $bug.data('originalTable');
+        if(action === 'add' && !$original_table){
+            $bug.data('originalTable', $table);
+        }
+        var $new_table;
+        if(action === 'remove' && $original_table){
+            $new_table = $original_table;
+        }
+        else{
+            $new_table = $('#'+new_table_type+'_table');
+        }
+        /* bugs not originally on the sprint shouldn't be removed, and
+         * bugs originally on the sprint shouldn't be added. */
+        if(!(action === 'remove' && !_.contains(original_bugs, bugid)) &&
+           !(action === 'add' && _.contains(original_bugs, bugid))){
+            bug_actions[action].push(bugid);
+        }
+        /* remove the bug from the opposite action if it's there */
         bug_actions[other_action] = _.filter(bug_actions[other_action], function(bid){
             return bid !== bugid;
         });

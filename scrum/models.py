@@ -159,9 +159,12 @@ class DBBugsMixin(object):
         :return: None
         """
         if remove:
-            qs = self._force_bug_qs(remove)
-            self.log_bugs_remove(qs)
-            self.bugs.remove(*qs)
+            for bug in self._force_bug_qs(remove):
+                try:
+                    self.bugs.remove(bug)
+                    self.log_bugs_remove([bug])
+                except self.DoesNotExist:
+                    pass
         if add:
             qs = self._force_bug_qs(add)
             self.log_bugs_add(qs)

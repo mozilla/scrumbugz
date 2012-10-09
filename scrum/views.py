@@ -262,6 +262,10 @@ class ManageSprintBugsView(BugsDataMixin, SprintMixin, ProtectedUpdateView):
         context['blocked_backlog_bugs'] = bugs.get_blocked()
         context['bugs_data'].update(self.object.get_burndown_data())
         context['bugs_data_json'] = json.dumps(context['bugs_data'])
+        context['old_sprint_bugs'] = Bug.objects.filter(
+            sprint__team=self.team,
+            sprint__start_date__lt=self.object.start_date,
+        ).open().order_by('sprint__start_date')
         return context
 
 

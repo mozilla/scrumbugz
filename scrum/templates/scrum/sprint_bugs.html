@@ -78,10 +78,15 @@
       </form>
 
       <h2>Stories: [Points = <span id="current-points">0</span>]</h2>
-      {{ bug_table(bugs, actions='toggle-sprint', button_color='danger', blocked_bugs=blocked_bugs) }}
+      {{ bug_table(bugs, actions='toggle-sprint', button_color='danger', blocked_bugs=blocked_bugs, show_sprint=True) }}
 
       <h2>Ready Backlog</h2>
-      {{ bug_table(team.get_bugs(), 'backlog_table', actions='toggle-sprint', button_color='success') }}
+      {{ bug_table(backlog_bugs, 'backlog_table', actions='toggle-sprint', button_color='success', blocked_bugs=blocked_backlog_bugs, show_sprint=True) }}
+
+      {% if old_sprint_bugs %}
+        <h2>Open Bugs From Previous Sprints</h2>
+        {{ bug_table(old_sprint_bugs, 'old_sprint_table', show_sprint=True, actions='toggle-sprint', button_color='success') }}
+      {% endif %}
     </div>
   </div>
 {% endblock %}
