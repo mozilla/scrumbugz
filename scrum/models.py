@@ -827,6 +827,8 @@ def update_scrum_data(sender, instance, **kwargs):
 
 @receiver(pre_save, sender=Bug)
 def move_to_sprint(sender, instance, **kwargs):
+    if not instance.has_scrum_data:
+        return
     wb_data = parse_whiteboard(instance.whiteboard)
     if 's' in wb_data:
         newsprint = wb_data['s']
