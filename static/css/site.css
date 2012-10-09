@@ -263,3 +263,7 @@ tr.active td {
 .blocked-bug {
     cursor: pointer;
 }
+
+.navbar-fixed-top {
+    opacity: .9;
+}

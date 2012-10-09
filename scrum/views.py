@@ -65,7 +65,8 @@ class ProtectedDeleteView(DeleteView):
 
 class BugsDataMixin(object):
     def get_bugs_context(self, context, kwargs, bugs=None):
-        self.bugs_kwargs = {}
+        scrum_only = kwargs.pop('scrum_only', True)
+        self.bugs_kwargs = {'scrum_only': scrum_only}
         # clear cache if requested
         if self.request.META.get('HTTP_CACHE_CONTROL') == 'no-cache':
             self.bugs_kwargs['refresh'] = True
@@ -73,7 +74,7 @@ class BugsDataMixin(object):
                                         "Bugzilla in a minute or two.")
         if 'all' in self.request.GET:
             self.bugs_kwargs['scrum_only'] = False
-        context['scrum_only'] = self.bugs_kwargs.get('scrum_only', True)
+        context['scrum_only'] = self.bugs_kwargs.get('scrum_only', scrum_only)
         context['refresh'] = self.bugs_kwargs.get('refresh', False)
         if bugs is not None:
             self.bugs_kwargs['bugs'] = bugs
@@ -256,6 +257,7 @@ class ManageSprintBugsView(BugsDataMixin, SprintMixin, ProtectedUpdateView):
     template_name = 'scrum/sprint_bugs.html'
 
     def get_context_data(self, **kwargs):
+        kwargs['scrum_only'] = False
         context = super(ManageSprintBugsView, self).get_context_data(**kwargs)
         bugs = self.team.get_bugs(**self.bugs_kwargs)
         context['backlog_bugs'] = bugs

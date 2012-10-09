@@ -119,10 +119,9 @@ class DBBugsMixin(object):
     def _get_bugs(self, **kwargs):
         """Get the db associated bugs (sprint/ready backlog)"""
         self.scrum_only = kwargs.get('scrum_only', True)
-        if kwargs.get('bugs') is None:
+        bugs = kwargs.get('bugs')
+        if bugs is None:
             bugs = self.bugs.all()
-        else:
-            bugs = kwargs['bugs']
         if 'bug_filters' in kwargs:
             bugs = bugs.filter(**kwargs['bug_filters'])
         if self.scrum_only:
@@ -686,9 +685,7 @@ class Bug(models.Model):
 
     @property
     def basic_status(self):
-        if not self.has_scrum_data:
-            status = 'dataless'
-        elif self.is_closed():
+        if self.is_closed():
             status = 'closed'
         else:
             status = 'assigned' if self.is_assigned() else 'open'
