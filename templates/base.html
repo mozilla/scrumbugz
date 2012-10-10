@@ -70,12 +70,16 @@
               </li>
             </ul>
             <ul class="nav pull-right">
-              <li{% if request.path_info == url('help') %} class="active"{% endif %}><a href="{{ url('help') }}">Help</a></li>
+              {% if user.is_staff %}
+                <li><a href="{{ url('admin:index') }}">Admin</a></li>
+              {% endif %}
               {% if not user.is_authenticated() -%}
-                <li><a class="browserid-login" href="#" data-site-name="ScrumBugs"><img
-                    src="{{ STATIC_URL }}img/persona_sign_in.png" alt="Sign In"></a></li>
+                <li><a class="browserid-login" id="browserid" href="#" data-site-name="ScrumBugs"><img
+                    src="{{ STATIC_URL }}img/persona_sign_in.png" alt="Sign in"></a></li>
+              {% else %}
+                <li><a href="{{ url('logout') }}?next={{ request.path_info }}">Sign out</a></li>
               {% endif -%}
-              <li><a href="{{ url('admin:index') }}">Admin</a></li>
+              <li{% if request.path_info == url('help') %} class="active"{% endif %}><a href="{{ url('help') }}">Help</a></li>
             </ul>
           </div><!--/.nav-collapse -->
         </div>
@@ -114,8 +118,8 @@
     <script src="//cdnjs.cloudflare.com/ajax/libs/lodash.js/0.4.2/lodash.min.js"></script>
     <script>
       // fall back to local if CDNs are offline
-      window.jQuery || document.write('<script src="{{ STATIC_URl }}js/jquery-1.7.2.min.js"><\/script>');
-      window._ || document.write('<script src="{{ STATIC_URl }}js/lodash-0.4.2.min.js"><\/script>');
+      window.jQuery || document.write('<script src="{{ STATIC_URL }}js/jquery-1.7.2.min.js"><\/script>');
+      window._ || document.write('<script src="{{ STATIC_URL }}js/lodash-0.4.2.min.js"><\/script>');
     </script>
     <script src="{{ STATIC_URL }}js/bootstrap.min.js"></script>
     <script src="{{ STATIC_URL }}js/jquery.cookie.js"></script>
@@ -124,6 +128,7 @@
 
     <form method="POST" action="{{ url('browserid_verify') }}">
         {{ csrf() }}
+        <input type="hidden" name="next" value="{{ request.path_info }}">
         {{ browserid_form.as_p()|safe }}
     </form>
     {% if ENABLE_GA %}

@@ -21,5 +21,5 @@ django-model-utils==1.1.0
 celery==3.0.9
 django-celery==3.0.9
 git+https://github.com/jbalogh/django-cache-machine.git@3b998e3b876018bc6f490e79abf6416004cde146
-git+https://github.com/mozilla/django-browserid.git@f2de0c62b0bb3a258729595ac8164245ee0c4b41
+django-browserid==0.6
 requests==0.14.1

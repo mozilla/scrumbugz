@@ -152,6 +152,7 @@ AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
 )
 LOGIN_REDIRECT_URL = '/'
+LOGIN_URL = LOGOUT_URL = '/'
 
 TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
 NOSE_ARGS = [
