@@ -8,6 +8,8 @@ admin.autodiscover()
 handler500 = 'scrum.views.server_error'
 
 urlpatterns = patterns('',
+    url(r'^logout/$', 'django.contrib.auth.views.logout', name='logout'),
+    url(r'^browserid/', include('django_browserid.urls')),
     url(r'^admin/', include(admin.site.urls)),
     url(r'^help/', TemplateView.as_view(template_name='help.html'),
         name='help'),

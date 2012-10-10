@@ -3,6 +3,8 @@ from __future__ import absolute_import
 import logging
 import sys
 
+from django.core.cache import cache
+
 from cronjobs import register
 
 from scrum.models import Bug, BugzillaURL, BZProduct, Project, Sprint
@@ -10,6 +12,11 @@ from scrum.tasks import update_bug_chunks
 
 
 log = logging.getLogger(__name__)
+
+
+@register
+def clear_cache():
+    cache.clear()
 
 
 @register

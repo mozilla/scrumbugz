@@ -267,3 +267,8 @@ tr.active td {
 .navbar-fixed-top {
     opacity: .9;
 }
+
+.browserid-login {
+    padding-top: 7.5px !important;
+    padding-bottom: 7.5px !important;
+}

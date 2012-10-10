@@ -131,19 +131,28 @@ INSTALLED_APPS = (
     'bugzilla',
     'south',
     'django_nose',
+    'django_browserid',
 )
 
 TEMPLATE_CONTEXT_PROCESSORS = (
-    "django.contrib.auth.context_processors.auth",
-    "django.core.context_processors.debug",
-    "django.core.context_processors.media",
-    "django.core.context_processors.static",
+    'django.contrib.auth.context_processors.auth',
+    'django.core.context_processors.debug',
+    'django.core.context_processors.media',
+    'django.core.context_processors.static',
     'django.core.context_processors.tz',
-    "django.core.context_processors.request",
-    "django.contrib.messages.context_processors.messages",
-    "context_processors.context_settings",
-    "scrum.context_processors.projects_and_teams",
+    'django.core.context_processors.request',
+    'django.contrib.messages.context_processors.messages',
+    'context_processors.context_settings',
+    'scrum.context_processors.projects_and_teams',
+    'django_browserid.context_processors.browserid_form',
 )
+
+AUTHENTICATION_BACKENDS = (
+    'django_browserid.auth.BrowserIDBackend',
+    'django.contrib.auth.backends.ModelBackend',
+)
+LOGIN_REDIRECT_URL = '/'
+LOGIN_URL = LOGOUT_URL = '/'
 
 TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
 NOSE_ARGS = [
