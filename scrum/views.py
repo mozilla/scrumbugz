@@ -1,5 +1,5 @@
 import logging
-from datetime import date, datetime
+from datetime import date
 
 from django.conf import settings
 from django.contrib import messages
@@ -17,14 +17,12 @@ from django.views.generic import (CreateView, DeleteView, DetailView,
                                   ListView, TemplateView, UpdateView, View)
 
 import celery
-import dateutil.parser
 
 from bugzilla.api import bugzilla
 from scrum.forms import (CreateProjectForm, CreateTeamForm, BZProductForm,
                          ProjectBugsForm, ProjectForm, SprintBugsForm,
                          SprintForm, TeamForm)
 from scrum.models import BZProduct, Project, Sprint, Team, Bug
-from scrum.utils import get_setting_or_env
 
 
 redis_client = None
@@ -379,26 +377,3 @@ class CheckRecentUpdates(View):
             if updated:
                 return HttpResponse()
         return HttpResponse(status=204)  # no content
-
-
-class BugmailStatsView(TemplateView):
-    template_name = 'scrum/bugmail_stats.html'
-
-    def get_context_data(self, **kwargs):
-        context = super(BugmailStatsView, self).get_context_data(**kwargs)
-        if redis_client:
-            date_started = get_setting_or_env('STATS_COLLECTION_START_DATE',
-                                              '2012-10-01')
-            date_started = dateutil.parser.parse(date_started)
-            days_since = (datetime.utcnow() - date_started).days
-            bmail_total = int(redis_client.get('STATS:BUGMAILS:TOTAL') or 1)
-            bmail_used = int(redis_client.get('STATS:BUGMAILS:USED') or 1)
-            context['bugmail_stats'] = {
-                'total': bmail_total,
-                'used': bmail_used,
-                'percent_used': "{0:.1%}".format(float(bmail_used) /
-                                                 bmail_total),
-                'date_started': date_started,
-                'avg_mail': bmail_total / days_since,
-            }
-        return context

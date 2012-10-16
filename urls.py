@@ -15,6 +15,7 @@ urlpatterns = patterns('',
         name='help'),
     url(r'^$', 'scrum.views.home', name='scrum_home'),
     url(r'^bugzilla/', include('bugzilla.urls')),
+    url(r'^bugmail/', include('bugmail.urls')),
     url(r'', include('scrum.urls')),
 )
 

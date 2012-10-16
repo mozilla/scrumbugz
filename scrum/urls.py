@@ -1,10 +1,9 @@
 from django.conf.urls import patterns, url
 
-from scrum.views import (BugmailStatsView, CheckRecentUpdates,
-                         CreateBZProductView, CreateProjectView,
-                         CreateSprintView, CreateTeamView, DeleteBZProductView,
-                         EditProjectView, EditSprintView, EditTeamView,
-                         ListProjectsView, ListTeamsView,
+from scrum.views import (CheckRecentUpdates, CreateBZProductView,
+                         CreateProjectView, CreateSprintView, CreateTeamView,
+                         DeleteBZProductView, EditProjectView, EditSprintView,
+                         EditTeamView, ListProjectsView, ListTeamsView,
                          ManageProjectBugsView, ManageSprintBugsView,
                          ProjectView, ProjectBacklogView, RedirectOldURLsView,
                          SprintView, TeamView)
@@ -41,6 +40,4 @@ urlpatterns = patterns('',
     url(r'^projects/(?P<path>.*)', RedirectOldURLsView.as_view()),
     url(r'^bugs_updated/$', CheckRecentUpdates.as_view(),
         name='scrum_bugs_updated'),
-    url(r'^stats/bugmail/$', BugmailStatsView.as_view(),
-        name='scrum_bugmail_stats'),
 )

@@ -128,6 +128,7 @@ INSTALLED_APPS = (
     'floppyforms',
     'djcelery',
     'scrum',
+    'bugmail',
     'bugzilla',
     'south',
     'django_nose',
