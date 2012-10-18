@@ -1,18 +1,15 @@
 import logging
-from datetime import datetime
+from datetime import timedelta
+from collections import defaultdict
 
-from django.conf import settings
+from django.utils import simplejson as json
+from django.utils.timezone import now
 from django.views.generic import TemplateView
 
-import celery
-import dateutil.parser
-
-from scrum.utils import get_setting_or_env
+from bugmail.models import BugmailStat
+from scrum.utils import date_range, date_to_js
 
 
-redis_client = None
-if getattr(settings, 'BROKER_URL', '').startswith('redis:'):
-    redis_client = celery.current_app.backend.client
 log = logging.getLogger(__name__)
 
 
@@ -21,19 +18,25 @@ class BugmailStatsView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super(BugmailStatsView, self).get_context_data(**kwargs)
-        if redis_client:
-            date_started = get_setting_or_env('STATS_COLLECTION_START_DATE',
-                                              '2012-10-01')
-            date_started = dateutil.parser.parse(date_started)
-            days_since = (datetime.utcnow() - date_started).days
-            bmail_total = int(redis_client.get('STATS:BUGMAILS:TOTAL') or 1)
-            bmail_used = int(redis_client.get('STATS:BUGMAILS:USED') or 1)
-            context['bugmail_stats'] = {
-                'total': bmail_total,
-                'used': bmail_used,
-                'percent_used': "{0:.1%}".format(float(bmail_used) /
-                                                 bmail_total),
-                'date_started': date_started,
-                'avg_mail': bmail_total / days_since,
-                }
+        two_wks_ago = (now() - timedelta(days=14)).date()
+        stats = BugmailStat.objects.stats_for_range(two_wks_ago)
+        stats_dict = {
+            BugmailStat.TOTAL: defaultdict(int),
+            BugmailStat.USED: defaultdict(int),
+        }
+        for s in stats:
+            stats_dict[s.stat_type][date_to_js(s.date)] += s.count
+        all_stats = {
+            'total': [],
+            'used': [],
+            'x_axis': [],
+        }
+        stats_total = stats_dict[BugmailStat.TOTAL]
+        stats_used = stats_dict[BugmailStat.USED]
+        for d in date_range(two_wks_ago):
+            d = date_to_js(d)
+            all_stats['x_axis'].append(d)
+            all_stats['total'].append([d, stats_total[d]])
+            all_stats['used'].append([d, stats_used[d]])
+        context['stats'] = json.dumps(all_stats)
         return context

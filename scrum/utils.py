@@ -6,6 +6,7 @@ from itertools import islice
 from django.conf import settings
 from django.http import QueryDict
 from django.utils.encoding import smart_str
+from django.utils.timezone import now
 
 from dateutil.relativedelta import relativedelta
 
@@ -101,11 +102,12 @@ def get_bz_url_for_bug_ids(bids):
     )
 
 
-def date_range(sdate, edate, step=1):
+def date_range(sdate, edate=None, step=1):
     """
     Return a list of date objects for every day
     between sdate and edate inclusive.
     """
+    edate = edate or now().date()
     dates = []
     cdate = sdate
     while cdate <= edate:

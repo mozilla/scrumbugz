@@ -6,11 +6,6 @@ from bugmail.utils import extract_bug_info, get_bugmails
 from scrum.models import Bug
 from scrum.tasks import update_bugs
 
-try:
-    import newrelic.agent
-except ImportError:
-    newrelic = False
-
 
 log = logging.getLogger(__name__)
 
@@ -31,7 +26,4 @@ def get_bugmail_messages():
                 bug.save()
         bugids = msgs.keys()
         update_bugs.delay(bugids)
-        numbugs = len(bugids)
-        if newrelic:
-            newrelic.agent.record_custom_metric('Custom/Bugmails', numbugs)
-        log.info('Synced %d bug(s) from email', numbugs)
+        log.info('Synced %d bug(s) from email', len(bugids))

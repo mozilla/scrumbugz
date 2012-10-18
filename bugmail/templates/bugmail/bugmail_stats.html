@@ -3,15 +3,95 @@
 {% block title %}Bugmail Stats{% endblock %}
 
 {% block content %}
-  <div class="hero-unit">
-    <h1>Bugmail Stats <small>Since {{ bugmail_stats.date_started|datetime }}</small></h1>
-    {% if bugmail_stats %}
-      <h2>Total Mail Recieved: <span class="text-info">{{ bugmail_stats.total }}</span></h2>
-      <h2>Bugmail Used: <span class="text-info">{{ bugmail_stats.used }}</span></h2>
-      <h2>Percent Used: <span class="text-info">{{ bugmail_stats.percent_used }}</span></h2>
-      <h2>Average Mail Per Day: <span class="text-info">{{ bugmail_stats.avg_mail }}</span></h2>
-    {% else %}
-      <p>Redis is not configured. Stats are not being collected.</p>
-    {% endif %}
-  </div>
+    <div class="row">
+        <div class="span12">
+            <h1>Bugmail Stats</h1>
+        </div>
+        <div class="span12" id="stats_chart" style="height:460px"></div>
+    </div>
+{% endblock %}
+
+{% block js %}
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.flot.min.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.flot.resize.min.js"></script>
+    <script type="text/javascript">
+        $(function(){
+            "use strict";
+
+            window.StatsChart = function(selector, stats_data) {
+                var self = this;
+                self.$element = $(selector);
+                self.$element.data('flot', self);
+                self.ticks = stats_data.x_axis;
+                self.total_plot = {
+                    data: stats_data.total,
+                    label: 'Total',
+                    lines: {show: true},
+                    points: {show: true, fill: true, radius: 4}
+                };
+                self.used_plot = {
+                    data: stats_data.used,
+                    label: 'Used',
+                    lines: {show: true},
+                    points: {show: true, fill: true, radius: 4}
+                };
+
+                self.resize = function(){
+                    self.$element.css('height', function(){
+                        return parseInt($(this).css('width'), 10)/2;
+                    });
+                };
+
+                // helper for returning the weekends in a period
+                // copied from flot visitors example
+                self.weekend_areas = function(axes) {
+                    var markings = [];
+                    var d = new Date(axes.xaxis.min);
+                    // go to the first Saturday
+                    d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 1) % 7));
+                    d.setUTCSeconds(0);
+                    d.setUTCMinutes(0);
+                    // This make the markings line up with the grid.
+                    // Could this be time zone related?
+                    d.setUTCHours(-1);
+                    var i = d.getTime();
+                    do {
+                        // when we don't set yaxis, the rectangle automatically
+                        // extends to infinity upwards and downwards
+                        markings.push({ xaxis: { from: i, to: i + 2 * 24 * 60 * 60 * 1000 } });
+                        i += 7 * 24 * 60 * 60 * 1000;
+                    } while (i < axes.xaxis.max);
+
+                    return markings;
+                };
+
+                self.base_options = {
+                    xaxis: {
+                        mode: 'time',
+                        ticks: self.ticks,
+                        min: self.ticks[0],
+                        max: self.ticks[self.ticks.length-1]
+                    },
+                    yaxis: {
+                        min: 0,
+                        tickSize: 2,
+                        tickFormatter: parseInt
+                    },
+                    grid: {
+                        hoverable: true,
+                        clickable: true,
+                        markings: self.weekend_areas
+                    }
+                };
+
+                self.resize();
+
+                $.plot(self.$element, [self.total_plot, self.used_plot], self.base_options);
+
+                self.$element.bind({resize: self.resize});
+            };
+
+            new StatsChart('#stats_chart', {{ stats|safe }});
+        });
+    </script>
 {% endblock %}

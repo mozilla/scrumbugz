@@ -5,22 +5,11 @@ import poplib
 import re
 from email.parser import Parser
 
-from django.conf import settings
 
-import celery
-
+from bugmail.models import BugmailStat
 from scrum.models import BZProduct
 from scrum.utils import get_setting_or_env
 
-try:
-    import newrelic.agent
-except ImportError:
-    newrelic = False
-
-
-redis_client = None
-if getattr(settings, 'BROKER_URL', '').startswith('redis:'):
-    redis_client = celery.current_app.backend.client
 
 BUGMAIL_HOST = get_setting_or_env('BUGMAIL_HOST')
 BUGMAIL_USER = get_setting_or_env('BUGMAIL_USER')
@@ -57,10 +46,7 @@ def get_messages(delete=True, max_get=50):
         num_messages = len(conn.list()[1])
         num_get = min(num_messages, max_get)
         log.debug('Getting %d bugmails', num_get)
-        if redis_client:
-            redis_client.incr('STATS:BUGMAILS:TOTAL', num_get)
-        if newrelic:
-            newrelic.agent.record_custom_metric('Custom/AllEmail', num_get)
+        log_bugmails_total(num_get)
         for msgid in range(1, num_get + 1):
             msg_str = '\n'.join(conn.retr(msgid)[1])
             msg = Parser().parsestr(msg_str)
@@ -72,8 +58,7 @@ def get_messages(delete=True, max_get=50):
         conn.quit()
     if messages:
         num_msgs = len(messages)
-        if redis_client:
-            redis_client.incr('STATS:BUGMAILS:USED', num_msgs)
+        log_bugmails_used(num_msgs)
         log.debug('Found %d interesting bugmails', num_msgs)
     return messages
 
@@ -149,3 +134,19 @@ def extract_bug_info(msg):
         if val:
             info[h.replace('-', '_')] = val
     return info
+
+
+def _log_bugmails(count, stat_type):
+    if count:
+        BugmailStat.objects.create(
+            stat_type=stat_type,
+            count=count,
+        )
+
+
+def log_bugmails_used(count):
+    _log_bugmails(count, BugmailStat.USED)
+
+
+def log_bugmails_total(count):
+    _log_bugmails(count, BugmailStat.TOTAL)
