@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 import djcelery
 from unipath import Path
 
@@ -167,9 +169,13 @@ CELERY_TASK_RESULT_EXPIRES = 60
 CELERY_TIMEZONE = 'UTC'
 CELERYD_CONCURRENCY = 4
 CELERYBEAT_SCHEDULE = {
-    'get_bugmails': {
+    'every-30-seconds': {
         'task': 'get_bugmails',
-        'schedule': 30,
+        'schedule': timedelta(seconds=30),
+    },
+    'every-couple-days': {
+        'task': 'clean_bugmail_log',
+        'schedule': timedelta(days=2),
     },
 }
 

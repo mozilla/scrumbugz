@@ -7,7 +7,14 @@
         <div class="span12">
             <h1>Bugmail Stats</h1>
         </div>
-        <div class="span12" id="stats_chart" style="height:460px"></div>
+        <div class="span6">
+            <h2>Bugmails we used <small>2 week total: <span id="total_used"></span></small></h2>
+            <div id="used_stats_chart"></div>
+        </div>
+        <div class="span6">
+            <h2>Total bugmails received <small>2 week total: <span id="total_total"></span></small></h2>
+            <div id="total_stats_chart"></div>
+        </div>
     </div>
 {% endblock %}
 
@@ -18,20 +25,13 @@
         $(function(){
             "use strict";
 
-            window.StatsChart = function(selector, stats_data) {
+            var StatsChart = function(selector, stats_data, ticks) {
                 var self = this;
                 self.$element = $(selector);
                 self.$element.data('flot', self);
-                self.ticks = stats_data.x_axis;
-                self.total_plot = {
-                    data: stats_data.total,
-                    label: 'Total',
-                    lines: {show: true},
-                    points: {show: true, fill: true, radius: 4}
-                };
-                self.used_plot = {
-                    data: stats_data.used,
-                    label: 'Used',
+                self.ticks = ticks;
+                self.plot = {
+                    data: stats_data,
                     lines: {show: true},
                     points: {show: true, fill: true, radius: 4}
                 };
@@ -86,12 +86,19 @@
 
                 self.resize();
 
-                $.plot(self.$element, [self.total_plot, self.used_plot], self.base_options);
+                $.plot(self.$element, [self.plot], self.base_options);
 
                 self.$element.bind({resize: self.resize});
             };
 
-            new StatsChart('#stats_chart', {{ stats|safe }});
+            var all_stats = {{ stats|safe }};
+
+            var stat_sum = function(memo, stat){ return memo + stat[1]; };
+            $('#total_total').html(_.reduce(all_stats.total, stat_sum, 0));
+            $('#total_used').html(_.reduce(all_stats.used, stat_sum, 0));
+
+            new StatsChart('#total_stats_chart', all_stats.total, all_stats.x_axis);
+            new StatsChart('#used_stats_chart', all_stats.used, all_stats.x_axis);
         });
     </script>
 {% endblock %}

@@ -1,12 +1,16 @@
+from datetime import timedelta
 from email.parser import Parser
 
 from django.conf import settings
 from django.test import TestCase
+from django.utils.timezone import now
 
 from mock import Mock
 from nose.tools import eq_, ok_
 
 from bugmail import utils as scrum_email
+from bugmail import tasks as bm_tasks
+from bugmail.models import BugmailStat
 from scrum import models as scrum_models
 
 
@@ -27,6 +31,22 @@ def get_messages_mock(delete=True):
 
 scrum_email.get_messages = Mock()
 scrum_email.get_messages.side_effect = get_messages_mock
+
+
+class TestTasks(TestCase):
+    def test_log_clean_deletes(self):
+        week_ago = (now() - timedelta(days=7)).date()
+        months_ago = (now() - timedelta(days=60)).date()
+        b1 = BugmailStat.objects.create(stat_type=BugmailStat.TOTAL,
+                                        count=5,
+                                        date=week_ago)
+        BugmailStat.objects.create(stat_type=BugmailStat.TOTAL,
+                                   count=5,
+                                   date=months_ago)
+        eq_(BugmailStat.objects.count(), 2)
+        bm_tasks.clean_bugmail_log()
+        eq_(BugmailStat.objects.count(), 1)
+        eq_(BugmailStat.objects.all()[0], b1)
 
 
 class TestEmail(TestCase):

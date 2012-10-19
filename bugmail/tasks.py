@@ -1,7 +1,11 @@
 import logging
+from datetime import timedelta
+
+from django.utils.timezone import now
 
 from celery import task
 
+from bugmail.models import BugmailStat
 from bugmail.utils import extract_bug_info, get_bugmails
 from scrum.models import Bug
 from scrum.tasks import update_bugs
@@ -27,3 +31,12 @@ def get_bugmail_messages():
         bugids = msgs.keys()
         update_bugs.delay(bugids)
         log.info('Synced %d bug(s) from email', len(bugids))
+
+
+@task(name='clean_bugmail_log')
+def clean_bugmail_log():
+    """
+    Delete old bugmail stats log entries.
+    """
+    month_ago = (now() - timedelta(days=30)).date()
+    BugmailStat.objects.filter(date__lt=month_ago).delete()
