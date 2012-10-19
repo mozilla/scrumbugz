@@ -8,11 +8,11 @@
             <h1>Bugmail Stats</h1>
         </div>
         <div class="span6">
-            <h2>Bugmails we used <small>2 week total: <span id="total_used"></span></small></h2>
+            <h2>Bugmails we used <small>2 week total: <strong id="total_used"></strong></small></h2>
             <div id="used_stats_chart"></div>
         </div>
         <div class="span6">
-            <h2>Total bugmails received <small>2 week total: <span id="total_total"></span></small></h2>
+            <h2>Total bugmails received <small>2 week total: <strong id="total_total"></strong></small></h2>
             <div id="total_stats_chart"></div>
         </div>
     </div>
@@ -21,80 +21,16 @@
 {% block js %}
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.flot.min.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.flot.resize.min.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/stats.js"></script>
     <script type="text/javascript">
         $(function(){
             "use strict";
 
-            var StatsChart = function(selector, stats_data, ticks) {
-                var self = this;
-                self.$element = $(selector);
-                self.$element.data('flot', self);
-                self.ticks = ticks;
-                self.plot = {
-                    data: stats_data,
-                    lines: {show: true},
-                    points: {show: true, fill: true, radius: 4}
-                };
-
-                self.resize = function(){
-                    self.$element.css('height', function(){
-                        return parseInt($(this).css('width'), 10)/2;
-                    });
-                };
-
-                // helper for returning the weekends in a period
-                // copied from flot visitors example
-                self.weekend_areas = function(axes) {
-                    var markings = [];
-                    var d = new Date(axes.xaxis.min);
-                    // go to the first Saturday
-                    d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 1) % 7));
-                    d.setUTCSeconds(0);
-                    d.setUTCMinutes(0);
-                    // This make the markings line up with the grid.
-                    // Could this be time zone related?
-                    d.setUTCHours(-1);
-                    var i = d.getTime();
-                    do {
-                        // when we don't set yaxis, the rectangle automatically
-                        // extends to infinity upwards and downwards
-                        markings.push({ xaxis: { from: i, to: i + 2 * 24 * 60 * 60 * 1000 } });
-                        i += 7 * 24 * 60 * 60 * 1000;
-                    } while (i < axes.xaxis.max);
-
-                    return markings;
-                };
-
-                self.base_options = {
-                    xaxis: {
-                        mode: 'time',
-                        ticks: self.ticks,
-                        min: self.ticks[0],
-                        max: self.ticks[self.ticks.length-1]
-                    },
-                    yaxis: {
-                        tickFormatter: parseInt,
-                        minTickSize: 1
-                    },
-                    grid: {
-                        hoverable: true,
-                        clickable: true,
-                        markings: self.weekend_areas
-                    }
-                };
-
-                self.resize();
-
-                $.plot(self.$element, [self.plot], self.base_options);
-
-                self.$element.bind({resize: self.resize});
-            };
-
             var all_stats = {{ stats|safe }};
 
             var stat_sum = function(memo, stat){ return memo + stat[1]; };
-            $('#total_total').html(_.reduce(all_stats.total, stat_sum, 0));
-            $('#total_used').html(_.reduce(all_stats.used, stat_sum, 0));
+            $('#total_total').html(numberWithCommas(_.reduce(all_stats.total, stat_sum, 0)));
+            $('#total_used').html(numberWithCommas(_.reduce(all_stats.used, stat_sum, 0)));
 
             new StatsChart('#total_stats_chart', all_stats.total, all_stats.x_axis);
             new StatsChart('#used_stats_chart', all_stats.used, all_stats.x_axis);

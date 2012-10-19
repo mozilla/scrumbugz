@@ -40,13 +40,9 @@ class BugmailStatsView(TemplateView):
             for d in date_range(wks_ago):
                 d = date_to_js(d)
                 all_stats['x_axis'].append(d)
-                stotal = stats_total[d]
-                if stotal:
-                    all_stats['total'].append([d, stotal])
-                sused = stats_used[d]
-                if sused:
-                    all_stats['used'].append([d, sused])
+                all_stats['total'].append([d, stats_total[d]])
+                all_stats['used'].append([d, stats_used[d]])
             json_stats = json.dumps(all_stats)
-            cache.set(self.cache_key, json_stats, 1800)  # 30 min
+            cache.set(self.cache_key, json_stats, 1800)  # 30 minutes
         context['stats'] = json_stats
         return context
