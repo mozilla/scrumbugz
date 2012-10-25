@@ -1,6 +1,6 @@
 import hashlib
 import os
-import time
+from calendar import timegm
 from itertools import islice
 
 from django.conf import settings
@@ -118,7 +118,7 @@ def date_range(sdate, edate=None, step=1):
 
 def date_to_js(date):
     """Return unix epoc timestamp in miliseconds (in UTC)"""
-    return int((time.mktime(date.timetuple()) - time.timezone) * 1000)
+    return timegm(date.timetuple()) * 1000
 
 
 def make_sha1_key(key, key_prefix, version):
