@@ -70,6 +70,18 @@ class TestBug(TestCase):
         self.p.products.create(name='Input')
         update_product('MDN')
 
+    def test_has_scrum_data(self):
+        """
+        A bug with u= or c= or p= with no data should still show up.
+        """
+        b = Bug.objects.get(id=784492)
+        ok_(b.has_scrum_data)
+
+    def test_scrum_only_queryset(self):
+        bugs = Bug.objects.scrum_only()
+        b = Bug.objects.get(id=784492)
+        ok_(b in bugs)
+
     def test_whiteboard_update(self):
         b = Bug.objects.get(id=778465)
         eq_(b.story_points, 1)

@@ -4,6 +4,7 @@ import logging
 import sys
 
 from django.core.cache import cache
+from django.core.paginator import Paginator
 
 from cronjobs import register
 
@@ -12,6 +13,22 @@ from scrum.tasks import update_bug_chunks
 
 
 log = logging.getLogger(__name__)
+
+
+@register
+def reprocess_bugs():
+    """
+    Fetch and resave all bugs so that their signals fire.
+    """
+    # we fetch bugs in chunks to reduce race condition chances
+    pages = Paginator(Bug.objects.all(), 50)
+    print 'Processing %d bugs' % pages.count
+    for pnum in pages.page_range:
+        for b in pages.page(pnum).object_list:
+            b.save()
+            sys.stdout.write('.')
+            sys.stdout.flush()
+    print '\nDone.'
 
 
 @register

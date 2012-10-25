@@ -480,9 +480,10 @@ class BugQuerySet(QuerySet):
         Only include bugs that have some data in the `story_*` fields.
         :return: QuerySet
         """
-        return self.filter(~Q(story_component='') |
-                           ~Q(story_user='') |
-                           Q(story_points__gt=0))
+        return self.filter(Q(whiteboard__contains='u=') |
+                           Q(whiteboard__contains='c=') |
+                           Q(whiteboard__contains='p=') |
+                           Q(whiteboard__contains='s='))
 
     def open(self):
         """
@@ -697,9 +698,10 @@ class Bug(models.Model):
 
     @property
     def has_scrum_data(self):
-        return bool(self.story_points or
-                    self.story_user or
-                    self.story_component)
+        return bool('u=' in self.whiteboard or
+                    'c=' in self.whiteboard or
+                    'p=' in self.whiteboard or
+                    's=' in self.whiteboard)
 
     @property
     def points_history(self):
