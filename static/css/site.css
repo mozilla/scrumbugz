@@ -76,9 +76,11 @@ table thead tr .headerSortDown {
     font-size:11px;
     border:1px solid #ccc;
 
+    border-radius:5px;
     -moz-border-radius:5px;
     -webkit-border-radius:5px;
 
+    box-shadow: 0 0 15px #666;
     -moz-box-shadow: 0 0 15px #666;
     -webkit-box-shadow: 0 0 15px #666;
 }
@@ -173,6 +175,7 @@ table thead tr .headerSortDown {
     text-align:center;
     line-height:20px;
     color:#666;
+    border-radius:3px;
     -moz-border-radius:3px;
     -webkit-border-radius:3px;
 }

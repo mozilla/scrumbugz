@@ -13,9 +13,7 @@ $(function(){
     // cool date picker stuffs
     var $date_fields = $(':date');
     if($date_fields.length){
-        $date_fields.dateinput({
-            format: 'yyyy-mm-dd'
-        });
+        $date_fields.dateinput({format: 'yyyy-mm-dd', offset:[5, 5]});
         $('#id_start_date').data('dateinput').change(function(){
             $('#id_end_date').data('dateinput')
                 // make the min date for end be after start
