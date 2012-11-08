@@ -214,7 +214,7 @@
         $('#bugs_table').stupidtable();
         $('#backlog_table').stupidtable();
         $('#old_sprint_table').stupidtable();
-        $('td.ttip').tooltip();
+        $('.ttip').tooltip();
     };
 
     var cur_key = null;

@@ -82,7 +82,7 @@
                        title="You should only need to login if you need to add/edit sprints."
                     ><img src="{{ STATIC_URL }}img/persona_sign_in.png" alt="Sign in"></a></li>
               {% else %}
-                <li><a href="{{ url('logout') }}?next={{ request.path_info }}">Sign out</a></li>
+                <li><a class="browserid-logout" href="{{ url('logout') }}?next={{ request.path_info }}">Sign out</a></li>
               {% endif -%}
               <li{% if request.path_info == url('help') %} class="active"{% endif %}><a href="{{ url('help') }}">Help</a></li>
             </ul>
@@ -133,11 +133,13 @@
     {{ browserid_form.media|safe }}
     {% block js %}{% endblock %}
 
-    <form method="POST" action="{{ url('browserid_verify') }}">
-        {{ csrf() }}
-        <input type="hidden" name="next" value="{{ request.path_info }}">
-        {{ browserid_form.as_p()|safe }}
-    </form>
+    {% if not user.is_authenticated() %}
+      <form method="POST" action="{{ url('browserid_verify') }}">
+          {{ csrf() }}
+          <input type="hidden" name="next" value="{{ request.path_info }}">
+          {{ browserid_form.as_p()|safe }}
+      </form>
+    {% endif %}
     {% if ENABLE_GA %}
       <script type="text/javascript">
         var _gaq = _gaq || [];

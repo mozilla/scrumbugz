@@ -48,13 +48,12 @@
         content: function(){
             return $(this).find('.blocker-links').html();
         },
-        trigger: 'manual',
+        html: true,
+        trigger: 'click',
         animation: false
     });
     $blocked_labels.on('click', function(e){
-        hide_all();
-        $(this).popover('toggle');
-        $('a.ttip').tooltip();
+        $('.popover .ttip').tooltip();
         return false;
     });
     $('body').on('click', hide_all);

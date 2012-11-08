@@ -154,7 +154,7 @@ AUTHENTICATION_BACKENDS = (
     'django_browserid.auth.BrowserIDBackend',
     'django.contrib.auth.backends.ModelBackend',
 )
-LOGIN_REDIRECT_URL = '/'
+LOGIN_REDIRECT_URL = LOGIN_REDIRECT_URL_FAILURE = '/'
 LOGIN_URL = LOGOUT_URL = '/'
 
 TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
