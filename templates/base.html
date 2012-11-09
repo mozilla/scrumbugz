@@ -80,7 +80,7 @@
                        data-site-name="ScrumBugs"
                        data-placement="bottom"
                        title="You should only need to login if you need to add/edit sprints."
-                    ><img src="{{ STATIC_URL }}img/persona_sign_in.png" alt="Sign in"></a></li>
+                    ><img data-site-name="ScrumBugs" src="{{ STATIC_URL }}img/persona_sign_in.png" alt="Sign in"></a></li>
               {% else %}
                 <li><a class="browserid-logout" href="{{ url('logout') }}?next={{ request.path_info }}">Sign out</a></li>
               {% endif -%}
