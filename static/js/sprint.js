@@ -3,6 +3,7 @@
 
     window.Burndown = function(selector, bugs_data) {
         var self = this;
+        var DAY = 24 * 60 * 60 * 1000;
         self.$element = $(selector);
         self.$element.data('flot', self);
         self.ticks = bugs_data.burndown_axis;
@@ -14,10 +15,7 @@
             lines: { show: true, fill: 0.4},
             points: {show: true, fill: true, radius: 4}
         };
-        self.ideal_plot = {data: [
-            [bugs_data.burndown_axis[0], bugs_data.total_points],
-            [bugs_data.burndown_axis[bugs_data.burndown_axis.length-1], 0]
-        ], lines: {fill: false}, points: {show: false}, color: '#0f0', label: 'Ideal'};
+
         self.bug_plot = {data: bugs_data.bugdown, color: '#db9c04', label: 'Bugs'};
         self.completed_data = [];
         for (var i = 0; i < bugs_data.burndown_axis.length; i++) {
@@ -71,21 +69,69 @@
             var markings = [];
             var d = new Date(axes.xaxis.min);
             // go to the first Saturday
-            d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 1) % 7));
+            d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 2) % 7));
             d.setUTCSeconds(0);
             d.setUTCMinutes(0);
-            // This make the markings line up with the grid.
-            // Could this be time zone related?
-            d.setUTCHours(-1);
             var i = d.getTime();
             do {
                 // when we don't set yaxis, the rectangle automatically
                 // extends to infinity upwards and downwards
-                markings.push({ xaxis: { from: i, to: i + 2 * 24 * 60 * 60 * 1000 } });
+                markings.push({
+                    xaxis: {
+                        from: i,
+                        to: i + 2 * DAY
+                    }
+                });
                 i += 7 * 24 * 60 * 60 * 1000;
             } while (i < axes.xaxis.max);
 
             return markings;
+        };
+
+        // Get a ideal burn line that takes in to account weekends.
+        function idea_burn_data() {
+            var burn_start = new Date(bugs_data.burndown_axis[0]);
+            var burn_end = new Date(bugs_data.burndown_axis[bugs_data.burndown_axis.length - 1]);
+
+            var adj_start = burn_start;
+            var adj_end = burn_end;
+            // Make start and end dates weekdays.
+            while (burn_start.getUTCDay() === 0 || burn_start.getUTCDay === 6) {
+                burn_start.setDate(burn_start.getDate() + 1);
+            }
+            while (burn_end.getUTCDay() === 0 || burn_end.getUTCDay === 6) {
+                burn_end.setDate(burn_end.getDate() - 1);
+            }
+            // count number of weekdays.
+            var weekend_days = Math.floor((adj_end - adj_start) / DAY / 7 * 2);
+            var days = (burn_end - burn_start) / DAY - weekend_days;
+            var burnrate = bugs_data.total_points / days;
+
+            // From this, calculate the burn rate per weekday, then iterate
+            // through the days, setting points that drop appropriately.
+            var ideal_data = [[bugs_data.burndown_axis[0], bugs_data.total_points]];
+            var last_value = bugs_data.total_points;
+            var timestamp = bugs_data.burndown_axis[0];
+
+            while(timestamp <= bugs_data.burndown_axis[bugs_data.burndown_axis.length - 1]) {
+                timestamp += DAY;
+                var timestamp_day = new Date(timestamp).getUTCDay();
+                if (timestamp_day === 0 || timestamp_day === 6) {
+                    ideal_data.push([timestamp, last_value]);
+                } else {
+                    last_value -= burnrate;
+                    ideal_data.push([timestamp, last_value]);
+                }
+            }
+            return ideal_data;
+        }
+
+        self.ideal_plot = {
+            data: idea_burn_data(),
+            lines: {fill: false},
+            points: {show: false},
+            color: '#0f0',
+            label: 'Ideal'
         };
 
         self.base_options = {
