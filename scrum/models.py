@@ -248,7 +248,6 @@ class Project(DBBugsMixin, BugsListMixin, models.Model):
 
 class BZProductManager(models.Manager):
     _full_list_cache_key = 'bzproducts-full-list'
-    _full_list = None
 
     def full_list(self):
         """
@@ -256,17 +255,13 @@ class BZProductManager(models.Manager):
         components (values list) that all projects have specified.
         :return: dict
         """
-        data = self._full_list
+        data = cache.get(self._full_list_cache_key)
         if not data:
-            data = cache.get(self._full_list_cache_key)
-            if not data:
-                data = get_bzproducts_dict(self.all())
-                self._full_list = data
-                cache.set(self._full_list_cache_key, data, 60)
+            data = get_bzproducts_dict(self.all())
+            cache.set(self._full_list_cache_key, data, 60 * 60 * 24)
         return data
 
     def _reset_full_list(self):
-        self._full_list = None
         cache.delete(self._full_list_cache_key)
 
 
@@ -871,3 +866,4 @@ def fetch_product_bugs(sender, instance, **kwargs):
     # avoid circular imports
     from .tasks import update_product
     update_product.delay(instance.name, instance.component)
+    BZProduct.objects._reset_full_list()
