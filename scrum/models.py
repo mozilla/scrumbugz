@@ -185,7 +185,7 @@ class Team(DBBugsMixin, BugsListMixin, models.Model):
         :return: bugs queryset
         """
         kwargs['bugs'] = Bug.objects.filter(project__team=self,
-                                            sprint__isnull=True)
+                                            sprint__isnull=True).open()
         return self._get_bugs(**kwargs)
 
     def __unicode__(self):
