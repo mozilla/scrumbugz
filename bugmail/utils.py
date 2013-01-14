@@ -7,7 +7,7 @@ from email.parser import Parser
 
 
 from bugmail.models import BugmailStat
-from scrum.models import BZProduct
+from scrum.models import ALL_COMPONENTS, BZProduct
 from scrum.utils import get_setting_or_env
 
 
@@ -74,7 +74,8 @@ def is_interesting(msg):
     comp = msg['x-bugzilla-component']
     log.debug('Bugmail found with product=%s and component=%s', prod, comp)
     if prod in all_products:
-        if all_products[prod] and comp not in all_products[prod]:
+        if not (comp in all_products[prod] or
+                ALL_COMPONENTS in all_products[prod]):
             return False
         return True
     return False

@@ -17,7 +17,7 @@ from scrum import cron as scrum_cron
 from scrum import models as scrum_models
 from scrum import tasks as scrum_tasks
 from scrum.forms import CreateProjectForm, SprintBugsForm
-from scrum.models import BugSprintLog, Bug, Project, Sprint
+from scrum.models import BugSprintLog, Bug, BZProduct, Project, Sprint
 from scrum.tasks import update_product
 
 
@@ -44,13 +44,38 @@ scrum_models.bugzilla.get_bug_ids.side_effect = get_bug_ids_mock
 scrum_tasks.bugzilla.get_bug_ids.side_effect = get_bug_ids_mock
 
 
+class TestBZProducts(TestCase):
+    fixtures = ['test_data.json']
+
+    def setUp(self):
+        self.p = Project.objects.get(slug='mdn')
+        BZProduct.objects._reset_full_list()
+
+    def test_products_dict_no_overlap(self):
+        """
+        There was an issue where if one project was following all components in
+        a product, and another just a specific component, the specific one would
+        override the ALL one and the other bugs wouldn't be looked at for
+        updating via email.
+        """
+        BZProduct.objects.create(name='Dude',
+                                 component='Abiding',
+                                 project=self.p)
+        BZProduct.objects.create(name='Dude',
+                                 component=scrum_models.ALL_COMPONENTS,
+                                 project=self.p)
+        all_prods = scrum_models.get_bzproducts_dict(BZProduct.objects.all())
+        self.assertDictEqual(all_prods, {'Dude': [scrum_models.ALL_COMPONENTS]})
+
+
 class TestCron(TestCase):
     fixtures = ['test_data.json']
 
     def setUp(self):
         self.s = Sprint.objects.get(slug='2.2')
         self.p = Project.objects.get(pk=1)
-        self.p.products.create(name='Input')
+        self.p.products.create(name='Input',
+                               component=scrum_models.ALL_COMPONENTS)
         update_product('MDN')
 
     def test_fix_projectless_bugs(self):
@@ -67,7 +92,8 @@ class TestBug(TestCase):
         cache.clear()
         self.s = Sprint.objects.get(slug='2.2')
         self.p = Project.objects.get(pk=1)
-        self.p.products.create(name='Input')
+        self.p.products.create(name='Input',
+                               component=scrum_models.ALL_COMPONENTS)
         update_product('MDN')
 
     def test_has_scrum_data(self):
@@ -107,22 +133,6 @@ class TestBug(TestCase):
         b = Bug.objects.get(id=778465)
         eq_(b.sprint, self.s)
         eq_(b.project, self.p)
-
-    def test_whiteboard_add_to_project_if_no_sprint(self):
-        """
-        Specifying a nonexistent sprint not in a date format should only add
-        to project.
-        """
-        b = Bug.objects.get(id=778465)
-        assert b.sprint is None
-        assert b.project is None
-        b.whiteboard += ' s=2012-01-15'
-        b.save()
-        b = Bug.objects.get(id=778465)
-        assert b.sprint is None
-        eq_(b.project, self.p)
-        with self.assertRaises(Sprint.DoesNotExist):
-            Sprint.objects.get(slug='2012-01-15')
 
     def test_whiteboard_change_moves_bug_to_new_sprint(self):
         """ Changes to the s= whiteboard tag should move the bug. """
@@ -229,7 +239,8 @@ class TestSprint(TestCase):
         cache.clear()
         self.s = Sprint.objects.get(slug='2.2')
         self.p = Project.objects.get(pk=1)
-        self.p.products.create(name='Input')
+        self.p.products.create(name='Input',
+                               component=scrum_models.ALL_COMPONENTS)
         self.p.products.create(name='Lebowski Enterprise',
                                component='Urban Achievers')
         self.p.products.create(name='Lebowski Enterprise',
@@ -272,7 +283,7 @@ class TestSprint(TestCase):
     def test_get_products(self):
         prods = self.p.get_products()
         expected = {
-            'Input': [],
+            'Input': ['__ALL__'],
             'Lebowski Enterprise': ['Rugs', 'Urban Achievers'],
         }
         self.assertSetEqual(set(prods.keys()), set(expected.keys()))
@@ -415,7 +426,7 @@ class TestForms(TestCase):
         project = form.save()
         eq_(project.products.count(), 1)
         eq_(project.products.all()[0].name, 'Websites')
-        eq_(project.products.all()[0].component, '')
+        eq_(project.products.all()[0].component, scrum_models.ALL_COMPONENTS)
         # no product required
         form = CreateProjectForm({
             'name': 'FO REAL Best Ever',

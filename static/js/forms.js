@@ -62,10 +62,10 @@ $(function(){
         start_spin();
         var comp = toComponent($('#id_product').val());
         var post_url = $(this).attr('action');
-        var post_data = {'name': comp[0]};
-        if(comp[1] !== '__ALL__'){
-            post_data.component = comp[1];
-        }
+        var post_data = {
+            'name': comp[0],
+            'component': comp[1]
+        };
         $.post(post_url, post_data)
             .done(function(data, status, jqxhr){
                 $('#bzproduct_list').replaceWith(data);

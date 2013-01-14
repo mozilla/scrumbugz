@@ -60,10 +60,7 @@ class CreateProjectForm(ProjectForm):
         prod = self.cleaned_data['product']
         if prod:
             prod, comp = prod.split('/', 1)
-            kwargs = {'name': prod, 'project': obj}
-            if comp != '__ALL__':
-                kwargs['component'] = comp
-            obj.products.create(**kwargs)
+            obj.products.create(name=prod, component=comp, project=obj)
 
 
 class SprintForm(forms.ModelForm):

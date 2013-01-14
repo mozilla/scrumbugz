@@ -3,7 +3,7 @@ import logging
 from celery import task
 
 from bugzilla.api import bugzilla
-from scrum.models import Bug, store_bugs, Sprint
+from scrum.models import ALL_COMPONENTS, Bug, store_bugs, Sprint
 from scrum.utils import chunked
 
 try:
@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 @task(name='update_product')
 def update_product(product, component=None):
     kwargs = {'product': product, 'scrum_only': True}
-    if component:
+    if component and component != ALL_COMPONENTS:
         kwargs['component'] = component
     bug_ids = bugzilla.get_bug_ids(**kwargs)
     log.debug('Updating %d bugs from %s', len(bug_ids), kwargs)

@@ -32,6 +32,7 @@ from scrum.utils import (date_to_js, date_range, get_bz_url_for_bug_ids,
 
 
 log = logging.getLogger(__name__)
+ALL_COMPONENTS = '__ALL__'
 
 
 class CompressedJSONField(JSONField):
@@ -235,7 +236,8 @@ class Project(DBBugsMixin, BugsListMixin, models.Model):
         return get_bzproducts_dict(self.products.all())
 
     def get_components(self):
-        return reduce(operator.add, self.get_products().values(), [])
+        all_comps = set(reduce(operator.add, self.get_products().values(), []))
+        return list(comp for comp in all_comps if comp != ALL_COMPONENTS)
 
     @models.permalink
     def get_absolute_url(self):
@@ -267,7 +269,7 @@ class BZProductManager(models.Manager):
 
 class BZProduct(models.Model):
     name = models.CharField(max_length=200)
-    component = models.CharField(max_length=200, blank=True)
+    component = models.CharField(max_length=200)
     project = models.ForeignKey(Project, related_name='products')
 
     objects = BZProductManager()
@@ -500,7 +502,7 @@ class BugQuerySet(QuerySet):
         qobjs = []
         for prod, comps in products.items():
             kwargs = {'product': prod}
-            if comps:
+            if comps and ALL_COMPONENTS not in comps:
                 if len(comps) == 1:
                     kwargs['component'] = comps[0]
                 else:
@@ -625,17 +627,14 @@ class Bug(models.Model):
     def __unicode__(self):
         return unicode(self.id)
 
-    @property
-    def project_from_product(self):
-        prodcomp = BZProduct.objects.filter(name=self.product,
+    def projects_from_product(self):
+        prodcomps = BZProduct.objects.filter(name=self.product,
                                             component=self.component)
-        if prodcomp:
-            return prodcomp[0].project
-        else:
+        projects = set(pc.project for pc in prodcomps)
+        if not projects:
             prod = BZProduct.objects.filter(name=self.product)
-            if prod:
-                return prod[0].project
-        return None
+            projects = set(pc.project for pc in prod)
+        return list(projects)
 
     def fill_from_data(self, data):
         for attr_name, value in data.items():
@@ -806,9 +805,10 @@ def get_sync_bugs(current_bugs, new_bugs):
 def get_bzproducts_dict(qs):
     prods = {}
     for prod in qs:
-        if prod.name not in prods:
+        if prod.name not in prods or prod.component == ALL_COMPONENTS:
             prods[prod.name] = []
-        if prod.component and prod.component not in prods[prod.name]:
+        if not (ALL_COMPONENTS in prods[prod.name] or
+                prod.component in prods[prod.name]):
             prods[prod.name].append(prod.component)
     return prods
 
@@ -829,24 +829,26 @@ def move_to_sprint(sender, instance, **kwargs):
         if instance.sprint and newsprint == instance.sprint.slug:
             # already in the sprint
             return
-        if instance.project is None:
-            new_proj = instance.project_from_product
-            if new_proj is None:
-                return
-            # add to ready backlog
-            log.debug('Adding %s to %s', instance, new_proj)
-            instance.project = new_proj
 
-        try:
-            newsprint_obj = Sprint.objects.get(team=instance.project.team,
-                                               slug=newsprint)
-        except Sprint.DoesNotExist:
+        newsprint_obj = None
+        proj = None
+        new_projs = instance.projects_from_product()
+        for proj in new_projs:
+            try:
+                newsprint_obj = Sprint.objects.get(team=proj.team,
+                                                   slug=newsprint)
+                break
+            except Sprint.DoesNotExist:
+                continue
+
+        if not newsprint_obj:
             return
 
         if instance.sprint:
             BugSprintLog.objects.removed_from_sprint(instance,
                                                      instance.sprint)
         instance.sprint = newsprint_obj
+        instance.project = proj
         BugSprintLog.objects.added_to_sprint(instance, newsprint_obj)
 
 
@@ -865,5 +867,8 @@ def process_notes(sender, instance, **kwargs):
 def fetch_product_bugs(sender, instance, **kwargs):
     # avoid circular imports
     from .tasks import update_product
-    update_product.delay(instance.name, instance.component)
     BZProduct.objects._reset_full_list()
+    args = [instance.name]
+    if instance.component != ALL_COMPONENTS:
+        args.append(instance.component)
+    update_product.delay(*args)

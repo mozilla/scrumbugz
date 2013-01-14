@@ -5,7 +5,7 @@ from django.conf import settings
 from django.test import TestCase
 from django.utils.timezone import now
 
-from mock import Mock
+from mock import Mock, patch
 from nose.tools import eq_, ok_
 
 from bugmail import utils as scrum_email
@@ -49,6 +49,7 @@ class TestTasks(TestCase):
         eq_(BugmailStat.objects.all()[0], b1)
 
 
+@patch('scrum.tasks.update_product', Mock())
 class TestEmail(TestCase):
     fixtures = ['test_data.json']
 
@@ -70,7 +71,7 @@ class TestEmail(TestCase):
             print scrum_email.is_interesting(msg)
             ok_(not scrum_email.is_interesting(msg))
         p = scrum_models.Project.objects.get(pk=1)
-        p.products.create(name='Input')
+        p.products.create(name='Input', component=scrum_models.ALL_COMPONENTS)
         scrum_models.BZProduct.objects._reset_full_list()
         for msg in scrum_email.get_bugmails().values():
             ok_(not scrum_email.is_interesting(msg))
@@ -88,7 +89,8 @@ class TestEmail(TestCase):
         scrum_models.BZProduct.objects._reset_full_list()
         for msg in scrum_email.get_bugmails().values():
             ok_(not scrum_email.is_interesting(msg))
-        p.products.create(name='Websites')
+        p.products.create(name='Websites',
+                          component=scrum_models.ALL_COMPONENTS)
         scrum_models.BZProduct.objects._reset_full_list()
         for msg in scrum_email.get_bugmails().values():
             ok_(scrum_email.is_interesting(msg))
