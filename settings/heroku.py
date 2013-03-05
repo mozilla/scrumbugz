@@ -13,8 +13,10 @@ if PROD_MODE:
     ENFORCE_HOSTNAME = 'scrumbu.gs'
     ENABLE_GA = True
     SITE_URL = 'http://scrumbu.gs'
+    ALLOWED_HOSTS = ['scrumbu.gs']
 else:
     SITE_URL = 'http://scrumbugz-dev.herokuapp.com'
+    ALLOWED_HOSTS = ['scrumbugz-dev.herokuapp.com']
 
 ADMINS = (
     ('Paul', 'pmac@mozilla.com'),
