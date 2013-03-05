@@ -270,6 +270,10 @@ tr.active td {
 .navbar-fixed-top {
     opacity: .9;
 }
+.navbar-fixed-top .dropdown-menu {
+    max-height: 400px;
+    overflow: auto;
+}
 
 .browserid-login {
     padding-top: 7.5px !important;

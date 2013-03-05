@@ -45,13 +45,13 @@
                    class="dropdown-toggle"
                    data-toggle="dropdown"><i class="icon-user"></i> Teams <b class="caret"></b></a>
                 <ul class="dropdown-menu">
+                  {% if perms.scrum.add_team %}
+                    <li><a href="{{ url('scrum_team_new') }}"><i class="icon-plus-sign"></i> New Team</a></li>
+                    <li class="divider"></li>
+                  {% endif %}
                   {% for _team in teams %}
                     <li{% if team == _team %} class="active"{% endif %}><a href="{{ _team.get_absolute_url() }}">{{ _team.name }}</a></li>
                   {% endfor %}
-                  {% if perms.scrum.add_team %}
-                    <li class="divider"></li>
-                    <li><a href="{{ url('scrum_team_new') }}"><i class="icon-plus-sign"></i> New Team</a></li>
-                  {% endif %}
                 </ul>
               </li>
               <li class="dropdown{% if request.path_info.startswith('/p') %} active{% endif %}">
@@ -59,13 +59,13 @@
                    class="dropdown-toggle"
                    data-toggle="dropdown"><i class="icon-briefcase"></i> Projects <b class="caret"></b></a>
                 <ul class="dropdown-menu">
+                  {% if perms.scrum.add_project %}
+                    <li><a href="{{ url('scrum_project_new') }}"><i class="icon-plus-sign"></i> New Project</a></li>
+                    <li class="divider"></li>
+                  {% endif %}
                   {% for _proj in projects %}
                     <li{% if project == _proj %} class="active"{% endif %}><a href="{{ _proj.get_absolute_url() }}">{{ _proj.name }}</a></li>
                   {% endfor %}
-                  {% if perms.scrum.add_project %}
-                    <li class="divider"></li>
-                    <li><a href="{{ url('scrum_project_new') }}"><i class="icon-plus-sign"></i> New Project</a></li>
-                  {% endif %}
                 </ul>
               </li>
             </ul>
