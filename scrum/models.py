@@ -817,13 +817,22 @@ def update_scrum_data(sender, instance, **kwargs):
         setattr(instance, 'story_' + k, v)
 
 
+TM_RE = re.compile(r'\d{4}-\d{2}-\d{2}$')
+
+
 @receiver(pre_save, sender=Bug)
 def move_to_sprint(sender, instance, **kwargs):
     if not instance.has_scrum_data:
         return
     wb_data = parse_whiteboard(instance.whiteboard)
+    newsprint = None
     if 's' in wb_data:
         newsprint = wb_data['s']
+    elif instance.target_milestone and instance.target_milestone != '---' \
+            and TM_RE.match(instance.target_milestone):
+        newsprint = instance.target_milestone
+
+    if newsprint:
         if instance.sprint and newsprint == instance.sprint.slug:
             # already in the sprint
             return
