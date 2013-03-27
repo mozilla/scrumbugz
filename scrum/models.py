@@ -628,13 +628,11 @@ class Bug(models.Model):
         return unicode(self.id)
 
     def projects_from_product(self):
-        prodcomps = BZProduct.objects.filter(name=self.product,
-                                            component=self.component)
-        projects = set(pc.project for pc in prodcomps)
-        if not projects:
-            prod = BZProduct.objects.filter(name=self.product)
-            projects = set(pc.project for pc in prod)
-        return list(projects)
+        prodcomps = BZProduct.objects.filter(
+            name=self.product,
+            component__in=[self.component, ALL_COMPONENTS],
+        )
+        return list(set(pc.project for pc in prodcomps))
 
     def fill_from_data(self, data):
         for attr_name, value in data.items():

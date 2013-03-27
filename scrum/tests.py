@@ -58,6 +58,7 @@ class TestBZProducts(TestCase):
         override the ALL one and the other bugs wouldn't be looked at for
         updating via email.
         """
+        BZProduct.objects.all().delete()
         BZProduct.objects.create(name='Dude',
                                  component='Abiding',
                                  project=self.p)
@@ -65,7 +66,8 @@ class TestBZProducts(TestCase):
                                  component=scrum_models.ALL_COMPONENTS,
                                  project=self.p)
         all_prods = scrum_models.get_bzproducts_dict(BZProduct.objects.all())
-        self.assertDictEqual(all_prods, {'Dude': [scrum_models.ALL_COMPONENTS]})
+        self.assertDictEqual(all_prods,
+                             {u'Dude': [unicode(scrum_models.ALL_COMPONENTS)]})
 
 
 class TestCron(TestCase):
@@ -74,15 +76,16 @@ class TestCron(TestCase):
     def setUp(self):
         self.s = Sprint.objects.get(slug='2.2')
         self.p = Project.objects.get(pk=1)
-        self.p.products.create(name='Input',
-                               component=scrum_models.ALL_COMPONENTS)
         update_product('MDN')
 
     def test_fix_projectless_bugs(self):
         self.s.update_bugs(self.p.get_backlog())
         eq_(self.s.bugs.filter(project__isnull=True).count(), 9)
         scrum_cron.fix_projectless_bugs()
-        self.assertSetEqual(set(self.s.bugs.all()), set(self.p.bugs.all()))
+        proj_bugs = set()
+        for proj in self.p.team.projects.all():
+            proj_bugs |= set(proj.bugs.all())
+        self.assertSetEqual(set(self.s.bugs.all()), proj_bugs)
 
 
 class TestBug(TestCase):
@@ -208,6 +211,16 @@ class TestBug(TestCase):
         b.save()
         eq_(Bug.objects.by_products(self.p.get_products()).count(), 10)
         eq_(Bug.objects.by_products({}).count(), 0)
+
+    def test_projects_from_product(self):
+        """
+        Bug.projects_from_product should return all projects with which
+        a bug is potentially associated.
+        """
+        search_bug = Bug.objects.get(id=781717)
+        eq_(len(search_bug.projects_from_product()), 2)
+        non_search_bug = Bug.objects.get(id=781715)
+        eq_(len(non_search_bug.projects_from_product()), 1)
 
 
 class TestProject(TestCase):
