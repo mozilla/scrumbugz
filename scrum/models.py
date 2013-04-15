@@ -686,7 +686,10 @@ class Bug(models.Model):
 
     @property
     def scrum_data(self):
-        return get_story_data(self.whiteboard)
+        data = get_story_data(self.whiteboard)
+        if not data.get('component', None):
+            data['component'] = self.component
+        return data
 
     @property
     def has_scrum_data(self):

@@ -106,6 +106,13 @@ class TestBug(TestCase):
         b = Bug.objects.get(id=784492)
         ok_(b.has_scrum_data)
 
+    def test_scrum_data_c_defaults_component(self):
+        """
+        A bug with no or blank c= should use BZ component.
+        """
+        b = Bug.objects.get(id=784492)
+        eq_(b.component, b.story_component)
+
     def test_scrum_only_queryset(self):
         bugs = Bug.objects.scrum_only()
         b = Bug.objects.get(id=784492)
