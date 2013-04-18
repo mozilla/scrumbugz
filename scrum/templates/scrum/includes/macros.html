@@ -67,7 +67,7 @@
           <td>{% if blocked_bugs and bug.id in blocked_bugs %}<span class="label label-important blocked-bug">BLOCKED<span class="hide blocker-links">{{ bug_links(blocked_bugs[bug.id]) }}</span></span> {% endif %}{{ bug.summary }}</td>
           <td><span title="{{ bug.assigned_full }}" class="ttip">{{ bug.assigned_name }}</span></td>
           <td>{{ bug.story_user }}</td>
-          <td>{{ bug.story_component }}</td>
+          <td>{{ bug.real_component }}</td>
           <td>{{ bug.story_points }}</td>
           <td>{{ bug.status }}</td>
           <td width="1">

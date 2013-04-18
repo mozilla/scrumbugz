@@ -549,7 +549,7 @@ class BugQuerySet(QuerySet):
         for bug in bugs:
             if bug.story_points:
                 data['users'][bug.story_user] += bug.story_points
-                data['components'][bug.story_component] += bug.story_points
+                data['components'][bug.real_component] += bug.story_points
                 data['status'][bug.status] += bug.story_points
                 data['basic_status'][bug.basic_status] += bug.story_points
                 data['total_points'] += bug.story_points
@@ -690,6 +690,10 @@ class Bug(models.Model):
         if not data.get('component', None):
             data['component'] = self.component
         return data
+
+    @property
+    def real_component(self):
+        return self.story_component or self.component
 
     @property
     def has_scrum_data(self):
