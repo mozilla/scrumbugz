@@ -33,7 +33,8 @@
     };
 
     var checkUpdatesAgain = function(){
-        window.setTimeout(bugsUpdatedRecently, initialWait * waitMultiplier());
+        // Disabled for now. Possibly DDOSing myself :\
+        //window.setTimeout(bugsUpdatedRecently, initialWait * waitMultiplier());
     };
 
     $(checkUpdatesAgain);
