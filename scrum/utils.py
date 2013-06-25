@@ -1,5 +1,6 @@
 import hashlib
 import os
+import re
 from calendar import timegm
 from itertools import islice
 
@@ -54,10 +55,13 @@ def get_setting_or_env(name, default=None):
     return getattr(settings, name, os.environ.get(name, default))
 
 
+WB_SPLIT_RE = re.compile(r'[\[\], ]+')
+
+
 def parse_whiteboard(wb):
-    wb = wb.strip().replace('[', ' ').replace(']', ' ')
-    if wb:
-        return dict(i.split('=', 1) for i in wb.split() if '=' in i)
+    wb_parts = WB_SPLIT_RE.split(wb.strip())
+    if wb_parts:
+        return dict(i.split('=', 1) for i in wb_parts if '=' in i)
     return {}
 
 

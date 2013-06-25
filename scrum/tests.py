@@ -19,6 +19,7 @@ from scrum import tasks as scrum_tasks
 from scrum.forms import CreateProjectForm, SprintBugsForm
 from scrum.models import BugSprintLog, Bug, BZProduct, Project, Sprint
 from scrum.tasks import update_product
+from scrum.utils import parse_whiteboard
 
 
 scrum_models.bugzilla = Mock()
@@ -42,6 +43,35 @@ def get_bug_ids_mock(**kwargs):
 
 scrum_models.bugzilla.get_bug_ids.side_effect = get_bug_ids_mock
 scrum_tasks.bugzilla.get_bug_ids.side_effect = get_bug_ids_mock
+
+
+class TestUtils(TestCase):
+    def test_parse_whiteboard(self):
+        """parse_whiteboard() should return the correct data."""
+        wbd = parse_whiteboard('u=dude c=bowling p=10')
+        self.assertDictEqual(wbd, {
+            'u': 'dude',
+            'c': 'bowling',
+            'p': '10',
+        })
+
+    def test_parse_whiteboard_brackets(self):
+        """parse_whiteboard() should return the correct data with brackets."""
+        wbd = parse_whiteboard('things,[u=dude c=bowling p=10] other stuff')
+        self.assertDictEqual(wbd, {
+            'u': 'dude',
+            'c': 'bowling',
+            'p': '10',
+        })
+
+    def test_parse_whiteboard_commas(self):
+        """parse_whiteboard() should return the correct data with commas."""
+        wbd = parse_whiteboard('things,u=dude c=bowling,p=10,[qawanted]')
+        self.assertDictEqual(wbd, {
+            'u': 'dude',
+            'c': 'bowling',
+            'p': '10',
+        })
 
 
 class TestBZProducts(TestCase):
