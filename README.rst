@@ -38,12 +38,21 @@ Currently, scrumbugz uses Bugzilla searches for Product(s)/Component(s) and
 bug IDs via the XMLRPC api (/xmlrpc.cgi).
 
 
+Create virtual environment
+--------------------------
+
+Create and activate the virtual environment::
+
+    virtualenv venv
+    source venv/bin/activate
+
+
 Get dependencies
 ----------------
 
 Run::
 
-    pip install -E ./venv/ -r requirements-dev.txt
+    pip install -r requirements-dev.txt
 
 That sets up all the dependencies required.
 
@@ -57,13 +66,6 @@ Then you should create a local file. First, copy the template over::
 
 and edit it.
 
-Activate virtual environment
-----------------------------
-
-After that, activate the virtual environment::
-
-    . ./venv/bin/activate
-
 
 Set up the db
 -------------
@@ -71,6 +73,7 @@ Set up the db
 Run::
 
     ./manage.py syncdb
+    ./manage.py migrate
 
 This also creates a superuser which you can use to log into the admin.
 
