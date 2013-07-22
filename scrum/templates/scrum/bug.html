@@ -55,7 +55,7 @@
           {% if bug.project %}
             <tr>
               <th>Project</th>
-              <td>{{ bug.project }}</td>
+              <td><a href="{{ bug.project.get_absolute_url() }}">{{ bug.project }}</a></td>
             </tr>
           {% else %}
             <tr>
