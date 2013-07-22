@@ -8,7 +8,7 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.urlresolvers import reverse
 from django.core.validators import validate_comma_separated_integer_list
-from django.http import (HttpResponse, HttpResponseBadRequest,
+from django.http import (Http404, HttpResponse, HttpResponseBadRequest,
                          HttpResponseForbidden, HttpResponsePermanentRedirect)
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.context import Context
@@ -22,7 +22,7 @@ from bugzilla.api import bugzilla
 from scrum.forms import (CreateProjectForm, CreateTeamForm, BZProductForm,
                          ProjectBugsForm, ProjectForm, SprintBugsForm,
                          SprintForm, TeamForm)
-from scrum.models import BZProduct, Project, Sprint, Team, Bug
+from scrum.models import BZProduct, Project, Sprint, Team, Bug, store_bugs
 
 
 redis_client = None
@@ -377,3 +377,26 @@ class CheckRecentUpdates(View):
             if updated:
                 return HttpResponse()
         return HttpResponse(status=204)  # no content
+
+
+class BugView(DetailView):
+    template_name = 'scrum/bug.html'
+    model = Bug
+
+    def get_object(self, queryset=None):
+        try:
+            return super(BugView, self).get_object(queryset)
+        except Http404:
+            pk = self.kwargs['pk']
+            bug_data = bugzilla.get_bugs(ids=[pk], scrum_only=False)
+            if bug_data['bugs']:
+                return store_bugs(bug_data)[0]
+            return None
+
+    def get_context_data(self, **kwargs):
+        context = super(BugView, self).get_context_data(**kwargs)
+        if (self.request.META.get('HTTP_CACHE_CONTROL') == 'no-cache' and
+                self.object):
+            self.object.refresh_from_bugzilla()
+            self.object.save()
+        return context

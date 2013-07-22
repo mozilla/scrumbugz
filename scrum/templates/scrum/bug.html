@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <div class="row">
+    <div class="span12">
+      {% if bug %}
+        <a class="btn pull-right show-tooltip"
+           href="#"
+           title="Refresh data from Bugzilla"
+           id="shift-refresh">
+          <i class="icon-refresh"></i> Refresh Data
+        </a>
+        <h1>Details for Bug <a class="show-tooltip" href="{{ bug.get_bugzilla_url() }}" title="Open in Bugzilla">{{ bug.id }}</a></h1>
+        <table class="table table-striped table-hover table-bordered">
+          <tr>
+            <th>Summary</th>
+            <td>{{ bug.summary }}</td>
+          </tr>
+          <tr>
+            <th>Last Modified</th>
+            <td>{{ timeago(bug.last_change_time) }}</td>
+          </tr>
+          <tr>
+            <th>Last Synced From Bugzilla</th>
+            <td>{{ timeago(bug.last_synced_time) }}</td>
+          </tr>
+          <tr>
+            <th>Status</th>
+            <td>{{ bug.status }}{{ ' &ndash; '|safe if bug.resolution }}{{ bug.resolution }}</td>
+          </tr>
+          <tr>
+            <th>Product</th>
+            <td>{{ bug.product }}</td>
+          </tr>
+          <tr>
+            <th>Component</th>
+            <td>{{ bug.component }}</td>
+          </tr>
+          <tr>
+            <th>Assigned To</th>
+            <td>{{ bug.assigned_to }}</td>
+          </tr>
+          <tr>
+            <th>Story User</th>
+            <td>{{ bug.story_user }}</td>
+          </tr>
+          <tr>
+            <th>Story Component</th>
+            <td>{{ bug.story_comonent }}</td>
+          </tr>
+          <tr>
+            <th>Story Points</th>
+            <td>{{ bug.story_points }}</td>
+          </tr>
+          {% if bug.project %}
+            <tr>
+              <th>Project</th>
+              <td>{{ bug.project }}</td>
+            </tr>
+          {% else %}
+            <tr>
+              <th><span class="show-tooltip" title="The project(s) in whose backlog(s) this bug shows.">Matching Projects (Backlogs)</span></th>
+              <td>{{ project_links(bug) }}</td>
+            </tr>
+          {% endif %}
+          {% if bug.sprint %}
+            <tr>
+              <th>Sprint</th>
+              <td><a href="{{ bug.sprint.get_absolute_url() }}">{{ bug.sprint }}</a></td>
+            </tr>
+          {% endif %}
+        </table>
+
+        {% if bug.sprint_actions.all() %}
+          <h2>Sprint History</h2>
+          <table class="table table-striped table-hover table-bordered">
+            <tr>
+              <th>Action</th>
+              <th>Sprint</th>
+              <th>When</th>
+            </tr>
+            {% for log in bug.sprint_actions.all() %}
+              <tr>
+                <td class="bug-log-action">{{ log.get_action_display() }}&nbsp;{% if log.action == log.ADDED %}to{% else %}from{% endif %}</td>
+                <td><a href="{{ log.sprint.get_absolute_url() }}">{{ log.sprint }}</a></td>
+                <td>{{ timeago(log.timestamp) }}</td>
+              </tr>
+            {% endfor %}
+          </table>
+        {% endif %}
+      {% else %}
+        <h1>Oh Noes! Bug Not Found!</h1>
+        <p>Either the bug ID in the URL is invalid, or the bug is private and ScrumBugs lacks the permission to access it.</p>
+        <p>Sorry about that.</p>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}
+
+{% block js %}
+  <script src="{{ STATIC_URL }}js/jquery.timeago.js"></script>
+  <script type="text/javascript">
+    $(function(){
+        "use strict";
+        $('time.timeago').timeago();
+        $('.show-tooltip').tooltip();
+    });
+  </script>
+{% endblock %}
+
+{% macro project_links(bug) -%}
+  {% for project in bug.projects_from_product() -%}
+    <a href="{{ project.get_absolute_url() }}">{{ project }}</a>{{ ', ' if not loop.last }}
+  {%- else -%}
+    None
+  {%- endfor -%}
+{% endmacro %}
+
+{% macro timeago(timestamp) -%}
+  <time class="timeago" datetime="{{ timestamp }}">{{ timestamp.strftime('%B %d, %Y at %I:%M %p %Z') }}</time>
+{% endmacro %}

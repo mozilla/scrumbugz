@@ -643,7 +643,11 @@ class Bug(models.Model):
         data = bugzilla.get_bugs(ids=[self.id]).get('bugs')
         self.fill_from_data(data[0])
 
+    @models.permalink
     def get_absolute_url(self):
+        return 'scrum_bug', [self.pk]
+
+    def get_bugzilla_url(self):
         return '%sid=%s' % (settings.BUGZILLA_SHOW_URL, self.id)
 
     def is_closed(self):

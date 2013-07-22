@@ -13,4 +13,4 @@ DB_NAME="$2"
 dropdb $DB_NAME && \
     createdb $DB_NAME && \
     pg_restore --clean --no-acl --no-owner -d $DB_NAME "$DUMP_NAME"
-./manage.py syncdb && ./manage.py migrate
+./manage.py syncdb --migrate

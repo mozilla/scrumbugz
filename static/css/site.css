@@ -279,3 +279,8 @@ tr.active td {
     padding-top: 7.5px !important;
     padding-bottom: 7.5px !important;
 }
+
+td.bug-log-action {
+    width: 10%;
+    text-align: right;
+}

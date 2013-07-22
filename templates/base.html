@@ -84,6 +84,7 @@
               {% else %}
                 <li><a class="browserid-logout" href="{{ url('logout') }}?next={{ request.path_info }}">Sign out</a></li>
               {% endif -%}
+              <li><a href="#bug_id_search_modal" data-toggle="modal" id="find_a_bug">Find a Bug</a></li>
               <li{% if request.path_info == url('help') %} class="active"{% endif %}><a href="{{ url('help') }}">Help</a></li>
             </ul>
           </div><!--/.nav-collapse -->
@@ -115,6 +116,21 @@
       </footer>
 
     </div> <!-- /container -->
+
+    <div class="modal hide fade" id="bug_id_search_modal">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h3>Find a bug</h3>
+      </div>
+      <div class="modal-body">
+        <p>Enter a bug ID in the box to discover what ScrumBugs knows about it, and what project or sprint (if any) owns it at present.</p>
+        <p><input id="bug_id_search" type="text" placeholder="Bug ID"></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
+        <a id="bug_id_search_btn" href="#" class="btn btn-primary">GO</a>
+      </div>
+    </div>
 
     <!-- Le javascript
     ================================================== -->
