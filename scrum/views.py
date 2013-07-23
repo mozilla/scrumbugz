@@ -384,19 +384,31 @@ class BugView(DetailView):
     model = Bug
 
     def get_object(self, queryset=None):
+        """Return the bug object.
+
+        Return None if the bug isn't in the DB
+        Return False if we're also unable to retrieve it from BZ
+        """
+        obj = None
+        refresh = self.request.META.get('HTTP_CACHE_CONTROL') == 'no-cache'
         try:
-            return super(BugView, self).get_object(queryset)
+            obj = super(BugView, self).get_object(queryset)
         except Http404:
-            pk = self.kwargs['pk']
-            bug_data = bugzilla.get_bugs(ids=[pk], scrum_only=False)
-            if bug_data['bugs']:
-                return store_bugs(bug_data)[0]
-            return None
+            if refresh:
+                pk = self.kwargs['pk']
+                bug_data = bugzilla.get_bugs(ids=[pk], scrum_only=False)
+                if bug_data['bugs']:
+                    obj = store_bugs(bug_data)[0]
+                else:
+                    obj = False
+        else:
+            if refresh:
+                obj.refresh_from_bugzilla()
+                obj.save()
+
+        return obj
 
     def get_context_data(self, **kwargs):
         context = super(BugView, self).get_context_data(**kwargs)
-        if (self.request.META.get('HTTP_CACHE_CONTROL') == 'no-cache' and
-                self.object):
-            self.object.refresh_from_bugzilla()
-            self.object.save()
+        context['tried_bugzilla'] = self.object is False
         return context

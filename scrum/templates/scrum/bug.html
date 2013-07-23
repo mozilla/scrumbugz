@@ -3,13 +3,13 @@
 {% block content %}
   <div class="row">
     <div class="span12">
+      <a class="btn pull-right show-tooltip"
+         href="#"
+         title="Refresh data from Bugzilla"
+         id="shift-refresh">
+        <i class="icon-refresh"></i> Refresh Data
+      </a>
       {% if bug %}
-        <a class="btn pull-right show-tooltip"
-           href="#"
-           title="Refresh data from Bugzilla"
-           id="shift-refresh">
-          <i class="icon-refresh"></i> Refresh Data
-        </a>
         <h1>Details for Bug <a class="show-tooltip" href="{{ bug.get_bugzilla_url() }}" title="Open in Bugzilla">{{ bug.id }}</a></h1>
         <table class="table table-striped table-hover table-bordered">
           <tr>
@@ -89,9 +89,15 @@
           </table>
         {% endif %}
       {% else %}
-        <h1>Oh Noes! Bug Not Found!</h1>
-        <p>Either the bug ID in the URL is invalid, or the bug is private and ScrumBugs lacks the permission to access it.</p>
-        <p>Sorry about that.</p>
+        {% if tried_bugzilla %}
+          <h1>Oh Noes! Bug Not Found!</h1>
+          <p>We can't find the bug in the database or Bugzilla. Either the bug ID in the URL is invalid, or the bug is private and ScrumBugs lacks the permission to access it.</p>
+          <p>Sorry about that.</p>
+        {% else %}
+          <h1>Say What?</h1>
+          <p>That bug isn't in the database. Hit the "Refresh Data" button in the upper right (or just shift-refresh) and we'll try to grab the bug from Bugzilla.</p>
+          <p>Thanks!</p>
+        {% endif %}
       {% endif %}
     </div>
   </div>
