@@ -74,7 +74,7 @@
                 <li><a href="{{ url('admin:index') }}">Admin</a></li>
               {% endif %}
               {% if not user.is_authenticated() -%}
-                <li><a class="browserid-login"
+                <li><a class="browserid-login show-tooltip"
                        id="browserid"
                        href="#"
                        data-site-name="ScrumBugs"

@@ -284,3 +284,7 @@ td.bug-log-action {
     width: 10%;
     text-align: right;
 }
+
+td.bug-links {
+    white-space: nowrap;
+}

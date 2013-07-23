@@ -1,7 +1,7 @@
 (function($){
     "use strict";
     $(function(){
-        $('#browserid').tooltip();
+        $('.show-tooltip').tooltip();
         $('#shift-refresh').on('click', function(e){
             e.preventDefault();
             window.location.reload(true);
@@ -21,6 +21,6 @@
                 e.preventDefault();
                 $bug_id_search_btn.trigger('click');
             }
-        })
+        });
     });
 })(jQuery);

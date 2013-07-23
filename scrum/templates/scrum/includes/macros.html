@@ -56,7 +56,10 @@
     <tbody>
       {% for bug in bugs %}
         <tr data-bugid="{{ bug.id }}" data-points="{{ bug.story_points }}" id="bug{{ bug.id }}" class="bug-{{ bug.basic_status }} {{ status_to_rowclass[bug.basic_status] }}">
-          <td data-order-by="{{ bug.id }}"><a href="{{ bug.get_absolute_url() }}">{{ bug.id }}</a></td>
+          <td data-order-by="{{ bug.id }}" class="bug-links">
+            <a href="{{ bug.get_bugzilla_url() }}" title="Open in Bugzilla"><img src="{{ STATIC_URL }}img/bugzilla.png" alt="Open in Bugzilla"></a>
+            <a href="{{ bug.get_absolute_url() }}">{{ bug.id }}</a>
+          </td>
           {% if show_project %}
             <td data-order-by="{{ bug.project }}">{% if bug.project %}<a href="{{ bug.project.get_absolute_url() }}">{{ bug.project }}</a>{% endif %}</td>
           {% endif %}
