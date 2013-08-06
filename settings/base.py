@@ -171,7 +171,7 @@ CELERYD_CONCURRENCY = 4
 CELERYBEAT_SCHEDULE = {
     'every-30-seconds': {
         'task': 'get_bugmails',
-        'schedule': timedelta(seconds=60),
+        'schedule': timedelta(seconds=30),
     },
     'every-couple-days': {
         'task': 'clean_bugmail_log',
