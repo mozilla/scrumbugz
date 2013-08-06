@@ -50,11 +50,10 @@ def get_messages(delete=True, max_get=500):
         for msgid in range(1, num_get + 1):
             msg_str = '\n'.join(conn.retr(msgid)[1])
             msg = Parser().parsestr(msg_str)
-            if is_bugmail(msg):
-                if is_interesting(msg):
-                    messages.append(msg)
-                if delete:
-                    conn.dele(msgid)
+            if is_bugmail(msg) and is_interesting(msg):
+                messages.append(msg)
+            if delete:
+                conn.dele(msgid)
         conn.quit()
     if messages:
         num_msgs = len(messages)
