@@ -169,9 +169,9 @@ CELERY_TASK_RESULT_EXPIRES = 60
 CELERY_TIMEZONE = 'UTC'
 CELERYD_CONCURRENCY = 4
 CELERYBEAT_SCHEDULE = {
-    'every-30-seconds': {
+    'every-minute': {
         'task': 'get_bugmails',
-        'schedule': timedelta(seconds=30),
+        'schedule': timedelta(seconds=60),
     },
     'every-couple-days': {
         'task': 'clean_bugmail_log',

@@ -33,7 +33,7 @@ BUGZILLA_INFO_HEADERS = (
 log = logging.getLogger(__name__)
 
 
-def get_messages(delete=True, max_get=500):
+def get_messages(delete=True, max_get=200):
     """
     Return a list of `email.message.Message` objects from the POP3 server.
     :return: list
