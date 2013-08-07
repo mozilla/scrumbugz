@@ -52,7 +52,9 @@
         };
 
         self.get_tip_key = function(item){
-            return item.datapoint[1];
+            var points = Math.round(item.datapoint[1]);
+            var units = (points === 1) ? ' point' : ' points';
+            return points + units;
         };
 
         self.get_tip_msg = function(item){
@@ -82,24 +84,30 @@
                         to: i + 2 * DAY
                     }
                 });
-                i += 7 * 24 * 60 * 60 * 1000;
+                i += 7 * DAY;
             } while (i < axes.xaxis.max);
 
             return markings;
         };
 
-        // Get a ideal burn line that takes in to account weekends.
-        function idea_burn_data() {
+        // Get an ideal burn line that takes into account weekends.
+        function ideal_burn_data() {
+            function is_weekday(date) {
+                var day_of_week = date.getUTCDay();
+                return day_of_week !== 0 && day_of_week !== 6;
+            }
+
             var burn_start = new Date(bugs_data.burndown_axis[0]);
             var burn_end = new Date(bugs_data.burndown_axis[bugs_data.burndown_axis.length - 1]);
 
             var adj_start = burn_start;
             var adj_end = burn_end;
+
             // Make start and end dates weekdays.
-            while (burn_start.getUTCDay() === 0 || burn_start.getUTCDay === 6) {
+            while (!is_weekday(burn_start)) {
                 burn_start.setDate(burn_start.getDate() + 1);
             }
-            while (burn_end.getUTCDay() === 0 || burn_end.getUTCDay === 6) {
+            while (!is_weekday(burn_end)) {
                 burn_end.setDate(burn_end.getDate() - 1);
             }
             // count number of weekdays.
@@ -115,19 +123,16 @@
 
             while(timestamp <= bugs_data.burndown_axis[bugs_data.burndown_axis.length - 1]) {
                 timestamp += DAY;
-                var timestamp_day = new Date(timestamp).getUTCDay();
-                if (timestamp_day === 0 || timestamp_day === 6) {
-                    ideal_data.push([timestamp, last_value]);
-                } else {
+                if (is_weekday(new Date(timestamp))) {
                     last_value -= burnrate;
-                    ideal_data.push([timestamp, last_value]);
                 }
+                ideal_data.push([timestamp, last_value]);
             }
             return ideal_data;
         }
 
         self.ideal_plot = {
-            data: idea_burn_data(),
+            data: ideal_burn_data(),
             lines: {fill: false},
             points: {show: false},
             color: '#0f0',
@@ -162,7 +167,6 @@
             resize: self.resize
         });
     };
-
 
     window.PieFlot = function(selector, data, extra) {
         var self = this;
