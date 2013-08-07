@@ -68,6 +68,7 @@ Set up the db
 Run::
 
     ./manage.py syncdb
+    ./manage.py migrate
 
 This also creates a superuser which you can use to log into the admin.
 
