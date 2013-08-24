@@ -18,12 +18,11 @@ Setup for development
 Requirements
 ------------
 
-* Bugzilla 4
-* a recent version of the Bugzilla API
+* Bugzilla 4+
+* The Bugzilla XMLRPC API.
 
-Currently, Scrumbugz uses Bugzilla search urls to define a sprint. It
-converts the parameters in the search url to a form which it then uses
-with the Bugzilla API.
+Currently, scrumbugz uses Bugzilla searches for Product(s)/Component(s) and
+bug IDs via the XMLRPC api (/xmlrpc.cgi).
 
 Thus, in order to use Scrumbugz, you need a Bugzilla instance that's
 running a recent version of Bugzilla and the Bugzilla API. We think
@@ -35,21 +34,28 @@ the minimum version is Bugzilla 4, but haven't verified this.
    have access to a Bugzilla server, you're fine.
 
 
-Get dependencies
-----------------
+Create virtual environment
+--------------------------
 
-Run::
+Create and activate the virtual environment::
 
-    virtualenv ./venv/
-    . ./venv/bin/activate
-    pip install -r requirements-dev.txt
-
-That sets up all the dependencies required.
+    virtualenv venv
+    source venv/bin/activate
 
 .. Note::
 
    You don't have to put your virtual environment in ``./venv/``. Feel
    free to put it anywhere.
+
+
+Get dependencies
+----------------
+
+Run::
+
+    pip install -r requirements-dev.txt
+
+That sets up all the dependencies required.
 
 
 Configure
@@ -70,7 +76,8 @@ Run::
     ./manage.py syncdb
     ./manage.py migrate
 
-This also creates a superuser which you can use to log into the admin.
+This also creates a superuser which you can use to log into the Django admin
+page at `<http://localhost:8000/admin>`_.
 
 
 Set up Cache
@@ -88,20 +95,20 @@ Run it
 
     ./manage.py runserver
 
-Static media will be handled automatically by Django 1.3's built-in
-handler.
+Static media will be handled automatically by Django's built-in handler.
 
 
 Setting up a project
 ====================
 
-1. Pull up the home page which should now be at `<http://localhost:8000/>`_.
-2. Click the `Admin` link on the right of the nav bar.
-3. Login with the admin account you setup in during `syncdb`,
-4. then go back to the home page.
+1. Pull up the Django admin page at `<http://localhost:8000/admin>`_.
+2. Login with the admin account you setup during `syncdb`,
+3. then go back to the home page at `<http://localhost:8000/>`_.
 
-Once you're logged in you'll see buttons for creating and editing
-projects and sprints.
+Once you're logged in, you'll see buttons for creating and editing projects
+and sprints. If your superuser account's email address is registered with
+Mozilla Persona, you can also login using the `Sign In` link on the right
+of the nav bar.
 
 The Bugzilla url for a sprint should be the url for a query defining
 the sprint. For example, SUMO uses the target to define sprints, so
