@@ -241,6 +241,10 @@ class TestBug(TestCase):
         self.assertSetEqual(set([781718, 781715, 781717, 781718]),
                             set(Bug.objects.get_blocked().keys()))
 
+    def test_flagged_bugs(self):
+        self.assertSetEqual(set([781710, 781717]),
+                            set(Bug.objects.get_flagged()))
+
     def test_get_by_products(self):
         eq_(Bug.objects.by_products(self.p.get_products()).count(), 11)
         b = Bug.objects.get(id=778466)

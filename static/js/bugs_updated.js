@@ -41,9 +41,6 @@
 
     // blocker popovers
     var $blocked_labels = $('.blocked-bug');
-    var hide_all = function(){
-        $blocked_labels.popover('hide');
-    };
     $blocked_labels.popover({
         title: 'Blocked By',
         content: function(){
@@ -57,6 +54,28 @@
         $('.popover .ttip').tooltip();
         return false;
     });
+
+    // flagged popovers
+    var $flagged_labels = $('.flagged-bug');
+    $flagged_labels.popover({
+        title: 'Flags:',
+        content: function(){
+            return $(this).find('.flagged-links').html();
+        },
+        html: true,
+        trigger: 'click',
+        animation: false
+    });
+    $flagged_labels.on('click', function(e){
+        $('.popover .ttip').tooltip();
+        return false;
+    });
+
+    // hide_all function
+    var hide_all = function(){
+        $blocked_labels.popover('hide');
+        $flagged_labels.popover('hide');
+    };
     $('body').on('click', hide_all);
 
 })(jQuery);

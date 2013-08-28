@@ -78,6 +78,7 @@ class BugsDataMixin(object):
             self.bugs_kwargs['bugs'] = bugs
         bugs = self.object.get_bugs(**self.bugs_kwargs)
         context['blocked_bugs'] = bugs.get_blocked()
+        context['flagged_bugs'] = bugs.get_flagged()
         context['bugs'] = bugs
         context['bz_search_url'] = bugs.get_bz_search_url()
         context['bugs_data'] = bugs.get_graph_data()
@@ -115,6 +116,7 @@ class ProjectView(BugsDataMixin, ProjectsMixin, DetailView):
                                   project=self.object)
         context['sprinting'] = bugs
         context['sprinting_blocked'] = bugs.get_blocked()
+        context['sprinting_flagged'] = bugs.get_flagged()
         return context
 
 
@@ -260,6 +262,7 @@ class ManageSprintBugsView(BugsDataMixin, SprintMixin, ProtectedUpdateView):
         bugs = self.team.get_bugs(**self.bugs_kwargs)
         context['backlog_bugs'] = bugs
         context['blocked_backlog_bugs'] = bugs.get_blocked()
+        context['flagged_backlog_bugs'] = bugs.get_flagged()
         context['bugs_data'].update(self.object.get_burndown_data())
         context['bugs_data_json'] = json.dumps(context['bugs_data'])
         context['old_sprint_bugs'] = Bug.objects.filter(
@@ -280,6 +283,7 @@ class ManageProjectBugsView(BugsDataMixin, ProtectedUpdateView):
         bugs = self.object.get_backlog(**self.bugs_kwargs)
         context['backlog_bugs'] = bugs
         context['blocked_backlog_bugs'] = bugs.get_blocked()
+        context['flagged_backlog_bugs'] = bugs.get_flagged()
         return context
 
 

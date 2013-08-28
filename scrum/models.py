@@ -535,6 +535,16 @@ class BugQuerySet(QuerySet):
                     all_blocked[bid].append(open_blocker[blocker])
         return all_blocked
 
+    def get_flagged(self):
+        """
+        Return a list of bug ids of bugs with flags
+        """
+        flags = []
+        for bug in self.open():
+            if bug.bucketed_flags:
+                flags.append(bug.id)
+        return flags
+
     def get_aggregate_data(self):
         bugs = self.all()
         data = {
@@ -605,6 +615,7 @@ class Bug(models.Model):
     whiteboard = models.CharField(max_length=2048, blank=True)
     blocks = JSONField(blank=True)
     depends_on = JSONField(blank=True)
+    flags = CompressedJSONField(blank=True)
     comments_count = models.PositiveSmallIntegerField(default=0)
     creation_time = models.DateTimeField(default=now)
     last_change_time = models.DateTimeField(default=now)
@@ -705,6 +716,52 @@ class Bug(models.Model):
                     'c=' in self.whiteboard or
                     'p=' in self.whiteboard or
                     's=' in self.whiteboard)
+
+    @property
+    def bucketed_flags(self):
+        # do we have cached values?
+        if hasattr(self, '_bucketed_flags'):
+            return self._bucketed_flags
+
+        # filter the flags and put them in named buckets
+        bf = {}
+        for f in self.flags:
+            if f['name'] not in bf:
+                bf[f['name']] = []
+            who = f.get('requestee', None)
+            if not who:
+                who = f.get('setter')
+            bf[f['name']].append({'who':who, 'when':f['modification_date'], 'status':f['status']})
+        self._bucketed_flags = bf
+
+        return self._bucketed_flags
+
+    @property
+    def flags_status(self):
+        # do we have cached values?
+        if hasattr(self, '_flags_status'):
+            return self._flags_status
+
+        fs = {}
+        for f in self.flags:
+            name = f['name']
+            status = f['status']
+            if status == '?':
+                status = 'question'
+            elif status == '+':
+                status = 'plus'
+            elif status == '-':
+                status = 'minus'
+
+            if name not in fs:
+                fs[name] = status
+                continue
+
+            if fs[name] != status:
+                fs[name] = 'mixed';
+        self._flags_status = fs
+
+        return self._flags_status
 
     @property
     def points_history(self):

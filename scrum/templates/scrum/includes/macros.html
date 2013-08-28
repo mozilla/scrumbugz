@@ -26,7 +26,7 @@
   </ul>
 {%- endmacro %}
 
-{% macro bug_table(bugs, id='bugs_table', actions=None, button_color=None, show_project=True, show_sprint=False, blocked_bugs=None) %}
+{% macro bug_table(bugs, id='bugs_table', actions=None, button_color=None, show_project=True, show_sprint=False, blocked_bugs=None, flagged_bugs=None) %}
   {%- set actions=[actions] if actions is string -%}
   {%- set status_to_rowclass = {'closed': 'success', 'open': 'warning'} -%}
   {% if button_color -%}
@@ -66,7 +66,7 @@
             <td data-order-by="{{ bug.sprint.slug }}">{% if bug.sprint %}<a href="{{ bug.sprint.get_absolute_url() }}">{{ bug.sprint.name }}</a>{% endif %}</td>
           {% endif %}
           <td data-order-by="{{ bug.priority if bug.priority != '--' else 'z' }}">{{ bug.priority if bug.priority != '--' }}</td>
-          <td>{% if blocked_bugs and bug.id in blocked_bugs %}<span class="label label-important blocked-bug">BLOCKED<span class="hide blocker-links">{{ bug_links(blocked_bugs[bug.id]) }}</span></span> {% endif %}<a href="{{ bug.get_absolute_url() }}" title="Bug Information">{{ bug.summary }}</a></td>
+          <td>{{ blocked_bug_marker(blocked_bugs, bug.id) }} {{ flags_markers(flagged_bugs, bug) }}<a href="{{ bug.get_absolute_url() }}" title="Bug Information">{{ bug.summary }}</a></td>
           <td><span title="{{ bug.assigned_full }}" class="ttip">{{ bug.assigned_name }}</span></td>
           <td>{{ bug.story_user }}</td>
           <td>{{ bug.real_component }}</td>
@@ -102,4 +102,24 @@
   {%- for bug in bug_objs -%}
     <a href="{{ bug.get_absolute_url() }}" class="ttip" target="_blank" title="{{ bug.summary }}">{{ bug.id }}</a>{{ ', ' if not loop.last }}
   {%- endfor -%}
+{% endmacro %}
+
+{% macro blocked_bug_marker(blocked_bugs, bug_id) %}
+  {%- if blocked_bugs and bug_id in blocked_bugs -%}
+    <span class="label label-important blocked-bug">BLOCKED<span class="hide blocker-links">{{ bug_links(blocked_bugs[bug_id]) }}</span></span> 
+  {%- endif -%}
+{% endmacro %}
+
+{% macro flags_links(flag_name, flags) %}
+  {%- for f in flags -%}
+    {{ flag_name }}{{ f['status'] }} <a href="mailto:{{ f['who'] }}" class="ttip" target="_blank" title="{{ f['when'] }}">{{ f['who'] }}</a>{{ ', ' if not loop.last }}
+  {%- endfor -%}
+{% endmacro %}
+
+{% macro flags_markers(flagged_bugs, bug) %}
+  {%- if flagged_bugs and bug.id in flagged_bugs -%}
+    {%- for flag_name,flags in bug.bucketed_flags.iteritems() -%}
+      <span class="label flag-{{bug.flags_status[flag_name]}} flagged-bug">{{ flag_name }}<span class="hide flagged-links">{{ flags_links(flag_name, flags) }}</span></span>
+    {%- endfor -%}
+  {%- endif -%}
 {% endmacro %}

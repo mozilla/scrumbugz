@@ -69,10 +69,10 @@
       </form>
 
       <h2>Sprint Ready Stories: [Points = <span id="current-points">0</span>]</h2>
-      {{ bug_table(bugs, actions='toggle-sprint', button_color='danger', blocked_bugs=blocked_bugs, show_project=False) }}
+      {{ bug_table(bugs, actions='toggle-sprint', button_color='danger', blocked_bugs=blocked_bugs, flagged_bugs=flagged_bugs, show_project=False) }}
 
       <h2>Backlog</h2>
-      {{ bug_table(backlog_bugs, 'backlog_table', actions='toggle-sprint', button_color='success', blocked_bugs=blocked_backlog_bugs, show_project=False) }}
+      {{ bug_table(backlog_bugs, 'backlog_table', actions='toggle-sprint', button_color='success', blocked_bugs=blocked_backlog_bugs, flagged_bugs=flagged_backlog_bugs, show_project=False) }}
     </div>
   </div>
 {% endblock %}

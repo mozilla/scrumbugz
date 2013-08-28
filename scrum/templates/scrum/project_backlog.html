@@ -55,7 +55,7 @@
   <div class="row">
     <div class="span12">
       <h2>Backlog</h2>
-      {{ bug_table(bugs, 'backlog_table', blocked_bugs=blocked_bugs, show_project=False) }}
+      {{ bug_table(bugs, 'backlog_table', blocked_bugs=blocked_bugs, flagged_bugs=flagged_bugs, show_project=False) }}
     </div>
   </div>
 {% endblock %}

@@ -20,7 +20,7 @@
   <div class="row">
     <div class="span12">
       <h2>Currently Sprinting</h2>
-      {{ bug_table(sprinting, show_sprint=True, show_project=False, blocked_bugs=sprinting_blocked) }}
+      {{ bug_table(sprinting, show_sprint=True, show_project=False, blocked_bugs=sprinting_blocked, flagged_bugs=sprinting_flagged) }}
       <hr>
       {% if perms.scrum.change_project %}
         <a class="btn btn-small btn-primary pull-right"
@@ -32,7 +32,7 @@
         <i class="icon-list"></i> Full Backlog
       </a>
       <h2>Sprint Ready</h2>
-      {{ bug_table(bugs, 'backlog_table', show_project=False, blocked_bugs=blocked_bugs) }}
+      {{ bug_table(bugs, 'backlog_table', show_project=False, blocked_bugs=blocked_bugs, flagged_bugs=flagged_bugs) }}
     </div>
   </div>
 {% endblock %}

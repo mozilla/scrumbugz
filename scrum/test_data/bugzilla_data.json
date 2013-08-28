@@ -23,6 +23,72 @@
         {
           "changes":[
             {
+              "removed":"",
+              "field_name":"flag",
+              "added":"needinfo?(willkg@mozilla.com), needinfo?(nobody@mozilla.com)"
+            }
+          ],
+          "who":"willkg@mozilla.com",
+          "when":"2012-08-10T14:14:26Z"
+        },
+        {
+          "changes":[
+            {
+              "removed":"needinfo?(willkg@mozilla.com)",
+              "field_name":"flag",
+              "added":""
+            }
+          ],
+          "who":"willkg@mozilla.com",
+          "when":"2012-08-10T14:14:27Z"
+        },
+        {
+          "changes":[
+            {
+              "removed":"needinfo?(nobody@mozilla.com)",
+              "field_name":"flag",
+              "added":""
+            }
+          ],
+          "who":"willkg@mozilla.com",
+          "when":"2012-08-10T14:14:28Z"
+        },
+        {
+          "changes":[
+            {
+              "removed":"",
+              "field_name":"flag",
+              "added":"needinfo?(willkg@mozilla.com)"
+            }
+          ],
+          "who":"willkg@mozilla.com",
+          "when":"2012-08-10T14:14:29Z"
+        },
+        {
+          "changes":[
+            {
+              "removed":"",
+              "field_name":"flag",
+              "added":"needinfo?(nobody@mozilla.com)"
+            }
+          ],
+          "who":"willkg@mozilla.com",
+          "when":"2012-08-10T14:14:30Z"
+        },
+        {
+          "changes":[
+            {
+              "removed":"needinfo?(willkg@mozilla.com), needinfo?(nobody@mozilla.com)",
+              "field_name":"flag",
+              "added":""
+            }
+          ],
+          "who":"willkg@mozilla.com",
+          "when":"2012-08-10T14:14:31Z"
+        },
+        {
+          "changes":[
+            {
               "removed":"nobody@mozilla.org",
               "field_name":"assigned_to",
               "added":"willkg@mozilla.com"
@@ -158,6 +224,18 @@
       "comments_count":3,
       "resolution":"",
       "last_change_time":"2012-08-28T14:09:26Z",
+      "flags":[
+        {
+          "requestee": "willkg@mozilla.com", 
+          "status": "?", 
+          "name":"needinfo", 
+          "modification_date":"2012-08-10T14:14:26Z", 
+          "type_id":800, 
+          "creation_date":"2012-08-10T14:14:26Z", 
+          "id":745073, 
+          "setter":"willkg@mozilla.com"
+        }
+      ],
       "history":[
         {
           "changes":[
@@ -181,6 +259,11 @@
               "removed":"",
               "field_name":"dependson",
               "added":"781715"
+            },
+            {
+              "removed":"",
+              "field_name":"flag",
+              "added":"needinfo?(willkg@mozilla.com)"
             }
           ],
           "who":"willkg@mozilla.com",
@@ -282,6 +365,11 @@
               "removed":"",
               "field_name":"blocked",
               "added":"781721"
+            },
+            {
+              "removed":"",
+              "field_name":"flag",
+              "added":"needinfo?(willkg@mozilla.com)"
             }
           ],
           "who":"willkg@mozilla.com",
@@ -409,6 +497,11 @@
               "removed":"",
               "field_name":"cc",
               "added":"mcooper@mozilla.com"
+            },
+            {
+              "removed":"",
+              "field_name":"flag",
+              "added":"needinfo?(willkg@mozilla.com)"
             }
           ],
           "who":"mcooper@mozilla.com",
@@ -420,6 +513,11 @@
               "removed":"--",
               "field_name":"priority",
               "added":"P3"
+            },
+            {
+              "removed":"needinfo?(willkg@mozilla.com)",
+              "field_name":"flag",
+              "added":""
             }
           ],
           "who":"willkg@mozilla.com",
@@ -444,6 +542,18 @@
       "comments_count":5,
       "resolution":"",
       "last_change_time":"2012-08-28T14:07:50Z",
+      "flags":[
+        {
+          "requestee": "willkg@mozilla.com", 
+          "status": "?", 
+          "name":"needinfo", 
+          "modification_date":"2012-08-10T14:14:26Z", 
+          "type_id":800, 
+          "creation_date":"2012-08-10T14:14:26Z", 
+          "id":745073, 
+          "setter":"willkg@mozilla.com"
+        }
+      ],
       "history":[
         {
           "changes":[
@@ -456,6 +566,11 @@
               "removed":"",
               "field_name":"status_whiteboard",
               "added":"u=dev c=infrastructure p=2"
+            },
+            {
+              "removed":"",
+              "field_name":"flag",
+              "added":"needinfo?(willkg@mozilla.com)"
             }
           ],
           "who":"willkg@mozilla.com",
@@ -472,6 +587,11 @@
               "removed":"",
               "field_name":"dependson",
               "added":"781709, 781710"
+            },
+            {
+              "removed":"needinfo?(willkg@mozilla.com)",
+              "field_name":"flag",
+              "added":"needinfo?(nobody@mozilla.com)"
             }
           ],
           "who":"willkg@mozilla.com",

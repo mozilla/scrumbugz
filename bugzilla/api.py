@@ -39,6 +39,7 @@ BZ_FIELDS = [
     'creation_time',
     'last_change_time',
     'target_milestone',
+    'flags',
 ]
 UNWANTED_COMPONENT_FIELDS = [
     'sort_key',

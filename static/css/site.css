@@ -267,6 +267,28 @@ tr.active td {
     cursor: pointer;
 }
 
+.flagged-bug {
+    cursor: pointer;
+    text-transform: uppercase;
+    margin-right: 0.33em;
+}
+
+.flag-question {
+  background-color: rgb(248, 148, 6);
+}
+
+.flag-minus {
+  background-color: rgb(185, 74, 72);
+}
+
+.flag-plus {
+  background-color: rgb(70, 136, 71);
+}
+
+.flag-mixed {
+  background-color: rgb(58, 135, 173);
+}
+
 .navbar-fixed-top {
     opacity: .9;
 }
