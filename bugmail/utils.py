@@ -14,6 +14,7 @@ from scrum.utils import get_setting_or_env
 BUGMAIL_HOST = get_setting_or_env('BUGMAIL_HOST')
 BUGMAIL_USER = get_setting_or_env('BUGMAIL_USER')
 BUGMAIL_PASS = get_setting_or_env('BUGMAIL_PASS')
+BUGMAIL_MAX_MESSAGES = get_setting_or_env('BUGMAIL_MAX_MESSAGES', 1000)
 BUG_ID_RE = re.compile(r'\[Bug (\d+)\]')
 BUG_SUMMARY_RE = re.compile(r'\[Bug (?:\d+)\](?: New:)? (.+)$')
 # 'admin' also comes through but is for account creation.
@@ -33,7 +34,7 @@ BUGZILLA_INFO_HEADERS = (
 log = logging.getLogger(__name__)
 
 
-def get_messages(delete=True, max_get=200):
+def get_messages(delete=True, max_get=BUGMAIL_MAX_MESSAGES):
     """
     Return a list of `email.message.Message` objects from the POP3 server.
     :return: list
