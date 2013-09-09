@@ -20,7 +20,9 @@ class BugmailStatsView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super(BugmailStatsView, self).get_context_data(**kwargs)
-        json_stats = cache.get(self.cache_key)
+        no_cache = self.request.META.get('HTTP_CACHE_CONTROL') == 'no-cache'
+        json_stats = None if no_cache else cache.get(self.cache_key)
+
         if not json_stats:
             wks_ago = (now() - timedelta(days=14)).date()
             stats = BugmailStat.objects.stats_for_range(wks_ago)
