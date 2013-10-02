@@ -1,0 +1,6 @@
+#!/bin/sh
+touch tmp/restart.txt
+echo "restarting ScrumBugz app"
+
+sudo supervisorctl restart scrumbugz
+sudo supervisorctl restart scrumbugz_celery
