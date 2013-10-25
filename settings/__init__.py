@@ -1,3 +1,5 @@
+# flake8: noqa
+
 from __future__ import absolute_import
 
 import os
@@ -82,7 +84,7 @@ LOGGING = {
     }
 }
 
-if 'SENTRY_DSN' in locals():
+if 'SENTRY_DSN' in locals() and SENTRY_DSN:
     LOGGING['handlers']['sentry'] = {
         'level': 'ERROR',
         'class': 'raven.handlers.logging.SentryHandler',
