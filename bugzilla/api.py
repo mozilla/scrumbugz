@@ -45,8 +45,10 @@ UNWANTED_COMPONENT_FIELDS = [
     'is_active',
     'default_qa_contact',
     'default_assigned_to',
-    'description'
+    'description',
+    'flag_types',
 ]
+UNWANTED_COMPONENT_FIELDS = ['components.' + i for i in UNWANTED_COMPONENT_FIELDS]
 
 
 def clean_bug_data(bug):
@@ -135,16 +137,12 @@ class BugzillaAPI(xmlrpclib.ServerProxy):
             return PRODUCTS_CACHE
         products = cache.get(self._products_cache_key)
         if products is None:
-            prod_ids = self.Product.get_enterable_products()
-            prod_ids['include_fields'] = ['id', 'name', 'components']
-            products = self.Product.get(prod_ids)['products']
-            for p in products:
-                for c in p['components']:
-                    for fname in UNWANTED_COMPONENT_FIELDS:
-                        try:
-                            del c[fname]
-                        except KeyError:
-                            continue
+            prod_query = {
+                'type': 'accessible',
+                'include_fields': ['id', 'name', 'components'],
+                'exclude_fields': UNWANTED_COMPONENT_FIELDS,
+            }
+            products = self.Product.get(prod_query)['products']
             cache.set(self._products_cache_key, products, 60 * 60 * 24 * 7)
         PRODUCTS_CACHE = products
         return products
