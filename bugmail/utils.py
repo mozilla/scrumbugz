@@ -3,8 +3,8 @@ from __future__ import absolute_import
 import logging
 import poplib
 import re
+import socket
 from email.parser import Parser
-
 
 from bugmail.models import BugmailStat
 from scrum.models import ALL_COMPONENTS, BZProduct
@@ -32,6 +32,7 @@ BUGZILLA_INFO_HEADERS = (
     'target-milestone',
 )
 log = logging.getLogger(__name__)
+socket.setdefaulttimeout(60 * 3)  # 3 min
 
 
 def get_messages(delete=True, max_get=BUGMAIL_MAX_MESSAGES):
@@ -41,21 +42,25 @@ def get_messages(delete=True, max_get=BUGMAIL_MAX_MESSAGES):
     """
     messages = []
     if BUGMAIL_HOST:
-        conn = poplib.POP3_SSL(BUGMAIL_HOST)
-        conn.user(BUGMAIL_USER)
-        conn.pass_(BUGMAIL_PASS)
-        num_messages = len(conn.list()[1])
-        num_get = min(num_messages, max_get)
-        log.debug('Getting %d bugmails', num_get)
-        log_bugmails_total(num_get)
-        for msgid in range(1, num_get + 1):
-            msg_str = '\n'.join(conn.retr(msgid)[1])
-            msg = Parser().parsestr(msg_str)
-            if is_bugmail(msg) and is_interesting(msg):
-                messages.append(msg)
-            if delete:
-                conn.dele(msgid)
-        conn.quit()
+        try:
+            conn = poplib.POP3_SSL(BUGMAIL_HOST)
+            conn.user(BUGMAIL_USER)
+            conn.pass_(BUGMAIL_PASS)
+            num_messages = len(conn.list()[1])
+            num_get = min(num_messages, max_get)
+            log.debug('Getting %d bugmails', num_get)
+            log_bugmails_total(num_get)
+            for msgid in range(1, num_get + 1):
+                msg_str = '\n'.join(conn.retr(msgid)[1])
+                msg = Parser().parsestr(msg_str)
+                if is_bugmail(msg) and is_interesting(msg):
+                    messages.append(msg)
+                if delete:
+                    conn.dele(msgid)
+            conn.quit()
+        except poplib.error_proto:
+            log.exception('Failed to get bugmails.')
+            return []
     if messages:
         num_msgs = len(messages)
         log_bugmails_used(num_msgs)
