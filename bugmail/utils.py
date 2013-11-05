@@ -4,13 +4,15 @@ import logging
 import poplib
 import re
 import socket
+import sys
 from email.parser import Parser
 
 from bugmail.models import BugmailStat
-from scrum.models import ALL_COMPONENTS, BZProduct
+from scrum.models import ALL_COMPONENTS, Bug, BZProduct
 from scrum.utils import get_setting_or_env
 
 
+PARSER = Parser()
 BUGMAIL_HOST = get_setting_or_env('BUGMAIL_HOST')
 BUGMAIL_USER = get_setting_or_env('BUGMAIL_USER')
 BUGMAIL_PASS = get_setting_or_env('BUGMAIL_PASS')
@@ -49,18 +51,37 @@ def get_messages(delete=True, max_get=BUGMAIL_MAX_MESSAGES):
             num_messages = len(conn.list()[1])
             num_get = min(num_messages, max_get)
             log.debug('Getting %d bugmails', num_get)
-            log_bugmails_total(num_get)
             for msgid in range(1, num_get + 1):
                 msg_str = '\n'.join(conn.retr(msgid)[1])
-                msg = Parser().parsestr(msg_str)
-                if is_bugmail(msg) and is_interesting(msg):
-                    messages.append(msg)
+                msg = PARSER.parsestr(msg_str, headersonly=True)
+                messages.append(msg)
                 if delete:
                     conn.dele(msgid)
             conn.quit()
         except poplib.error_proto:
             log.exception('Failed to get bugmails.')
-            return []
+    return messages
+
+
+def get_bugmail_stdin():
+    """
+    Return a dict of a parsed email message from stdin keyed on bug id.
+    :return: dict
+    """
+    message = PARSER.parse(sys.stdin, headersonly=True)
+    bugmails = {}
+    for msg in process_messages(message):
+        bid = get_bug_id(msg)
+        if bid:
+            bugmails[bid] = msg
+    return bugmails
+
+
+def process_messages(msgs):
+    if not isinstance(msgs, list):
+        msgs = [msgs]
+    log_bugmails_total(len(msgs))
+    messages = [msg for msg in msgs if is_interesting(msg)]
     if messages:
         num_msgs = len(messages)
         log_bugmails_used(num_msgs)
@@ -70,12 +91,33 @@ def get_messages(delete=True, max_get=BUGMAIL_MAX_MESSAGES):
     return messages
 
 
+def store_messages(msgs):
+    if msgs:
+        for bid, msg in msgs.iteritems():
+            bug_data = extract_bug_info(msg)
+            bug, created = Bug.objects.get_or_create(id=bid, defaults=bug_data)
+            if not created:
+                for attr, val in bug_data.items():
+                    setattr(bug, attr, val)
+                bug.save()
+        bugids = msgs.keys()
+        log.info('Synced %d bug(s) from email', len(bugids))
+        return bugids
+
+    return []
+
+
 def is_interesting(msg):
     """
     Return true if the bug is of a product and component about which we care.
     :param msg: email.message.Message object
     :return: bool
     """
+    if not is_bugmail(msg):
+        return False
+    changed_fields = msg['x-bugzilla-changed-fields'].strip()
+    if not changed_fields:  # just a comment
+        return False
     all_products = BZProduct.objects.full_list()
     prod = msg['x-bugzilla-product']
     comp = msg['x-bugzilla-component']
@@ -118,7 +160,8 @@ def get_bugmails(delete=True):
     :return: dict
     """
     bugmails = {}
-    for msg in get_messages(delete=delete):
+    messages = get_messages(delete=delete)
+    for msg in process_messages(messages):
         bid = get_bug_id(msg)
         if bid:
             bugmails[bid] = msg

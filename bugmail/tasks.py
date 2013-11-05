@@ -6,8 +6,7 @@ from django.utils.timezone import now
 from celery import task
 
 from bugmail.models import BugmailStat
-from bugmail.utils import extract_bug_info, get_bugmails
-from scrum.models import Bug
+from bugmail.utils import get_bugmails, store_messages
 from scrum.tasks import update_bugs
 
 
@@ -20,17 +19,9 @@ def get_bugmail_messages():
     Check bugmail for updated bugs, and get their data from Bugzilla.
     """
     msgs = get_bugmails()
-    if msgs:
-        for bid, msg in msgs.iteritems():
-            bug_data = extract_bug_info(msg)
-            bug, created = Bug.objects.get_or_create(id=bid, defaults=bug_data)
-            if not created:
-                for attr, val in bug_data.items():
-                    setattr(bug, attr, val)
-                bug.save()
-        bugids = msgs.keys()
+    bugids = store_messages(msgs)
+    if bugids:
         update_bugs.delay(bugids)
-        log.info('Synced %d bug(s) from email', len(bugids))
 
 
 @task(name='clean_bugmail_log')
