@@ -69,11 +69,13 @@ def get_bugmail_stdin():
     :return: dict
     """
     message = PARSER.parse(sys.stdin, headersonly=True)
+    log.debug('Got mail on stdin: ' + message['subject'])
     bugmails = {}
     for msg in process_messages(message):
         bid = get_bug_id(msg)
         if bid:
             bugmails[bid] = msg
+            log.debug('Got bug {0} on stdin.'.format(bid))
     return bugmails
 
 
