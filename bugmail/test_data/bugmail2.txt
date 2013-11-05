@@ -35,12 +35,12 @@ X-Bugzilla-Product: Websites
 X-Bugzilla-Component: Scrumbugs
 X-Bugzilla-Keywords:
 X-Bugzilla-Severity: normal
-X-Bugzilla-Who: pmac@mclanahan.net
+X-Bugzilla-Who: pmac@mozilla.com
 X-Bugzilla-Status: NEW
 X-Bugzilla-Priority: --
-X-Bugzilla-Assigned-To: pmac@mclanahan.net
+X-Bugzilla-Assigned-To: pmac@mozilla.com
 X-Bugzilla-Target-Milestone: Future
-X-Bugzilla-Changed-Fields:
+X-Bugzilla-Changed-Fields: Summary
 Message-ID: <bug-760693-449245-MORTmbFeyi@https.bugzilla.mozilla.org/>
 In-Reply-To: <bug-760693-449245@https.bugzilla.mozilla.org/>
 References: <bug-760693-449245@https.bugzilla.mozilla.org/>
@@ -52,7 +52,7 @@ MIME-Version: 1.0
 Do not reply to this email. You can add comments to this bug at
 https://bugzilla.mozilla.org/show_bug.cgi?id=760693
 
---- Comment #2 from Paul McLanahan [:pmac] <pmac@mclanahan.net> 2012-08-17 21:29:45 PDT ---
+--- Comment #2 from Paul McLanahan [:pmac] <pmac@mozilla.com> 2012-08-17 21:29:45 PDT ---
 Testing again
 
 --

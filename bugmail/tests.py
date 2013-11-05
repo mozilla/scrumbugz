@@ -64,6 +64,9 @@ class TestEmail(TestCase):
 
     def test_get_bugmails(self):
         good_data = [760693, 760694]
+        p = scrum_models.Project.objects.get(pk=1)
+        p.products.create(name='Websites', component='Scrumbugs')
+        scrum_models.BZProduct.objects._reset_full_list()
         eq_(good_data, sorted(scrum_email.get_bugmails().keys()))
 
     def test_not_is_interesting(self):
