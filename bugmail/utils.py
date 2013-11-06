@@ -63,13 +63,11 @@ def get_messages(delete=True, max_get=BUGMAIL_MAX_MESSAGES):
     return messages
 
 
-def get_bugmail_stdin():
+def parse_bugmail(message):
     """
-    Return a dict of a parsed email message from stdin keyed on bug id.
+    Return a dict of interesting parsed email message from the provided email object.
     :return: dict
     """
-    message = PARSER.parse(sys.stdin, headersonly=True)
-    log.debug('Got mail on stdin: ' + message['subject'])
     bugmails = {}
     for msg in process_messages(message):
         bid = get_bug_id(msg)
@@ -77,6 +75,25 @@ def get_bugmail_stdin():
             bugmails[bid] = msg
             log.debug('Got bug {0} on stdin.'.format(bid))
     return bugmails
+
+
+def get_bugmail_stdin():
+    """
+    Return a dict of a parsed email message from stdin keyed on bug id.
+    :return: dict
+    """
+    message = PARSER.parse(sys.stdin, headersonly=True)
+    log.debug('Got mail on stdin: ' + message['subject'])
+    return parse_bugmail(message)
+
+
+def get_bugmail_str(email):
+    """
+    Return a dict of a parsed email message from given string keyed on bug id.
+    :return: dict
+    """
+    message = PARSER.parsestr(email, headersonly=True)
+    return parse_bugmail(message)
 
 
 def process_messages(msgs):
