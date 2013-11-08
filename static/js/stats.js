@@ -6,6 +6,7 @@
     };
 
     window.StatsChart = function(selector, stats_data, ticks) {
+        var DAY = 24 * 60 * 60 * 1000;
         var self = this;
         self.$element = $(selector);
         self.$element.data('flot', self);
@@ -73,8 +74,8 @@
             do {
                 // when we don't set yaxis, the rectangle automatically
                 // extends to infinity upwards and downwards
-                markings.push({ xaxis: { from: i, to: i + 2 * 24 * 60 * 60 * 1000 } });
-                i += 7 * 24 * 60 * 60 * 1000;
+                markings.push({ xaxis: { from: i, to: i + 2 * DAY } });
+                i += 7 * DAY;
             } while (i < axes.xaxis.max);
 
             return markings;
