@@ -41,6 +41,12 @@ BZ_FIELDS = [
     'target_milestone',
     'flags',
 ]
+BZ_ATTACHMENT_FIELDS = [
+    'file_name',
+    'flags',
+    'id',
+    'is_patch',
+]
 UNWANTED_COMPONENT_FIELDS = [
     'sort_key',
     'is_active',
@@ -177,12 +183,12 @@ class BugzillaAPI(xmlrpclib.ServerProxy):
         scrum_only = kwargs.pop('scrum_only', True)
         get_history = kwargs.pop('history', True)
         get_comments = kwargs.pop('comments', True)
+        get_attachments = kwargs.pop('attachments', True)
         kwargs.update({
             'include_fields': BZ_FIELDS,
         })
         if 'ids' in kwargs:
             kwargs['permissive'] = True
-            log.debug('Getting bugs with kwargs: %s', kwargs)
             bugs = self.Bug.get(kwargs)
         else:
             if open_only and 'status' not in kwargs:
@@ -197,21 +203,34 @@ class BugzillaAPI(xmlrpclib.ServerProxy):
         if not bug_ids:
             return bugs
 
-        # mix in history and comments
-        history = comments = {}
+        # mix in history, comments, and attachments
+        history = comments = attachments = {}
         if get_history:
             history = self.get_history(bug_ids)
         if get_comments:
             comments = self.get_comments(bug_ids)
+        if get_attachments:
+            attachments = self.get_attachments(bug_ids)
         for bug in bugs['bugs']:
             bug['history'] = history.get(bug['id'], [])
             bug['comments_count'] = len(comments.get(bug['id'], {})
                                         .get('comments', []))
+            bug['attachments'] = attachments.get(bug['id'], [])
             clean_bug_data(bug)
         return bugs
 
+    def get_attachments(self, bug_ids):
+        try:
+            attachments = self.Bug.attachments({
+                'ids': bug_ids,
+                'include_fields': BZ_ATTACHMENT_FIELDS}).get('bugs')
+        except xmlrpclib.Fault:
+            log.exception('Problem getting attachments for bug ids: %s', bug_ids)
+            return {}
+
+        return dict((int(k), v) for k, v in attachments.iteritems())
+
     def get_history(self, bug_ids):
-        log.debug('Getting history for bugs: %s', bug_ids)
         try:
             history = self.Bug.history({'ids': bug_ids}).get('bugs')
         except xmlrpclib.Fault:
@@ -220,7 +239,6 @@ class BugzillaAPI(xmlrpclib.ServerProxy):
         return dict((h['id'], h['history']) for h in history)
 
     def get_comments(self, bug_ids):
-        log.debug('Getting comments for bugs: %s', bug_ids)
         try:
             comments = self.Bug.comments({
                 'ids': bug_ids,

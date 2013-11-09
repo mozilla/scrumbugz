@@ -20,6 +20,7 @@ BUGZILLA_ALL_URLS = {
     'BUGZILLA_SHOW_URL': '/show_bug.cgi?',
     'BUGZILLA_FILE_URL': '/enter_bug.cgi?',
     'BUGZILLA_SEARCH_URL': '/buglist.cgi?',
+    'BUGZILLA_ATTACHMENT_URL': '/attachment.cgi?',
 }
 for attrname, relurl in BUGZILLA_ALL_URLS.items():
     if attrname not in locals():
