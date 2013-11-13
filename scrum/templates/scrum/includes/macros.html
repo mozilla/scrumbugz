@@ -112,7 +112,7 @@
 
 {% macro flags_links(flag_name, flags) %}
   {%- for f in flags -%}
-    {{ flag_name }}{{ f['status'] }} <a href="mailto:{{ f['who'] }}" class="ttip" target="_blank" title="{{ f['when'] }}">{{ f['who'] }}</a>{{ ', ' if not loop.last }}
+  {{ flag_name }}{{ f['status'] }} <a href="mailto:{{ f['who'] }}" class="ttip" target="_blank" title="{{ f['when'] }}">{{ f['who'] }}</a> {%- if f.get('ref_id', None) -%}<br /><a href="{{ f['ref_link'] }}" target="_blank" class="ttip">{{ f['ref_name'] }}</a>{%- endif -%}{{ ', ' if not loop.last }}<br />
   {%- endfor -%}
 {% endmacro %}
 

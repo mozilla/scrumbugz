@@ -242,8 +242,19 @@ class TestBug(TestCase):
                             set(Bug.objects.get_blocked().keys()))
 
     def test_flagged_bugs(self):
-        self.assertSetEqual(set([781710, 781717]),
+        self.assertSetEqual(set([778465, 781710, 781717]),
                             set(Bug.objects.get_flagged()))
+
+    def test_bugs_with_attachments(self):
+        b = Bug.objects.get(id=778465)
+        self.assertSetEqual(set(['review', 'feedback', 'superreview', 'ui-review']),
+                            set(b.bucketed_flags.keys()))
+        self.assertSetEqual(set(['review', 'feedback', 'superreview', 'ui-review']),
+                            set(b.flags_status.keys()))
+        self.assertEqual('plus', b.flags_status.get('review'))
+        self.assertEqual('question', b.flags_status.get('superreview'))
+        self.assertEqual('question', b.flags_status.get('ui-review'))
+        self.assertEqual('question', b.flags_status.get('feedback'))
 
     def test_get_by_products(self):
         eq_(Bug.objects.by_products(self.p.get_products()).count(), 11)

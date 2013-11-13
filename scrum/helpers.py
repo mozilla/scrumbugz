@@ -12,6 +12,9 @@ from markdown import markdown as parse_markdown
 def bugzilla_url(bug_id):
     return '%sid=%s' % (settings.BUGZILLA_SHOW_URL, bug_id)
 
+@register.function
+def buzilla_attachment_url(attachment_id):
+    return '%sid=%s' % (settings.BUGZILLA_ATTACHMENT_URL, attachment_id)
 
 @register.filter
 def markdown(value):
@@ -21,7 +24,6 @@ def markdown(value):
         output_format='html5',
         safe_mode=True,
     )
-
 
 @register.function
 def now(fmt=None):

@@ -616,6 +616,7 @@ class Bug(models.Model):
     blocks = JSONField(blank=True)
     depends_on = JSONField(blank=True)
     flags = CompressedJSONField(blank=True)
+    attachments = CompressedJSONField(blank=True)
     comments_count = models.PositiveSmallIntegerField(default=0)
     creation_time = models.DateTimeField(default=now)
     last_change_time = models.DateTimeField(default=now)
@@ -631,6 +632,11 @@ class Bug(models.Model):
                                 on_delete=models.SET_NULL)
 
     objects = BugManager()
+    flag_status_names = {
+        '?': 'question',
+        '+': 'plus',
+        '-': 'minus'
+    }
 
     class Meta:
         ordering = ('id',)
@@ -660,6 +666,11 @@ class Bug(models.Model):
 
     def get_bugzilla_url(self):
         return '%sid=%s' % (settings.BUGZILLA_SHOW_URL, self.id)
+
+    def get_bugzilla_attachment_url(self, attachment_id):
+        if attachment_id == None:
+            return None
+        return '%sid=%s' % (settings.BUGZILLA_ATTACHMENT_URL, attachment_id)
 
     def is_closed(self):
         return is_closed(self.status)
@@ -717,24 +728,68 @@ class Bug(models.Model):
                     'p=' in self.whiteboard or
                     's=' in self.whiteboard)
 
+    def _bucket_flag(self, f):
+        name = f.get('name', None)
+        if not name:
+            return (None,)
+
+        who = f.get('requestee', f.get('setter', None))
+        mod_date = f.get('modification_date', None)
+        status = f.get('status', None)
+
+        return (name, {'who': who, 'when': mod_date, 'status': status })
+
     @property
     def bucketed_flags(self):
         # do we have cached values?
         if hasattr(self, '_bucketed_flags'):
             return self._bucketed_flags
 
-        # filter the flags and put them in named buckets
-        bf = {}
-        for f in self.flags:
-            if f['name'] not in bf:
-                bf[f['name']] = []
-            who = f.get('requestee', None)
-            if not who:
-                who = f.get('setter')
-            bf[f['name']].append({'who':who, 'when':f['modification_date'], 'status':f['status']})
-        self._bucketed_flags = bf
+        bf = defaultdict(list)
 
+        # filter the bug flags and put them in named buckets
+        for f in self.flags:
+
+            flag_name, flag_data = self._bucket_flag(f)
+            if flag_name != None:
+                bf[flag_name].append(flag_data)
+
+        # add in the flags from attachments
+        for a in self.attachments:
+
+            # put the attachment flags into the buckets
+            for f in a.get('flags', []):
+
+                flag_name, flag_data = self._bucket_flag(f)
+                if flag_name == None:
+                    continue
+
+                ref_id = a.get('id', None)
+                ref_name = a.get('file_name', None)
+                ref_link = self.get_bugzilla_attachment_url(ref_id)
+                flag_data.update({
+                    'ref_id': ref_id,
+                    'ref_name': ref_name,
+                    'ref_link': ref_link})
+
+                bf[flag_name].append(flag_data)
+
+        self._bucketed_flags = bf
         return self._bucketed_flags
+
+    def _flag_status_name(self, status):
+        return self.flag_status_names.get(status, 'none')
+
+    def _bucket_flag_status(self, flag, fs):
+        flag_name = flag.get('name', None)
+        if not flag_name:
+            return {}
+
+        status_name = self._flag_status_name(flag.get('status', None))
+        if fs.get(flag_name, None) is None or status_name == fs[flag_name]:
+            return {flag_name: status_name}
+        else:
+            return {flag_name: 'mixed'}
 
     @property
     def flags_status(self):
@@ -743,24 +798,17 @@ class Bug(models.Model):
             return self._flags_status
 
         fs = {}
+
+        # update the status for each flag bucket
         for f in self.flags:
-            name = f['name']
-            status = f['status']
-            if status == '?':
-                status = 'question'
-            elif status == '+':
-                status = 'plus'
-            elif status == '-':
-                status = 'minus'
+            fs.update(self._bucket_flag_status(f, fs))
 
-            if name not in fs:
-                fs[name] = status
-                continue
+        # go through attachment flags too
+        for a in self.attachments:
+            for f in a.get('flags', []):
+                fs.update(self._bucket_flag_status(f, fs))
 
-            if fs[name] != status:
-                fs[name] = 'mixed';
         self._flags_status = fs
-
         return self._flags_status
 
     @property
