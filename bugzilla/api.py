@@ -46,6 +46,7 @@ BZ_ATTACHMENT_FIELDS = [
     'flags',
     'id',
     'is_patch',
+    'is_obsolete',
 ]
 UNWANTED_COMPONENT_FIELDS = [
     'sort_key',

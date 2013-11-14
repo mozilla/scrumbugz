@@ -757,6 +757,11 @@ class Bug(models.Model):
         # add in the flags from attachments
         for a in self.attachments:
 
+            # if is_obsolete is True, or is_obsolete field doesn't exist,
+            # skip this attachment
+            if a.get('is_obsolete', True):
+                continue
+
             # put the attachment flags into the buckets
             for f in a.get('flags', []):
 
@@ -805,6 +810,11 @@ class Bug(models.Model):
 
         # go through attachment flags too
         for a in self.attachments:
+            # if is_obsolete is True, or is_obsolete field doesn't exist,
+            # skip this attachment
+            if a.get('is_obsolete', True):
+                continue
+
             for f in a.get('flags', []):
                 fs.update(self._bucket_flag_status(f, fs))
 
