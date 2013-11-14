@@ -256,6 +256,19 @@ class TestBug(TestCase):
         self.assertEqual('question', b.flags_status.get('ui-review'))
         self.assertEqual('question', b.flags_status.get('feedback'))
 
+    def test_bug_938346(self):
+        """
+        Tests Bug 938346 - attachment flag labeling doesn't ignore obsolete attachments
+        """
+        b = Bug.objects.get(id=778465)
+        ref_ids = []
+        for flag_name, flags in b.bucketed_flags.iteritems():
+            for flag in flags:
+                if 'ref_id' in flag:
+                    ref_ids.append(flag['ref_id'])
+        self.assertSetEqual(set([829407, 830313]),
+                            set(ref_ids))
+        
     def test_get_by_products(self):
         eq_(Bug.objects.by_products(self.p.get_products()).count(), 11)
         b = Bug.objects.get(id=778466)
