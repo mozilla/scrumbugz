@@ -38,6 +38,7 @@ MARKDOWN_EXTENSIONS = [
     'tables',
     'smart_strong',
     'sane_lists',
+    'headerid',
 ]
 
 CACHES = {
