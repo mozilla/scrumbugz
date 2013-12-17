@@ -54,8 +54,24 @@ for example WebProd uses 2012.1, 2012.2, 2012.3.
 ### Managing The Backlog
 Any bugs with u c p tags in the whiteboard will appear in the backlog.
 Example whiteboard: "u=dev c=infrastructure p=2". u c p tags denote
-User Component & Points and tell scrumbugs that the bug has been vetted and
-should appear in the backlog.
+User, Component, and Points respectively, and tell scrumbugs that the bug has been vetted and
+should appear in the backlog. The tags can be wrapped in square brackets if you want. 
+The User and Component are in the Scrum sense in that they
+represent the components of a User Story. Take for example the following user story:
+
+    As The Dude, I can not let this aggression stand.
+
+The whiteboard for a bug representing this story should look like this:
+
+    u=the_dude c=aggression p=100
+
+There is one more tag that is just a convenience for moving a bug directly to a sprint.
+If you have setup a sprint and you want to move a bug into it from bugzilla, you can add
+"s=sprint_slug" to the whiteboard, where "sprint_slug" is the slug of the sprint into which
+you want the bug to move. The bug must be in a product and component being watched by the
+project in which the sprint is setup. Be careful with this though, because if you manually
+move a bug to another sprint, then save the bug for another reason it will move back to the
+sprint indicated in the whiteboard.
 
 ### Managing The Ready List
 When bugs can be worked on they should be moved from the backlog to the ready
