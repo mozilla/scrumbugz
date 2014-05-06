@@ -78,6 +78,7 @@ JINGO_EXCLUDE_APPS = (
     'debug_toolbar',
     'floppyforms',
     'registration',  # needed for django tests
+    'browserid',
 )
 
 JINJA_CONFIG = {
@@ -91,7 +92,6 @@ JINJA_CONFIG = {
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
-#    'django.contrib.staticfiles.finders.DefaultStorageFinder',
 )
 
 # List of callables that know how to import templates from various sources.
@@ -99,12 +99,9 @@ TEMPLATE_LOADERS = (
     'jingo.Loader',
     'django.template.loaders.filesystem.Loader',
     'django.template.loaders.app_directories.Loader',
-#     'django.template.loaders.eggs.Loader',
 )
 
 MIDDLEWARE_CLASSES = (
-#    'johnny.middleware.LocalStoreClearMiddleware',
-#    'johnny.middleware.QueryCacheMiddleware',
     'middleware.EnforceHostnameMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -149,7 +146,6 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     'django.contrib.messages.context_processors.messages',
     'context_processors.context_settings',
     'scrum.context_processors.projects_and_teams',
-    'django_browserid.context_processors.browserid_form',
 )
 
 AUTHENTICATION_BACKENDS = (
@@ -158,6 +154,11 @@ AUTHENTICATION_BACKENDS = (
 )
 LOGIN_REDIRECT_URL = LOGIN_REDIRECT_URL_FAILURE = '/'
 LOGIN_URL = LOGOUT_URL = '/'
+
+BROWSERID_REQUEST_ARGS = {
+    'siteName': 'ScrumBugs',
+    'siteLogo': 'https://s3.amazonaws.com/scrumbugz-static/img/scrumbugs_favicon.png',
+}
 
 TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
 NOSE_ARGS = [

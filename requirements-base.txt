@@ -1,4 +1,4 @@
-Django==1.4.8
+Django==1.5.7
 Unipath
 django-floppyforms
 python-dateutil==1.5
@@ -8,8 +8,8 @@ django-storages==1.1.4
 boto==2.3.0
 raven==1.8.1
 South==0.7.5
-Jinja2==2.6
-jingo==0.4
+Jinja2==2.7.2
+jingo==0.7
 git+https://github.com/auzigog/jinja-bootstrap.git@v0.3.0
 Markdown==2.2.0
 nose==1.2.1
@@ -20,5 +20,5 @@ django-cronjobs==0.2.3
 django-model-utils==1.1.0
 celery==3.0.24
 django-celery==3.0.23
-django-browserid==0.7.1
-requests==0.14.1
+django-browserid==0.10.1
+requests==2.2.1

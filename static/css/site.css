@@ -297,10 +297,10 @@ tr.active td {
     overflow: auto;
 }
 
-.browserid-login {
-    padding-top: 7.5px !important;
-    padding-bottom: 7.5px !important;
-}
+/*.browserid-login {*/
+    /*padding-top: 7.5px !important;*/
+    /*padding-bottom: 7.5px !important;*/
+/*}*/
 
 td.bug-log-action {
     width: 10%;
@@ -309,4 +309,20 @@ td.bug-log-action {
 
 td.bug-links {
     white-space: nowrap;
+}
+
+/*overrides for browserid*/
+a.persona-button{
+  padding-top: 7.5px !important;
+  padding-bottom: 7.5px !important;
+  color: #fff !important;
+  display: inline-block;
+  font-size: 14px;
+  font-family: Helvetica, Arial, sans-serif;
+  font-weight: bold;
+  line-height: 1.1;
+  overflow: hidden;
+  position: relative;
+  text-decoration: none;
+  text-shadow: 0 1px rgba(0,0,0,0.5), 0 0 2px rgba(0,0,0,0.2) !important;
 }
