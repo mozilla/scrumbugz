@@ -1,7 +1,7 @@
 # Production Requirements
 -r requirements-base.txt
 
-gunicorn==0.13.4
+gunicorn==18.0
 gevent==0.13.7
 greenlet==0.3.4
 django-pylibmc
