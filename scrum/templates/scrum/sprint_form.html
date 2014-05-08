@@ -24,7 +24,5 @@
 {% endblock %}
 
 {% block js %}
-  <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.tools.min.js"></script>
-  <script type="text/javascript" src="{{ STATIC_URL }}js/spin.min.js"></script>
-  <script type="text/javascript" src="{{ STATIC_URL }}js/forms.js"></script>
+  {% compressed_js 'forms' %}
 {% endblock %}

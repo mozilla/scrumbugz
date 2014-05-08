@@ -86,6 +86,7 @@ JINJA_CONFIG = {
         'jinja2.ext.do',
         'jinja2.ext.loopcontrols',
         'jinja2.ext.with_',
+        'pipeline.jinja2.ext.PipelineExtension',
     ),
 }
 
@@ -93,6 +94,7 @@ STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 )
+STATICFILES_STORAGE = 'pipeline.storage.PipelineStorage'
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
@@ -134,6 +136,7 @@ INSTALLED_APPS = (
     'south',
     'django_nose',
     'django_browserid',
+    'pipeline',
 )
 
 TEMPLATE_CONTEXT_PROCESSORS = (
@@ -195,3 +198,73 @@ BUG_CLOSED_STATUSES = [
     'VERIFIED',
     'CLOSED',
 ]
+
+PIPELINE_JS = {
+    'base': {
+        'source_filenames': (
+            'js/jquery-2.1.1.min.js',
+            'js/jquery-migrate-1.2.1.min.js',
+            'js/lodash-2.4.1.min.js',
+            'js/bootstrap.min.js',
+            'js/jquery.cookie.js',
+            'js/site.js',
+            'browserid/api.js',
+            'browserid/browserid.js',
+        ),
+        'output_filename': 'js/base.min.js',
+    },
+    'forms': {
+        'source_filenames': (
+            'js/jquery.tools.min.js',
+            'js/spin.min.js',
+            'js/forms.js',
+        ),
+        'output_filename': 'js/forms.min.js',
+    },
+    'graphs': {
+        'source_filenames': (
+            'js/jquery.flot.min.js',
+            'js/jquery.flot.pie.min.js',
+            'js/jquery.flot.resize.min.js',
+            'js/jquery.stupidtable.min.js',
+            'js/sprint.js',
+            'js/bugs_updated.js',
+        ),
+        'output_filename': 'js/graphs.min.js',
+    },
+    'bugs': {
+        'source_filenames': (
+            'js/jquery.timeago.js',
+            'js/bugs_updated.js',
+        ),
+        'output_filename': 'js/bugs.min.js',
+    },
+    'teams': {
+        'source_filenames': (
+            'js/jquery.stupidtable.min.js',
+            'js/project.js',
+            'js/bugs_updated.js',
+        ),
+        'output_filename': 'js/teams.min.js',
+    },
+    'bugs_management': {
+        'source_filenames': (
+            'js/sprint_bug_management.js',
+        ),
+        'output_filename': 'js/bugs.mgmnt.min.js',
+    }
+}
+
+PIPELINE_CSS = {
+    'base': {
+        'source_filenames': (
+            'css/bootstrap.min.css',
+            'css/site.css',
+            'css/bootstrap-responsive.min.css',
+            'browserid/persona-buttons.css',
+        ),
+        'output_filename': 'css/base.min.css',
+    }
+}
+
+PIPELINE_DISABLE_WRAPPER = True

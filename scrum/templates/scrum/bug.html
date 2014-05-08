@@ -105,8 +105,7 @@
 {% endblock %}
 
 {% block js %}
-  <script src="{{ STATIC_URL }}js/jquery.timeago.js"></script>
-  <script type="text/javascript" src="{{ STATIC_URL }}js/bugs_updated.js"></script>
+  {% compressed_js 'bugs' %}
   <script type="text/javascript">
     $(function(){
         "use strict";
