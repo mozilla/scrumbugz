@@ -67,9 +67,6 @@ MEDIA_URL = '/media/'
 
 STATIC_ROOT = PROJECT_DIR.child('static_root')
 STATIC_URL = '/static/'
-STATICFILES_DIRS = (
-    str(PROJECT_DIR.child('static')),
-)
 
 JINGO_EXCLUDE_APPS = (
     'admin',
