@@ -5,8 +5,8 @@ from __future__ import absolute_import
 import os
 import sys
 
-if 'HEROKU' in os.environ:
-    from .heroku import *
+if 'SERVER_ENV' in os.environ:
+    from .server import *
 elif 'TRAVIS' in os.environ:
     from .travis import *
 else:
