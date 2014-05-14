@@ -1,4 +1,4 @@
-Django==1.6.4
+Django==1.6.5
 Unipath
 django-floppyforms
 python-dateutil==1.5
