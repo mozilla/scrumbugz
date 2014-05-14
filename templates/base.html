@@ -65,6 +65,7 @@
               <li>
                 {% if not user.is_authenticated() -%}
                   {{ browserid_login(text='Login') }}
+                  <div style="display:none">{{ csrf() }}</div>{# force CSRF cookie send #}
                 {% else %}
                   {{ browserid_logout(text='Logout') }}
                 {% endif -%}
