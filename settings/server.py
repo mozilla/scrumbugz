@@ -6,10 +6,11 @@ import dj_database_url
 
 from .base import *  # noqa
 
+DEBUG = False
 ENFORCE_HOSTNAME = 'scrumbu.gs'
 ENABLE_GA = True
 SITE_URL = 'https://scrumbu.gs'
-ALLOWED_HOSTS = ['scrumbu.gs']
+ALLOWED_HOSTS = ['scrumbu.gs', 'localhost']
 PROD_MODE = True
 BROWSERID_AUDIENCES = [
     'https://scrumbu.gs',

@@ -6,10 +6,10 @@ newrev=$2
 source /home/pmclanahan/www/scrumbugz/scrumbugz_env
 source ${VENV_PATH}/bin/activate
 
-if [ -n $newrev ]; then
-    echo $newrev > static/revision.txt
-fi
-
 pip install -r requirements.txt
 python manage.py syncdb --migrate --noinput
 python manage.py collectstatic --noinput
+
+if [ -n $newrev ]; then
+    echo $newrev > static_root/revision.txt
+fi

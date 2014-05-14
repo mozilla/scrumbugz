@@ -45,7 +45,7 @@ dl.sprint-numbers dt {
 table thead .type-int,
 table thead .type-float,
 table thead .type-string {
-    background-image: url(../img/bg.gif);
+    background-image: url(/static/img/bg.gif);
     background-repeat: no-repeat;
     background-position: center left;
     cursor: pointer;
@@ -53,12 +53,12 @@ table thead .type-string {
 }
 
 table thead tr .headerSortUp {
-    background-image: url(../img/asc.gif);
+    background-image: url(/static/img/asc.gif);
     background-color: rgb(221, 221, 221);
 }
 
 table thead tr .headerSortDown {
-    background-image: url(../img/desc.gif);
+    background-image: url(/static/img/desc.gif);
     background-color: rgb(221, 221, 221);
 }
 
@@ -107,7 +107,7 @@ table thead tr .headerSortDown {
     height: 14px;
     line-height: 14px;
     vertical-align: text-top;
-    background-image: url("../img/glyphicons-halflings.png");
+    background-image: url("/static/img/glyphicons-halflings.png");
     background-position: -432px -72px;
     background-repeat: no-repeat;
     *margin-right: .3em;

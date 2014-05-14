@@ -88,7 +88,7 @@ JINJA_CONFIG = {
 }
 
 STATICFILES_FINDERS = (
-    'django.contrib.staticfiles.finders.FileSystemFinder',
+    # 'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 )
 STATICFILES_STORAGE = 'pipeline.storage.PipelineStorage'
@@ -123,11 +123,11 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.admin',
+    'scrum',
     'cronjobs',
     'bootstrap',
     'floppyforms',
     'djcelery',
-    'scrum',
     'bugmail',
     'bugzilla',
     'south',
@@ -255,9 +255,9 @@ PIPELINE_JS = {
 PIPELINE_CSS = {
     'base': {
         'source_filenames': (
-            'css/bootstrap.min.css',
+            'css/bootstrap.css',
             'css/site.css',
-            'css/bootstrap-responsive.min.css',
+            'css/bootstrap-responsive.css',
             'browserid/persona-buttons.css',
         ),
         'output_filename': 'css/base.min.css',
