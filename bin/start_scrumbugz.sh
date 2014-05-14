@@ -41,6 +41,7 @@ cd $PROJECT_DIR
 # Programs meant to be run under supervisor should not daemonize themselves (do not use --daemon)
 exec newrelic-admin run-program gunicorn \
 	--name $APP_NAME \
-	--user=$GUNICORN_USER --group=$GUNICORN_GROUP \
-	--log-level=$LOG_LEVEL \
-	--bind=unix:$SOCKET_FILE wsgi:application
+	--user $GUNICORN_USER --group $GUNICORN_GROUP \
+	--workers $WEB_CONCURRENCY \
+	--log-level $LOG_LEVEL \
+	--bind unix:$SOCKET_FILE wsgi:application

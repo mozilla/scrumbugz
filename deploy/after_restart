@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+oldrev=$1
+newrev=$2
+
+github_url="https://github.com/mozilla/scrumbugz/compare/${oldrev:0:10}...${newrev:0:10}"
+git_log=$(git log --oneline ${oldrev}..${newrev})
+
+echo "== Change Log =="
+echo -e "$git_log"
+
+if [ -n "$NEW_RELIC_API_KEY" ]; then
+    # Notify New Relic of the deployment
+    curl -H "x-api-key:${NEW_RELIC_API_KEY}" \
+        --data "deployment[app_name]=${NEW_RELIC_APP_NAME}" \
+        --data-urlencode "deployment[description]=Diff: ${github_url}" \
+        --data-urlencode "deployment[changelog]=${git_log}" \
+        --data "deployment[revision]=${newrev}" https://rpm.newrelic.com/deployments.xml > /dev/null 2>&1
+fi
