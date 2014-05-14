@@ -1,5 +1,5 @@
 # Dev and testing requirements.
 -r requirements-base.txt
 
-mock==0.8.0
-Sphinx
+mock==1.0.1
+Sphinx==1.2.2
