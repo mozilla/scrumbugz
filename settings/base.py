@@ -1,5 +1,7 @@
 from datetime import timedelta
 
+from django.utils.functional import lazy
+
 import djcelery
 from unipath import Path
 
@@ -101,7 +103,6 @@ TEMPLATE_LOADERS = (
 )
 
 MIDDLEWARE_CLASSES = (
-    'middleware.EnforceHostnameMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -155,10 +156,15 @@ AUTHENTICATION_BACKENDS = (
 LOGIN_REDIRECT_URL = LOGIN_REDIRECT_URL_FAILURE = '/'
 LOGIN_URL = LOGOUT_URL = '/'
 
-BROWSERID_REQUEST_ARGS = {
-    'siteName': 'ScrumBugs',
-    'siteLogo': 'https://s3.amazonaws.com/scrumbugz-static/img/scrumbugs_favicon.png',
-}
+
+def browserid_req_args_lazy():
+    from scrum.helpers import static
+    return {
+        'siteName': 'ScrumBugs',
+        'siteLogo': static('img/scrumbugs_favicon.png'),
+    }
+
+BROWSERID_REQUEST_ARGS = lazy(browserid_req_args_lazy, dict)()
 
 TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
 NOSE_ARGS = [
@@ -249,7 +255,15 @@ PIPELINE_JS = {
             'js/sprint_bug_management.js',
         ),
         'output_filename': 'js/bugs.mgmnt.min.js',
-    }
+    },
+    'bugmail_stats': {
+        'source_filenames': (
+            'js/jquery.flot.min.js',
+            'js/jquery.flot.resize.min.js',
+            'js/stats.js',
+        ),
+        'output_filename': 'js/bugmail_stats.min.js',
+    },
 }
 
 PIPELINE_CSS = {
