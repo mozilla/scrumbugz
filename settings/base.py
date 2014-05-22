@@ -219,6 +219,7 @@ PIPELINE_JS = {
     'forms': {
         'source_filenames': (
             'js/jquery.tools.min.js',
+            'js/bootstrap-datepicker.js',
             'js/spin.min.js',
             'js/forms.js',
         ),
@@ -275,7 +276,13 @@ PIPELINE_CSS = {
             'browserid/persona-buttons.css',
         ),
         'output_filename': 'css/base.min.css',
-    }
+    },
+    'forms': {
+        'source_filenames': (
+            'css/bootstrap-datepicker.css',
+        ),
+        'output_filename': 'css/forms.min.css',
+    },
 }
 
 PIPELINE_DISABLE_WRAPPER = True

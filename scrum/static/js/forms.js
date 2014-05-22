@@ -11,18 +11,31 @@ $(function(){
     });
 
     // cool date picker stuffs
-    var $date_fields = $(':date');
-    if($date_fields.length){
-        $date_fields.dateinput({format: 'yyyy-mm-dd', offset:[5, 5]});
-        $('#id_start_date').data('dateinput').change(function(){
-            $('#id_end_date').data('dateinput')
-                // make the min date for end be after start
-                .setMin(this.getValue(), true)
-                // set the end date to two weeks from start
-                .setValue(new Date(this.getValue().getTime() + 1000 * 60 * 60 * 24 * 7 * 2));
+    var $start_date = $('#id_start_date');
+    var $end_date = $('#id_end_date');
+    if ($start_date.length) {
+        var start_picker = $start_date.datepicker({
+            format: 'yyyy-mm-dd'
+        }).data('datepicker');
+        var end_picker = $end_date.datepicker({
+            format: 'yyyy-mm-dd',
+            onRender: function(date){
+                // disable dates before start_date.
+                return date.valueOf() <= start_picker.date.valueOf() ? 'disabled' : '';
+            }
+        }).data('datepicker');
+        $start_date.on('changeDate', function(e){
+            if (e.date.valueOf() > end_picker.date.valueOf()) {
+                var endDate = new Date(e.date);
+                // set the end date 2 weeks out by default.
+                endDate.setDate(endDate.getDate() + 14);
+                end_picker.setValue(endDate);
+            }
+            start_picker.hide();
+            $end_date.focus();
         });
-        $('#id_end_date').data('dateinput').onBeforeShow(function(){
-            this.setMin($('#id_start_date').data('dateinput').getValue());
+        $end_date.on('changeDate', function(e){
+            end_picker.hide();
         });
     }
 
