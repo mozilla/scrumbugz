@@ -82,7 +82,7 @@ $(function(){
         $.post(post_url, post_data)
             .done(function(data, status, jqxhr){
                 $('#bzproduct_list').replaceWith(data);
-                $('#id_product').val('').focus();
+                $('#id_product').select2('val', '');
             })
             .fail(function(jqxhr, status, err){
                 var errors = $.parseJSON(jqxhr.responseText);
@@ -102,7 +102,7 @@ $(function(){
     });
 
     var toComponent = function(name) {
-        var slash = name.indexOf("/");
-        return [name.slice(0, slash), name.slice(slash + 1)];
+        return name.split(' :: ');
     };
+    $('#id_product').select2();
 });

@@ -1,3 +1,4 @@
+import json
 import logging
 from datetime import date
 
@@ -12,7 +13,6 @@ from django.http import (Http404, HttpResponse, HttpResponseBadRequest,
                          HttpResponseForbidden, HttpResponsePermanentRedirect)
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.context import Context
-from django.utils import simplejson as json
 from django.views.generic import (CreateView, DeleteView, DetailView,
                                   ListView, TemplateView, UpdateView, View)
 
@@ -158,8 +158,8 @@ class EditProjectMixin(object):
         for prod, comps in bugzilla.get_products_simplified().items():
             comps.insert(0, '__ALL__')
             for comp in comps:
-                bz_prod_choices.append('%s/%s' % (prod, comp))
-        context['bz_product_choices'] = json.dumps(bz_prod_choices)
+                bz_prod_choices.append('%s :: %s' % (prod, comp))
+        context['bz_product_choices'] = bz_prod_choices
         return context
 
 

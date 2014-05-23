@@ -218,7 +218,7 @@ PIPELINE_JS = {
     },
     'forms': {
         'source_filenames': (
-            'js/jquery.tools.min.js',
+            'js/select2.js',
             'js/bootstrap-datepicker.js',
             'js/spin.min.js',
             'js/forms.js',
@@ -280,6 +280,8 @@ PIPELINE_CSS = {
     'forms': {
         'source_filenames': (
             'css/bootstrap-datepicker.css',
+            'css/select2.css',
+            'css/select2-bootstrap.css',
         ),
         'output_filename': 'css/forms.min.css',
     },

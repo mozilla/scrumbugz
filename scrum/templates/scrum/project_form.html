@@ -47,8 +47,8 @@
 
 {% block js %}
   {% compressed_js 'forms' %}
-  <script type="text/javascript">
-    var bz_product_choices = {{ bz_product_choices|safe }};
-    $("#id_product").typeahead({source: bz_product_choices, items: 10});
-  </script>
+{% endblock %}
+
+{% block css %}
+  {% compressed_css 'forms' %}
 {% endblock %}

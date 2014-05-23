@@ -7,12 +7,15 @@
   <div class="control-group">
     <label class="control-label" for="id_product">Add a Product</label>
     <div class="controls">
-      <div class="input-append" id="id_url_wrapper">
-        <input id="id_product"
-               class="input-xlarge"
-               name="product"
-               placeholder="Bugzilla Product/Component"
-               type="text"><button class="btn" type="submit" id="add_product_btn"><i class="icon-plus" id="add_product_icon"></i></button>
+      <div class="input" id="id_url_wrapper">
+        <select name="product" id="id_product" class="input-xxlarge"
+                data-placeholder="Bugzilla Product :: Component">
+          <option value=""></option>
+          {% for bzproduct in bz_product_choices %}
+            <option value="{{ bzproduct }}">{{ bzproduct }}</option>
+          {% endfor %}
+        </select>
+        <button class="btn" type="submit" id="add_product_btn"><i class="icon-plus" id="add_product_icon"></i></button>
         <p class="help-block">Select the "__ALL__" component to include the entire Product.</p>
       </div>
     </div>
